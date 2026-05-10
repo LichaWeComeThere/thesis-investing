@@ -1,0 +1,37 @@
+# Thesis Investing
+
+Thesis Investing is a Windows-first desktop app for building investment discipline. The goal is to help users score stocks, track portfolios, write thesis notes, and monitor whether an original investment thesis remains intact.
+
+This repository is currently in Phase 0, Stage 1: foundational monorepo setup only. It does not connect to brokerage accounts, execute trades, provide personalized financial advice, or use live stock APIs.
+
+## Windows-first
+
+The first supported target is a Windows desktop app built with Electron, Vite, React, and TypeScript.
+
+## Setup
+
+```bash
+pnpm install
+pnpm dev
+```
+
+## Available Scripts
+
+```bash
+pnpm dev
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+## Workspace Layout
+
+- `apps/desktop`: Electron + Vite + React + TypeScript desktop app
+- `packages/core`: pure TypeScript scoring and domain logic
+- `packages/ui`: reusable React UI components
+- `.github/workflows`: GitHub Actions workflows
+
+## Financial Disclaimer
+
+Thesis Investing is educational software. It is not financial advice, investment advice, a brokerage, or a trading execution platform.
