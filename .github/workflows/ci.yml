@@ -1,24 +1,19 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
-permissions:
-  contents: write
-
 jobs:
-  bootstrap-lockfile:
-    name: Bootstrap lockfile cleanup
-    if: ${{ github.actor != 'github-actions[bot]' }}
+  verify:
+    name: Verify
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out PR branch
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: codex/phase-0-stage-1-foundation
-          fetch-depth: 0
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -30,107 +25,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Generate final cleanup commit
-        run: |
-          pnpm install --lockfile-only
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-          cat > .github/workflows/ci.yml <<'YAML'
-          name: CI
+      - name: Lint
+        run: pnpm lint
 
-          on:
-            push:
-              branches: [main]
-            pull_request:
-              branches: [main]
+      - name: Typecheck
+        run: pnpm typecheck
 
-          jobs:
-            verify:
-              name: Verify
-              runs-on: ubuntu-latest
+      - name: Test
+        run: pnpm test
 
-              steps:
-                - name: Check out repository
-                  uses: actions/checkout@v4
-
-                - name: Set up pnpm
-                  uses: pnpm/action-setup@v4
-                  with:
-                    version: 9.15.4
-
-                - name: Set up Node.js
-                  uses: actions/setup-node@v4
-                  with:
-                    node-version: 22
-
-                - name: Install dependencies
-                  run: pnpm install --frozen-lockfile
-
-                - name: Lint
-                  run: pnpm lint
-
-                - name: Typecheck
-                  run: pnpm typecheck
-
-                - name: Test
-                  run: pnpm test
-
-                - name: Build
-                  run: pnpm build
-          YAML
-
-          cat > .github/workflows/windows-build.yml <<'YAML'
-          name: Windows Build
-
-          on:
-            workflow_dispatch:
-            pull_request:
-              branches: [main]
-              paths:
-                - apps/desktop/**
-                - packages/**
-                - package.json
-                - pnpm-lock.yaml
-                - pnpm-workspace.yaml
-
-          jobs:
-            windows-build-placeholder:
-              name: Windows build placeholder
-              runs-on: windows-latest
-
-              steps:
-                - name: Check out repository
-                  uses: actions/checkout@v4
-
-                - name: Set up pnpm
-                  uses: pnpm/action-setup@v4
-                  with:
-                    version: 9.15.4
-
-                - name: Set up Node.js
-                  uses: actions/setup-node@v4
-                  with:
-                    node-version: 22
-
-                - name: Install dependencies
-                  run: pnpm install --frozen-lockfile
-
-                - name: Build desktop app
-                  run: pnpm --filter @thesis-investing/desktop build
-
-                - name: Artifact placeholder
-                  run: echo "Windows packaging artifacts will be added in a later phase."
-          YAML
-
-          rm -f .github/workflows/lockfile-bootstrap.yml
-
-      - name: Commit final cleanup
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pnpm-lock.yaml .github/workflows/ci.yml .github/workflows/windows-build.yml .github/workflows/lockfile-bootstrap.yml
-          if git diff --cached --quiet; then
-            echo "No cleanup changes to commit."
-          else
-            git commit -m "Add pnpm lockfile and frozen installs"
-            git push origin HEAD:codex/phase-0-stage-1-foundation
-          fi
+      - name: Build
+        run: pnpm build
