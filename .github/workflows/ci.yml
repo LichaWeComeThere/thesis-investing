@@ -121,7 +121,6 @@ jobs:
                   run: echo "Windows packaging artifacts will be added in a later phase."
           YAML
 
-          sed -i 's/^          //' .github/workflows/ci.yml .github/workflows/windows-build.yml
           rm -f .github/workflows/lockfile-bootstrap.yml
 
       - name: Commit final cleanup
