@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@thesis-investing/core": ["../../packages/core/src/index.ts"],
+      "@thesis-investing/ui": ["../../packages/ui/src/index.tsx"]
+    },
+    "types": ["node", "vite/client"]
+  },
+  "include": ["electron.vite.config.ts", "src"]
+}
