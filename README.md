@@ -32,6 +32,12 @@ pnpm build
 - `packages/ui`: reusable React UI components
 - `.github/workflows`: GitHub Actions workflows
 
+## Documentation
+
+- [Roadmap](docs/ROADMAP.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Codex Workflow](docs/CODEX_WORKFLOW.md)
+
 ## Financial Disclaimer
 
 Thesis Investing is educational software. It is not financial advice, investment advice, a brokerage, or a trading execution platform.
