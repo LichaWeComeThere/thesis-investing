@@ -2,7 +2,7 @@
 
 Thesis Investing is a Windows-first desktop app for building investment discipline. The goal is to help users score stocks, track portfolios, write thesis notes, and monitor whether an original investment thesis remains intact.
 
-This repository is currently in Phase 0: foundational setup and planning only. It does not connect to brokerage accounts, execute trades, provide personalized financial advice, or use live stock APIs.
+This repository is currently entering Phase 1: Offline Windows MVP. The desktop app has a navigation shell with placeholder views only. It does not connect to brokerage accounts, execute trades, provide personalized financial advice, or use live stock APIs.
 
 ## Windows-first
 
