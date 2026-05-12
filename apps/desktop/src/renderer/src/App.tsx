@@ -1,4 +1,10 @@
-import { Card } from '@thesis-investing/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  PageHeader,
+  themeCssVariables
+} from '@thesis-investing/ui';
 import { useMemo, useState } from 'react';
 
 type NavigationView = {
@@ -77,7 +83,7 @@ export function App(): JSX.Element {
   );
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={themeCssVariables}>
       <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand-area">
           <p className="brand-eyebrow">Thesis Investing</p>
@@ -89,15 +95,18 @@ export function App(): JSX.Element {
             const isActive = view.id === selectedView.id;
 
             return (
-              <button
+              <Button
                 aria-current={isActive ? 'page' : undefined}
                 className={`nav-item${isActive ? ' active' : ''}`}
+                fullWidth
+                isActive={isActive}
                 key={view.id}
                 onClick={() => setSelectedViewId(view.id)}
                 type="button"
+                variant="sidebar"
               >
                 {view.navLabel}
-              </button>
+              </Button>
             );
           })}
         </nav>
@@ -109,13 +118,19 @@ export function App(): JSX.Element {
       </aside>
 
       <main className="content-area">
-        <div className="content-header">
-          <p className="section-label">Phase 1 Offline Windows MVP</p>
-          <p className="stage-label">Stage 1 navigation shell</p>
-        </div>
+        <PageHeader
+          badge={<Badge variant="accent">Not built yet</Badge>}
+          description={selectedView.description}
+          eyebrow="Phase 1 Offline Windows MVP"
+          title={selectedView.title}
+        />
 
-        <Card title={selectedView.title}>
-          <p>{selectedView.description}</p>
+        <Card title="Planned workspace">
+          <p>
+            This placeholder reserves space for a future offline MVP screen.
+            No portfolio workflows, scoring actions, live data, or trading
+            tools are available here.
+          </p>
         </Card>
       </main>
     </div>
