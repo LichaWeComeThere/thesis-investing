@@ -6,7 +6,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
       "@thesis-investing/core": ["../../packages/core/src/index.ts"],
-      "@thesis-investing/ui": ["../../packages/ui/src/index.tsx"]
+      "@thesis-investing/ui": ["../../packages/ui/src/index.ts"]
     },
     "types": ["node", "vite/client"]
   },
