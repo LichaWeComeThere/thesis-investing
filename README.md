@@ -41,6 +41,7 @@ pnpm build
 - [Definition Of Done](docs/DEFINITION_OF_DONE.md)
 - [Issue Labels](docs/ISSUE_LABELS.md)
 - [Phase 1 Issues](docs/PHASE_1_ISSUES.md)
+- [Design System](docs/DESIGN_SYSTEM.md)
 
 ## Financial Disclaimer
 
