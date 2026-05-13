@@ -11,6 +11,7 @@ import {
   markOnboardingCompleted,
   resetOnboardingCompletion
 } from './onboardingState';
+import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 
 type NavigationView = {
   id: string;
@@ -194,32 +195,38 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
       </aside>
 
       <main className="content-area">
-        <PageHeader
-          badge={<Badge variant="accent">Not built yet</Badge>}
-          description={selectedView.description}
-          eyebrow="Phase 1 Offline Windows MVP"
-          title={selectedView.title}
-        />
+        {selectedView.id === 'mbs-scorer' ? (
+          <ManualMbsScorerScreen />
+        ) : (
+          <>
+            <PageHeader
+              badge={<Badge variant="accent">Not built yet</Badge>}
+              description={selectedView.description}
+              eyebrow="Phase 1 Offline Windows MVP"
+              title={selectedView.title}
+            />
 
-        <Card title="Planned workspace">
-          <p>
-            This placeholder reserves space for a future offline MVP screen.
-            No portfolio workflows, scoring actions, live data, or trading
-            tools are available here.
-          </p>
+            <Card title="Planned workspace">
+              <p>
+                This placeholder reserves space for a future offline MVP screen.
+                No portfolio workflows, scoring actions, live data, or trading
+                tools are available here.
+              </p>
 
-          {selectedView.id === 'settings-about' ? (
-            <div className="settings-actions">
-              <Button
-                onClick={onResetOnboarding}
-                type="button"
-                variant="secondary"
-              >
-                Reset onboarding
-              </Button>
-            </div>
-          ) : null}
-        </Card>
+              {selectedView.id === 'settings-about' ? (
+                <div className="settings-actions">
+                  <Button
+                    onClick={onResetOnboarding}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Reset onboarding
+                  </Button>
+                </div>
+              ) : null}
+            </Card>
+          </>
+        )}
       </main>
     </div>
   );
