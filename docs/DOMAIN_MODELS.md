@@ -17,7 +17,7 @@ The `packages/core` workspace contains pure TypeScript domain models and helper 
 - `WatchlistItem`: a manually tracked company or ticker.
 - `ThesisNote`: a user-authored thesis note.
 - `ThesisStatus`: supported lifecycle states for a thesis note.
-- `ManualBusinessScoreInput` and `ManualBusinessScoreOutput`: typed placeholders for future MBS scoring.
+- `ManualBusinessScoreInput` and `ManualBusinessScoreOutput`: deterministic Manual Business Score input and output models.
 - `ThemeBasket`: static educational grouping metadata.
 - `Reminder`: a manually entered reminder such as earnings or thesis review.
 
@@ -36,7 +36,6 @@ The `packages/core` workspace contains pure TypeScript domain models and helper 
 
 ## Out Of Scope
 
-- Full MBS scoring rules.
 - UI screens or product workflows.
 - SQLite or any other persistence layer.
 - Live stock APIs or market data providers.
@@ -46,3 +45,5 @@ The `packages/core` workspace contains pure TypeScript domain models and helper 
 - Personalized financial advice.
 
 These models are offline, deterministic, and non-advisory foundations for later stages.
+
+See [Manual Business Score](MBS_SCORING.md) for the scoring categories, weights, and rating bands.
