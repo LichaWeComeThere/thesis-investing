@@ -67,24 +67,54 @@ export type ThesisNote = {
   reviewDueAt?: IsoDateString;
 };
 
-export type ManualBusinessScoreInput = {
-  businessQuality?: number;
-  moat?: number;
-  management?: number;
-  balanceSheet?: number;
-  growth?: number;
-  valuation?: number;
-  risk?: number;
+export type ManualBusinessScoreCategory =
+  | 'businessQuality'
+  | 'moat'
+  | 'management'
+  | 'balanceSheet'
+  | 'growth'
+  | 'valuation'
+  | 'risk';
+
+export type ManualBusinessScoreInput = Partial<
+  Record<ManualBusinessScoreCategory, number>
+> & {
   notes?: string;
 };
 
-export type ManualBusinessScoreRating = 'not-scored';
+export type ManualBusinessScoreCategoryWeights = Record<
+  ManualBusinessScoreCategory,
+  number
+>;
+
+export type ManualBusinessScoreRating =
+  | 'incomplete'
+  | 'weak'
+  | 'mixed'
+  | 'strong'
+  | 'exceptional';
+
+export type ManualBusinessScoreValidationError = {
+  category: ManualBusinessScoreCategory;
+  message: string;
+  value: unknown;
+};
+
+export type ManualBusinessScoreWarning = {
+  code: 'missing-criteria' | 'invalid-criteria-excluded';
+  message: string;
+  categories: ManualBusinessScoreCategory[];
+};
 
 export type ManualBusinessScoreOutput = {
   score: number;
   maxScore: number;
+  percentage: number;
   rating: ManualBusinessScoreRating;
   completedCriteria: number;
+  missingCriteria: ManualBusinessScoreCategory[];
+  warnings: ManualBusinessScoreWarning[];
+  errors: ManualBusinessScoreValidationError[];
   input: ManualBusinessScoreInput;
 };
 
