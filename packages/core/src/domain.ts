@@ -118,6 +118,26 @@ export type ManualBusinessScoreOutput = {
   input: ManualBusinessScoreInput;
 };
 
+export type ManualPortfolioRankerItemInput = {
+  id: EntityId;
+  ticker: TickerSymbol;
+  companyName?: string;
+  manualScore?: number;
+  notes?: string;
+};
+
+export type ManualPortfolioRankerStatus =
+  | 'ranked'
+  | 'incomplete'
+  | 'invalid';
+
+export type ManualPortfolioRankedItem = ManualPortfolioRankerItemInput & {
+  normalizedTicker: TickerSymbol;
+  rank: number | null;
+  status: ManualPortfolioRankerStatus;
+  errors: string[];
+};
+
 export type ThemeBasket = {
   id: EntityId;
   name: string;

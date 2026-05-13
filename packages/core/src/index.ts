@@ -10,6 +10,9 @@ export type {
   ManualBusinessScoreRating,
   ManualBusinessScoreValidationError,
   ManualBusinessScoreWarning,
+  ManualPortfolioRankedItem,
+  ManualPortfolioRankerItemInput,
+  ManualPortfolioRankerStatus,
   Portfolio,
   Reminder,
   ReminderType,
@@ -22,6 +25,11 @@ export type {
 } from './domain';
 export { createId } from './ids';
 export type { IdPrefix } from './ids';
+export {
+  PORTFOLIO_RANKER_MAX_SCORE,
+  PORTFOLIO_RANKER_MIN_SCORE,
+  rankManualPortfolioItems
+} from './portfolioRanker';
 export {
   calculateMbsScore,
   MBS_CATEGORIES,
