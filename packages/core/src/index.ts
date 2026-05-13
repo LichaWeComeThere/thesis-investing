@@ -3,9 +3,13 @@ export type {
   EntityId,
   Holding,
   IsoDateString,
+  ManualBusinessScoreCategory,
+  ManualBusinessScoreCategoryWeights,
   ManualBusinessScoreInput,
   ManualBusinessScoreOutput,
   ManualBusinessScoreRating,
+  ManualBusinessScoreValidationError,
+  ManualBusinessScoreWarning,
   Portfolio,
   Reminder,
   ReminderType,
@@ -18,7 +22,14 @@ export type {
 } from './domain';
 export { createId } from './ids';
 export type { IdPrefix } from './ids';
-export { calculateMbsScore } from './scoring';
+export {
+  calculateMbsScore,
+  MBS_CATEGORIES,
+  MBS_CATEGORY_MAX_SCORE,
+  MBS_CATEGORY_MIN_SCORE,
+  MBS_CATEGORY_WEIGHTS,
+  MBS_MAX_SCORE
+} from './scoring';
 export {
   isValidIsoDate,
   isValidTickerSymbol,
