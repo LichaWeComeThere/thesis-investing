@@ -44,6 +44,7 @@ pnpm build
 - [Design System](docs/DESIGN_SYSTEM.md)
 - [Domain Models](docs/DOMAIN_MODELS.md)
 - [Manual Business Score](docs/MBS_SCORING.md)
+- [Manual MBS Scorer Screen](docs/MANUAL_MBS_SCORER.md)
 - [First-Run Onboarding](docs/ONBOARDING.md)
 - [Persistence](docs/PERSISTENCE.md)
 
