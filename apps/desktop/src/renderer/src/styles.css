@@ -26,6 +26,39 @@ select {
   font: inherit;
 }
 
+.onboarding-screen {
+  background: var(--ti-color-background);
+  display: grid;
+  min-height: 100vh;
+  padding: 40px;
+  place-items: center;
+}
+
+.onboarding-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 840px;
+  width: 100%;
+}
+
+.onboarding-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.onboarding-copy ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.onboarding-copy li {
+  padding-left: 4px;
+}
+
 .app-shell {
   background: var(--ti-color-background);
   display: grid;
@@ -112,6 +145,10 @@ select {
   margin-top: 0;
 }
 
+.settings-actions {
+  margin-top: 24px;
+}
+
 @media (max-width: 780px) {
   body {
     overflow: auto;
@@ -131,5 +168,15 @@ select {
 
   .content-area {
     padding: 24px;
+  }
+
+  .onboarding-screen {
+    padding: 24px;
+    place-items: start center;
+  }
+
+  .content-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
