@@ -271,7 +271,7 @@ export function ThesisMonitorScreen({
                   >
                     <span>{note.title}</span>
                     <small>
-                      {note.ticker ?? 'No ticker'} · {statusLabels[note.status]}
+                      {note.ticker ?? 'No ticker'} - {statusLabels[note.status]}
                     </small>
                   </button>
                 );
