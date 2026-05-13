@@ -6,6 +6,11 @@ import {
   themeCssVariables
 } from '@thesis-investing/ui';
 import { useMemo, useState } from 'react';
+import {
+  hasCompletedOnboarding,
+  markOnboardingCompleted,
+  resetOnboardingCompletion
+} from './onboardingState';
 
 type NavigationView = {
   id: string;
@@ -74,6 +79,77 @@ const navigationViews: NavigationView[] = [
 ];
 
 export function App(): JSX.Element {
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(() =>
+    hasCompletedOnboarding()
+  );
+
+  function completeOnboarding(): void {
+    markOnboardingCompleted();
+    setIsOnboardingComplete(true);
+  }
+
+  function resetOnboarding(): void {
+    resetOnboardingCompletion();
+    setIsOnboardingComplete(false);
+  }
+
+  if (!isOnboardingComplete) {
+    return <OnboardingScreen onComplete={completeOnboarding} />;
+  }
+
+  return <AppShell onResetOnboarding={resetOnboarding} />;
+}
+
+type OnboardingScreenProps = {
+  onComplete: () => void;
+};
+
+function OnboardingScreen({
+  onComplete
+}: OnboardingScreenProps): JSX.Element {
+  return (
+    <main className="onboarding-screen" style={themeCssVariables}>
+      <div className="onboarding-layout">
+        <PageHeader
+          badge={<Badge variant="accent">Offline-first</Badge>}
+          description="A Windows-first desktop app for building investment discipline through user-directed scoring, thesis notes, and manual tracking."
+          eyebrow="Welcome"
+          title="Thesis Investing"
+        />
+
+        <Card
+          footer={
+            <Button onClick={onComplete} type="button">
+              Continue
+            </Button>
+          }
+          title="Invest with a thesis."
+        >
+          <div className="onboarding-copy">
+            <p>
+              Thesis Investing is educational software for organizing your own
+              research process. It does not provide personalized financial
+              advice, investment recommendations, or instructions to buy, sell,
+              or hold any security.
+            </p>
+
+            <ul>
+              <li>No brokerage connections or trading execution.</li>
+              <li>No live stock APIs or automated market data yet.</li>
+              <li>Offline-first workflows built around manual user input.</li>
+            </ul>
+          </div>
+        </Card>
+      </div>
+    </main>
+  );
+}
+
+type AppShellProps = {
+  onResetOnboarding: () => void;
+};
+
+function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   const [selectedViewId, setSelectedViewId] = useState(navigationViews[0].id);
   const selectedView = useMemo(
     () =>
@@ -131,6 +207,18 @@ export function App(): JSX.Element {
             No portfolio workflows, scoring actions, live data, or trading
             tools are available here.
           </p>
+
+          {selectedView.id === 'settings-about' ? (
+            <div className="settings-actions">
+              <Button
+                onClick={onResetOnboarding}
+                type="button"
+                variant="secondary"
+              >
+                Reset onboarding
+              </Button>
+            </div>
+          ) : null}
         </Card>
       </main>
     </div>
