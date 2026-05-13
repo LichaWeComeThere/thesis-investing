@@ -13,6 +13,7 @@ import {
 } from './onboardingState';
 import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
+import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 
 type NavigationView = {
   id: string;
@@ -200,6 +201,8 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           <ManualMbsScorerScreen />
         ) : selectedView.id === 'portfolio-ranker' ? (
           <PortfolioRankerScreen />
+        ) : selectedView.id === 'thesis-monitor' ? (
+          <ThesisMonitorScreen />
         ) : (
           <>
             <PageHeader
