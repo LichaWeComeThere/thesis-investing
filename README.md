@@ -42,6 +42,7 @@ pnpm build
 - [Issue Labels](docs/ISSUE_LABELS.md)
 - [Phase 1 Issues](docs/PHASE_1_ISSUES.md)
 - [Design System](docs/DESIGN_SYSTEM.md)
+- [Domain Models](docs/DOMAIN_MODELS.md)
 
 ## Financial Disclaimer
 
