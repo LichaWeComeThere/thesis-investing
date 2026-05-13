@@ -5,6 +5,19 @@ import { runMigrations } from "./schema";
 import { createSqliteDatabase, createSqliteStorage } from "./sqlite";
 
 describe("SQLite local storage", () => {
+  it("creates the repository boundary through createSqliteStorage", async () => {
+    const storage = await createSqliteStorage();
+
+    expect(Object.keys(storage.repositories).sort()).toEqual([
+      "holdings",
+      "reminders",
+      "thesisNotes",
+      "watchlistItems"
+    ]);
+
+    storage.close();
+  });
+
   it("runs the initial migration and creates local tables", async () => {
     const database = await createSqliteDatabase();
 
