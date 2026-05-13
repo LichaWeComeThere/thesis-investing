@@ -266,6 +266,176 @@ select {
   padding-left: 20px;
 }
 
+.portfolio-ranker-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1080px;
+}
+
+.portfolio-ranker-disclaimer {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  color: var(--ti-color-text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+}
+
+.portfolio-ranker-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.portfolio-ranker-row {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.portfolio-ranker-row-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.portfolio-ranker-row-header h3 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.portfolio-ranker-entry-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(180px, 1.4fr) minmax(
+      120px,
+      0.8fr
+    );
+}
+
+.portfolio-ranker-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.portfolio-ranker-field span {
+  color: var(--ti-color-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.portfolio-ranker-field input,
+.portfolio-ranker-field textarea {
+  background: var(--ti-color-surface);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  color: var(--ti-color-text);
+  font-size: 15px;
+  line-height: 1.4;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+.portfolio-ranker-field input:focus,
+.portfolio-ranker-field textarea:focus {
+  border-color: var(--ti-color-border-strong);
+  box-shadow: var(--ti-shadow-focus);
+  outline: none;
+}
+
+.portfolio-ranker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.portfolio-ranker-results {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-x: auto;
+}
+
+.portfolio-ranker-table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+.portfolio-ranker-table th,
+.portfolio-ranker-table td {
+  border-bottom: 1px solid var(--ti-color-border);
+  color: var(--ti-color-text);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.portfolio-ranker-table th {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.portfolio-ranker-status {
+  border-radius: var(--ti-radius-sm);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 5px 8px;
+}
+
+.portfolio-ranker-status.ranked {
+  background: #e5f4ee;
+  color: #17614b;
+}
+
+.portfolio-ranker-status.incomplete {
+  background: #fff4d6;
+  color: #7a4d00;
+}
+
+.portfolio-ranker-status.invalid {
+  background: #fde8e8;
+  color: #9b1c1c;
+}
+
+.portfolio-ranker-feedback {
+  color: var(--ti-color-text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.portfolio-ranker-feedback h3 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0 0 10px;
+}
+
+.portfolio-ranker-feedback ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
 @media (max-width: 780px) {
   body {
     overflow: auto;
@@ -293,7 +463,8 @@ select {
   }
 
   .mbs-input-grid,
-  .mbs-score-summary {
+  .mbs-score-summary,
+  .portfolio-ranker-entry-grid {
     grid-template-columns: 1fr;
   }
 
