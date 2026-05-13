@@ -21,6 +21,12 @@ This keeps the adapter dependency-free for the early Windows-first repo foundati
 
 The current adapter can create an in-memory database for tests or open a filename-backed SQLite database. Future Electron desktop work can decide the final user-data path, backup approach, and runtime packaging details.
 
+## Adapter Boundary
+
+`node:sqlite` is currently used only as the first local SQLite adapter. It is experimental, and support inside the target Electron runtime must be verified before storage is wired into user-visible workflows.
+
+The repository interfaces are intentionally the stable boundary. Future work can swap this SQLite adapter for another implementation if packaging, runtime support, or performance requirements make that the better choice.
+
 ## Schema And Migrations
 
 Migrations are defined in `apps/desktop/src/storage/schema.ts`.
