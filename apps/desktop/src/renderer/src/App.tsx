@@ -12,6 +12,7 @@ import {
   resetOnboardingCompletion
 } from './onboardingState';
 import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
+import { PortfolioRankerScreen } from './PortfolioRankerScreen';
 
 type NavigationView = {
   id: string;
@@ -197,6 +198,8 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
       <main className="content-area">
         {selectedView.id === 'mbs-scorer' ? (
           <ManualMbsScorerScreen />
+        ) : selectedView.id === 'portfolio-ranker' ? (
+          <PortfolioRankerScreen />
         ) : (
           <>
             <PageHeader
