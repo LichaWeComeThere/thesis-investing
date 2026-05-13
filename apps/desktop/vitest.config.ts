@@ -10,6 +10,10 @@ export default defineConfig({
       "@thesis-investing/core": resolve(
         projectRoot,
         "../../packages/core/src/index.ts"
+      ),
+      "@thesis-investing/ui": resolve(
+        projectRoot,
+        "../../packages/ui/src/index.ts"
       )
     }
   },
