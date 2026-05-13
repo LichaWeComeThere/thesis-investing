@@ -9,7 +9,13 @@ import {
   validateThesisNote,
   validateWatchlistItem
 } from './index';
-import type { Holding, Reminder, ThesisNote, WatchlistItem } from './index';
+import type {
+  Holding,
+  ManualBusinessScoreInput,
+  Reminder,
+  ThesisNote,
+  WatchlistItem
+} from './index';
 
 describe('ticker helpers', () => {
   it('normalizes ticker symbols by trimming and uppercasing', () => {
@@ -182,15 +188,162 @@ describe('validateReminder', () => {
 });
 
 describe('calculateMbsScore', () => {
-  it('returns a typed placeholder score without implementing the engine', () => {
-    expect(calculateMbsScore({ businessQuality: 4 })).toEqual({
-      score: 0,
+  it('calculates a complete weighted score from valid inputs', () => {
+    expect(
+      calculateMbsScore({
+        businessQuality: 8,
+        moat: 7,
+        management: 9,
+        balanceSheet: 6,
+        growth: 7,
+        valuation: 5,
+        risk: 8
+      })
+    ).toEqual({
+      score: 71.9,
       maxScore: 100,
-      rating: 'not-scored',
-      completedCriteria: 1,
+      percentage: 71.9,
+      rating: 'strong',
+      completedCriteria: 7,
+      missingCriteria: [],
+      warnings: [],
+      errors: [],
       input: {
-        businessQuality: 4
+        businessQuality: 8,
+        moat: 7,
+        management: 9,
+        balanceSheet: 6,
+        growth: 7,
+        valuation: 5,
+        risk: 8
       }
     });
   });
+
+  it('handles partial scoring with missing criteria', () => {
+    const result = calculateMbsScore({
+      businessQuality: 8,
+      moat: 6
+    });
+
+    expect(result.score).toBe(25);
+    expect(result.percentage).toBe(25);
+    expect(result.rating).toBe('incomplete');
+    expect(result.completedCriteria).toBe(2);
+    expect(result.missingCriteria).toEqual([
+      'management',
+      'balanceSheet',
+      'growth',
+      'valuation',
+      'risk'
+    ]);
+    expect(result.warnings).toEqual([
+      {
+        code: 'missing-criteria',
+        message: 'Score is incomplete because one or more criteria are missing.',
+        categories: [
+          'management',
+          'balanceSheet',
+          'growth',
+          'valuation',
+          'risk'
+        ]
+      }
+    ]);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('returns validation errors for invalid category values', () => {
+    const result = calculateMbsScore({
+      businessQuality: -1,
+      moat: 11,
+      management: Number.NaN,
+      balanceSheet: 'high',
+      growth: 5
+    } as unknown as ManualBusinessScoreInput);
+
+    expect(result.score).toBe(6);
+    expect(result.rating).toBe('incomplete');
+    expect(result.completedCriteria).toBe(1);
+    expect(result.missingCriteria).toEqual(['valuation', 'risk']);
+    expect(result.errors.map((error) => error.category)).toEqual([
+      'businessQuality',
+      'moat',
+      'management',
+      'balanceSheet'
+    ]);
+    expect(result.warnings.map((warning) => warning.code)).toEqual([
+      'missing-criteria',
+      'invalid-criteria-excluded'
+    ]);
+  });
+
+  it('supports boundary values of 0 and 10', () => {
+    expect(createCompleteMbsInput(0)).toMatchObject({
+      businessQuality: 0,
+      risk: 0
+    });
+    expect(calculateMbsScore(createCompleteMbsInput(0))).toMatchObject({
+      score: 0,
+      percentage: 0,
+      rating: 'weak',
+      completedCriteria: 7,
+      missingCriteria: []
+    });
+    expect(calculateMbsScore(createCompleteMbsInput(10))).toMatchObject({
+      score: 100,
+      percentage: 100,
+      rating: 'exceptional',
+      completedCriteria: 7,
+      missingCriteria: []
+    });
+  });
+
+  it('assigns rating bands at deterministic thresholds', () => {
+    expect(calculateMbsScore(createCompleteMbsInput(3.9)).rating).toBe('weak');
+    expect(calculateMbsScore(createCompleteMbsInput(4)).rating).toBe('mixed');
+    expect(calculateMbsScore(createCompleteMbsInput(6.5)).rating).toBe('strong');
+    expect(calculateMbsScore(createCompleteMbsInput(8.5)).rating).toBe(
+      'exceptional'
+    );
+  });
+
+  it('does not let notes affect the score', () => {
+    const withoutNotes = calculateMbsScore(createCompleteMbsInput(7));
+    const withNotes = calculateMbsScore({
+      ...createCompleteMbsInput(7),
+      notes: 'This user-authored note is informational only.'
+    });
+
+    expect(withNotes.score).toBe(withoutNotes.score);
+    expect(withNotes.percentage).toBe(withoutNotes.percentage);
+    expect(withNotes.rating).toBe(withoutNotes.rating);
+    expect(withNotes.completedCriteria).toBe(withoutNotes.completedCriteria);
+  });
+
+  it('returns deterministic output for repeated calls', () => {
+    const input = {
+      businessQuality: 9,
+      moat: 8,
+      management: 8,
+      balanceSheet: 7,
+      growth: 6,
+      valuation: 5,
+      risk: 8
+    };
+
+    expect(calculateMbsScore(input)).toEqual(calculateMbsScore(input));
+  });
 });
+
+function createCompleteMbsInput(value: number): ManualBusinessScoreInput {
+  return {
+    businessQuality: value,
+    moat: value,
+    management: value,
+    balanceSheet: value,
+    growth: value,
+    valuation: value,
+    risk: value
+  };
+}
