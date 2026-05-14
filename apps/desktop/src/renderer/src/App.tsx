@@ -11,6 +11,7 @@ import {
   markOnboardingCompleted,
   resetOnboardingCompletion
 } from './onboardingState';
+import { DashboardScreen } from './DashboardScreen';
 import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
 import { ThemeBasketsScreen } from './ThemeBasketsScreen';
@@ -30,7 +31,7 @@ const navigationViews: NavigationView[] = [
     title: 'Dashboard',
     navLabel: 'Dashboard',
     description:
-      'Future home for a local overview of user-entered watchlist items, thesis notes, reminders, and scoring snapshots. This feature is not built yet.'
+      'Local overview of the offline MVP areas, current readiness, and product boundaries.'
   },
   {
     id: 'mbs-scorer',
@@ -199,7 +200,9 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
       </aside>
 
       <main className="content-area">
-        {selectedView.id === 'mbs-scorer' ? (
+        {selectedView.id === 'dashboard' ? (
+          <DashboardScreen />
+        ) : selectedView.id === 'mbs-scorer' ? (
           <ManualMbsScorerScreen />
         ) : selectedView.id === 'portfolio-ranker' ? (
           <PortfolioRankerScreen />
