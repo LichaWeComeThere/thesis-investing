@@ -47,7 +47,6 @@ pnpm build
 - [Manual MBS Scorer Screen](docs/MANUAL_MBS_SCORER.md)
 - [Portfolio Ranker](docs/PORTFOLIO_RANKER.md)
 - [Thesis Monitor](docs/THESIS_MONITOR.md)
-- [Watchlist](docs/WATCHLIST.md)
 - [First-Run Onboarding](docs/ONBOARDING.md)
 - [Persistence](docs/PERSISTENCE.md)
 

@@ -14,7 +14,6 @@ import {
 import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
 import { ThesisMonitorScreen } from './ThesisMonitorScreen';
-import { WatchlistScreen } from './WatchlistScreen';
 
 type NavigationView = {
   id: string;
@@ -204,8 +203,6 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           <PortfolioRankerScreen />
         ) : selectedView.id === 'thesis-monitor' ? (
           <ThesisMonitorScreen />
-        ) : selectedView.id === 'watchlist' ? (
-          <WatchlistScreen />
         ) : (
           <>
             <PageHeader
