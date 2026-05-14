@@ -18,6 +18,7 @@ export type {
   ReminderType,
   StockIdentity,
   ThemeBasket,
+  ThemeBasketExample,
   ThesisNote,
   ThesisStatus,
   TickerSymbol,
