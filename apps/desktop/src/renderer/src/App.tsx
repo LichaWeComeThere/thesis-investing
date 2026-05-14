@@ -13,6 +13,7 @@ import {
 } from './onboardingState';
 import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
+import { ThemeBasketsScreen } from './ThemeBasketsScreen';
 import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 import { WatchlistScreen } from './WatchlistScreen';
 
@@ -206,6 +207,8 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           <ThesisMonitorScreen />
         ) : selectedView.id === 'watchlist' ? (
           <WatchlistScreen />
+        ) : selectedView.id === 'theme-baskets' ? (
+          <ThemeBasketsScreen />
         ) : (
           <>
             <PageHeader

@@ -138,12 +138,22 @@ export type ManualPortfolioRankedItem = ManualPortfolioRankerItemInput & {
   errors: string[];
 };
 
+export type ThemeBasketExample = {
+  ticker?: TickerSymbol;
+  companyName: string;
+  note?: string;
+};
+
 export type ThemeBasket = {
   id: EntityId;
   name: string;
   description: string;
+  educationalRationale: string;
+  examples: ThemeBasketExample[];
+  tags: string[];
   tickers: TickerSymbol[];
   isStatic: boolean;
+  nonAdvisoryNote: string;
 };
 
 export type ReminderType = 'earnings' | 'thesis-review' | 'custom';
