@@ -1,0 +1,209 @@
+.watchlist-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1120px;
+}
+
+.watchlist-disclaimer {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  color: var(--ti-color-text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+}
+
+.watchlist-form-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.watchlist-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.watchlist-field span {
+  color: var(--ti-color-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.watchlist-field input,
+.watchlist-field textarea {
+  background: var(--ti-color-surface);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  color: var(--ti-color-text);
+  font-size: 15px;
+  line-height: 1.4;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+.watchlist-field input:focus,
+.watchlist-field textarea:focus {
+  border-color: var(--ti-color-border-strong);
+  box-shadow: var(--ti-shadow-focus);
+  outline: none;
+}
+
+.watchlist-note-field {
+  margin-top: 18px;
+}
+
+.watchlist-validation {
+  background: #fff4d6;
+  border: 1px solid #f3ce74;
+  border-radius: var(--ti-radius-md);
+  color: #5f3d00;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-top: 18px;
+  padding: 14px 16px;
+}
+
+.watchlist-validation h3 {
+  color: #5f3d00;
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0 0 10px;
+}
+
+.watchlist-validation ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.watchlist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.watchlist-layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+}
+
+.watchlist-table-wrap {
+  overflow-x: auto;
+}
+
+.watchlist-table {
+  border-collapse: collapse;
+  min-width: 720px;
+  width: 100%;
+}
+
+.watchlist-table th,
+.watchlist-table td {
+  border-bottom: 1px solid var(--ti-color-border);
+  color: var(--ti-color-text);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.watchlist-table th {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.watchlist-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.watchlist-details {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.watchlist-details-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.watchlist-details-eyebrow {
+  color: var(--ti-color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.watchlist-details h3 {
+  color: var(--ti-color-text);
+  font-size: 22px;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.watchlist-meta-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.watchlist-meta-grid div {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  padding: 12px;
+}
+
+.watchlist-meta-grid dt {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 4px;
+}
+
+.watchlist-meta-grid dd {
+  color: var(--ti-color-text);
+  font-size: 15px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.watchlist-detail-section {
+  color: var(--ti-color-text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.watchlist-detail-section h4 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+
+@media (max-width: 780px) {
+  .watchlist-form-grid,
+  .watchlist-layout,
+  .watchlist-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
