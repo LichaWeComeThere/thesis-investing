@@ -18,7 +18,7 @@ The `packages/core` workspace contains pure TypeScript domain models and helper 
 - `ThesisNote`: a user-authored thesis note.
 - `ThesisStatus`: supported lifecycle states for a thesis note.
 - `ManualBusinessScoreInput` and `ManualBusinessScoreOutput`: deterministic Manual Business Score input and output models.
-- `ThemeBasket`: static educational grouping metadata.
+- `ThemeBasket`: static educational grouping metadata with rationale, tags, examples, and non-advisory copy.
 - `Reminder`: a manually entered reminder such as earnings or thesis review.
 
 ## Helpers Added
