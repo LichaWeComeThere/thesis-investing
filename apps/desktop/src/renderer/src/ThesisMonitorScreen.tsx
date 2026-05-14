@@ -1,4 +1,4 @@
-import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
+import { Badge, Button, Card, PageHeader, type BadgeVariant } from '@thesis-investing/ui';
 import { useMemo, useState } from 'react';
 import {
   buildThesisNoteFromForm,
@@ -34,6 +34,19 @@ const convictionLabels: Record<
   low: 'Low',
   medium: 'Medium'
 };
+
+function thesisHeaderBadgeVariant(status: LocalThesisNote['status']): BadgeVariant {
+  if (status === 'broken') {
+    return 'risk';
+  }
+  if (status === 'active') {
+    return 'success';
+  }
+  if (status === 'challenged') {
+    return 'warning';
+  }
+  return 'neutral';
+}
 
 export function ThesisMonitorScreen({
   initialForm,
@@ -292,7 +305,9 @@ export function ThesisMonitorScreen({
                   </p>
                   <h3>{selectedNote.title}</h3>
                 </div>
-                <Badge variant="neutral">{statusLabels[selectedNote.status]}</Badge>
+                <Badge variant={thesisHeaderBadgeVariant(selectedNote.status)}>
+                  {statusLabels[selectedNote.status]}
+                </Badge>
               </div>
 
               <dl className="thesis-meta-grid">

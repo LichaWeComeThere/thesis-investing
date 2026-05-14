@@ -30,7 +30,7 @@ export function PageHeader({
           <p
             style={{
               color: tokens.colors.textSubtle,
-              fontSize: tokens.typography.fontSize.sm,
+              fontSize: tokens.typography.fontSize.xs,
               fontWeight: tokens.typography.fontWeight.bold,
               lineHeight: tokens.typography.lineHeight.normal,
               margin: `0 0 ${tokens.spacing.sm}px`
@@ -52,6 +52,8 @@ export function PageHeader({
             style={{
               color: tokens.colors.text,
               fontSize: tokens.typography.fontSize.xxl,
+              fontWeight: tokens.typography.fontWeight.bold,
+              letterSpacing: '-0.03em',
               lineHeight: tokens.typography.lineHeight.tight,
               margin: 0
             }}

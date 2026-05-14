@@ -1,19 +1,20 @@
 .watchlist-screen {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
   max-width: 1120px;
 }
 
 .watchlist-disclaimer {
-  background: var(--ti-color-surface-muted);
+  background: color-mix(in srgb, var(--ti-color-surface-muted) 92%, var(--ti-color-surface));
   border: 1px solid var(--ti-color-border);
-  border-radius: var(--ti-radius-md);
+  border-radius: var(--ti-radius-lg);
+  box-shadow: var(--ti-shadow-surface-inset);
   color: var(--ti-color-text-muted);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: var(--ti-font-size-md);
+  line-height: 1.55;
   margin-bottom: 24px;
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 
 .watchlist-form-grid {
@@ -30,18 +31,18 @@
 
 .watchlist-field span {
   color: var(--ti-color-text);
-  font-size: 14px;
+  font-size: var(--ti-font-size-sm);
   font-weight: 700;
   line-height: 1.35;
 }
 
 .watchlist-field input,
 .watchlist-field textarea {
-  background: var(--ti-color-surface);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-md);
   color: var(--ti-color-text);
-  font-size: 15px;
+  font-size: var(--ti-font-size-md);
   line-height: 1.4;
   padding: 11px 12px;
   width: 100%;
@@ -59,19 +60,19 @@
 }
 
 .watchlist-validation {
-  background: #fff4d6;
-  border: 1px solid #f3ce74;
+  background: var(--ti-color-callout-warning-bg);
+  border: 1px solid var(--ti-color-callout-warning-border);
   border-radius: var(--ti-radius-md);
-  color: #5f3d00;
-  font-size: 15px;
+  color: var(--ti-color-callout-warning-text);
+  font-size: var(--ti-font-size-md);
   line-height: 1.5;
   margin-top: 18px;
   padding: 14px 16px;
 }
 
 .watchlist-validation h3 {
-  color: #5f3d00;
-  font-size: 16px;
+  color: var(--ti-color-callout-warning-text);
+  font-size: var(--ti-font-size-md);
   line-height: 1.35;
   margin: 0 0 10px;
 }
@@ -97,30 +98,7 @@
 }
 
 .watchlist-table-wrap {
-  overflow-x: auto;
-}
-
-.watchlist-table {
-  border-collapse: collapse;
-  min-width: 720px;
-  width: 100%;
-}
-
-.watchlist-table th,
-.watchlist-table td {
-  border-bottom: 1px solid var(--ti-color-border);
-  color: var(--ti-color-text);
-  font-size: 14px;
-  line-height: 1.4;
-  padding: 12px 10px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.watchlist-table th {
-  color: var(--ti-color-text-subtle);
-  font-size: 13px;
-  font-weight: 700;
+  max-width: 100%;
 }
 
 .watchlist-row-actions {
@@ -144,7 +122,7 @@
 
 .watchlist-details-eyebrow {
   color: var(--ti-color-primary);
-  font-size: 13px;
+  font-size: var(--ti-font-size-sm);
   font-weight: 700;
   line-height: 1.35;
   margin: 0 0 6px;
@@ -153,7 +131,7 @@
 
 .watchlist-details h3 {
   color: var(--ti-color-text);
-  font-size: 22px;
+  font-size: var(--ti-font-size-xl);
   line-height: 1.25;
   margin: 0;
 }
@@ -166,15 +144,16 @@
 }
 
 .watchlist-meta-grid div {
-  background: var(--ti-color-surface-muted);
+  background: var(--ti-color-surface-elevated);
   border: 1px solid var(--ti-color-border);
-  border-radius: var(--ti-radius-md);
-  padding: 12px;
+  border-radius: var(--ti-radius-lg);
+  box-shadow: var(--ti-shadow-surface-inset);
+  padding: 14px;
 }
 
 .watchlist-meta-grid dt {
-  color: var(--ti-color-text-subtle);
-  font-size: 13px;
+  color: var(--ti-color-text-quiet);
+  font-size: var(--ti-font-size-sm);
   font-weight: 700;
   line-height: 1.35;
   margin: 0 0 4px;
@@ -182,20 +161,20 @@
 
 .watchlist-meta-grid dd {
   color: var(--ti-color-text);
-  font-size: 15px;
+  font-size: var(--ti-font-size-md);
   line-height: 1.4;
   margin: 0;
 }
 
 .watchlist-detail-section {
   color: var(--ti-color-text-muted);
-  font-size: 15px;
+  font-size: var(--ti-font-size-md);
   line-height: 1.6;
 }
 
 .watchlist-detail-section h4 {
   color: var(--ti-color-text);
-  font-size: 16px;
+  font-size: var(--ti-font-size-md);
   line-height: 1.35;
   margin: 0 0 8px;
 }

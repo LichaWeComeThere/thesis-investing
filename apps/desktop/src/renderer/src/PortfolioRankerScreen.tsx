@@ -2,9 +2,10 @@ import {
   PORTFOLIO_RANKER_MAX_SCORE,
   PORTFOLIO_RANKER_MIN_SCORE,
   rankManualPortfolioItems,
-  type ManualPortfolioRankedItem
+  type ManualPortfolioRankedItem,
+  type ManualPortfolioRankerStatus
 } from '@thesis-investing/core';
-import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
+import { Badge, Button, Card, PageHeader, type BadgeVariant } from '@thesis-investing/ui';
 import { useMemo, useState } from 'react';
 import {
   buildPortfolioRankerInput,
@@ -21,6 +22,18 @@ const defaultRows = [
   createEmptyPortfolioRankerRow('idea-2'),
   createEmptyPortfolioRankerRow('idea-3')
 ];
+
+function portfolioStatusBadgeVariant(
+  status: ManualPortfolioRankerStatus
+): BadgeVariant {
+  if (status === 'ranked') {
+    return 'success';
+  }
+  if (status === 'invalid') {
+    return 'risk';
+  }
+  return 'neutral';
+}
 
 export function PortfolioRankerScreen({
   initialRows = defaultRows
@@ -181,10 +194,11 @@ export function PortfolioRankerScreen({
         </div>
       </Card>
 
-      <Card title="Deterministic ranking output">
+      <Card emphasis title="Deterministic ranking output">
         {rankedItems.length > 0 ? (
           <div className="portfolio-ranker-results">
-            <table className="portfolio-ranker-table">
+            <div className="ti-table-panel portfolio-ranker-table-panel">
+              <table className="portfolio-ranker-table">
               <thead>
                 <tr>
                   <th scope="col">Rank</th>
@@ -202,16 +216,18 @@ export function PortfolioRankerScreen({
                     <td>{item.companyName ?? 'Not provided'}</td>
                     <td>{formatScore(item)}</td>
                     <td>
-                      <span
-                        className={`portfolio-ranker-status ${item.status}`}
+                      <Badge
+                        className="portfolio-ranker-status-badge"
+                        variant={portfolioStatusBadgeVariant(item.status)}
                       >
                         {formatStatus(item)}
-                      </span>
+                      </Badge>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
 
             <div className="portfolio-ranker-feedback">
               {rankedItems.some((item) => item.errors.length > 0) ? (

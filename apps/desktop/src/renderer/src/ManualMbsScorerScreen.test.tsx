@@ -25,6 +25,9 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('80%');
     expect(html).toContain('strong');
     expect(html).toContain('7 / 7');
+    expect(html).toContain('Why this score?');
+    expect(html).toContain('Adjusted MBS');
+    expect(html).toContain('Raw MBS');
   });
 
   it('renders missing and invalid criteria clearly', () => {
