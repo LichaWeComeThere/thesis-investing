@@ -33,7 +33,11 @@ const navigationViews: NavigationView[] = [
     navLabel: 'Dashboard',
     navSubtitle: 'Main overview',
     description:
+<<<<<<< Updated upstream
+      'Local overview of the offline MVP areas, current readiness, and product boundaries.'
+=======
       'A single home for watchlist, thesis, and reminder signals will land here. This build routes each sidebar item to its own workspace—no long scrolling document.'
+>>>>>>> Stashed changes
   },
   {
     id: 'mbs-scorer',
@@ -170,8 +174,6 @@ function renderWorkspace(
   onResetOnboarding: () => void
 ): JSX.Element {
   switch (view.id) {
-    case 'overview':
-      return <DashboardScreen />;
     case 'mbs-scorer':
       return <ManualMbsScorerScreen />;
     case 'positions':
@@ -195,10 +197,10 @@ function renderWorkspace(
           <Card title="This workspace is not available yet">
             <p>
               The navigation entry is wired as its own module, but the full
-              experience for this area is still in development. Dashboard, MBS
-              Scorer, Portfolio Ranker, Thesis Monitor, Watchlist, and Theme
-              Baskets already open in their own workspaces—without live market
-              data, brokerage connectivity, or automated trading.
+              experience for this area is still in development. MBS Scorer,
+              Portfolio Ranker, Thesis Monitor, Watchlist, and Theme Baskets
+              already open in their own workspaces—without live market data,
+              brokerage connectivity, or automated trading.
             </p>
 
             {view.id === 'settings' ? (
@@ -350,10 +352,56 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
         </p>
       </aside>
 
+<<<<<<< Updated upstream
+      <main className="content-area">
+        {selectedView.id === 'dashboard' ? (
+          <DashboardScreen />
+        ) : selectedView.id === 'mbs-scorer' ? (
+          <ManualMbsScorerScreen />
+        ) : selectedView.id === 'portfolio-ranker' ? (
+          <PortfolioRankerScreen />
+        ) : selectedView.id === 'thesis-monitor' ? (
+          <ThesisMonitorScreen />
+        ) : selectedView.id === 'watchlist' ? (
+          <WatchlistScreen />
+        ) : selectedView.id === 'theme-baskets' ? (
+          <ThemeBasketsScreen />
+        ) : (
+          <>
+            <PageHeader
+              badge={<Badge variant="accent">Not built yet</Badge>}
+              description={selectedView.description}
+              eyebrow="Phase 1 Offline Windows MVP"
+              title={selectedView.title}
+            />
+
+            <Card title="Planned workspace">
+              <p>
+                This placeholder reserves space for a future offline MVP screen.
+                No portfolio workflows, scoring actions, live data, or trading
+                tools are available here.
+              </p>
+
+              {selectedView.id === 'settings-about' ? (
+                <div className="settings-actions">
+                  <Button
+                    onClick={onResetOnboarding}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Reset onboarding
+                  </Button>
+                </div>
+              ) : null}
+            </Card>
+          </>
+        )}
+=======
       <main ref={contentRef} className="content-area">
         <div key={selectedViewId} className="workspace-panel">
           {renderWorkspace(selectedView, onResetOnboarding)}
         </div>
+>>>>>>> Stashed changes
       </main>
     </div>
   );

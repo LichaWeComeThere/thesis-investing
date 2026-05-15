@@ -1,9 +1,6 @@
 import react from '@vitejs/plugin-react';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { defineConfig } from 'electron-vite';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   main: {
