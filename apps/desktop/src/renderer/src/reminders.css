@@ -1,0 +1,228 @@
+.reminders-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1120px;
+}
+
+.reminders-disclaimer {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  color: var(--ti-color-text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+}
+
+.reminders-form-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reminders-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reminders-field span {
+  color: var(--ti-color-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.reminders-field input,
+.reminders-field textarea,
+.reminders-field select {
+  background: var(--ti-color-surface);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  color: var(--ti-color-text);
+  font-size: 15px;
+  line-height: 1.4;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+.reminders-field input:focus,
+.reminders-field textarea:focus,
+.reminders-field select:focus {
+  border-color: var(--ti-color-border-strong);
+  box-shadow: var(--ti-shadow-focus);
+  outline: none;
+}
+
+.reminders-note-field {
+  margin-top: 18px;
+}
+
+.reminders-completed-field {
+  align-items: center;
+  color: var(--ti-color-text);
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 10px;
+  line-height: 1.35;
+  margin-top: 18px;
+}
+
+.reminders-completed-field input {
+  accent-color: var(--ti-color-primary);
+  height: 18px;
+  width: 18px;
+}
+
+.reminders-validation {
+  background: #fff4d6;
+  border: 1px solid #f3ce74;
+  border-radius: var(--ti-radius-md);
+  color: #5f3d00;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-top: 18px;
+  padding: 14px 16px;
+}
+
+.reminders-validation h3 {
+  color: #5f3d00;
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0 0 10px;
+}
+
+.reminders-validation ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.reminders-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.reminders-layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+}
+
+.reminders-table-wrap {
+  overflow-x: auto;
+}
+
+.reminders-table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+.reminders-table th,
+.reminders-table td {
+  border-bottom: 1px solid var(--ti-color-border);
+  color: var(--ti-color-text);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.reminders-table th {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.reminders-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reminders-details {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.reminders-details-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.reminders-details-eyebrow {
+  color: var(--ti-color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.reminders-details h3 {
+  color: var(--ti-color-text);
+  font-size: 22px;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.reminders-meta-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.reminders-meta-grid div {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-md);
+  padding: 12px;
+}
+
+.reminders-meta-grid dt {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 4px;
+}
+
+.reminders-meta-grid dd {
+  color: var(--ti-color-text);
+  font-size: 15px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.reminders-detail-section {
+  color: var(--ti-color-text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.reminders-detail-section h4 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+
+@media (max-width: 780px) {
+  .reminders-form-grid,
+  .reminders-layout,
+  .reminders-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
