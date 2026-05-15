@@ -33,5 +33,9 @@ describe('DashboardScreen', () => {
     expect(html).toContain('Live data integrations');
     expect(html).toContain('Brokerage connections');
     expect(html).toContain('Pending MVP areas');
+    expect(html).toContain('<strong>6</strong>');
+    expect(html).toContain('<strong>1</strong>');
+    expect(html).toContain('Manual reminders');
+    expect(html).toContain('Built');
   });
 });
