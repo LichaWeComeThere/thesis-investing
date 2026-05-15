@@ -12,7 +12,7 @@ The dashboard summarizes the local MVP areas that are available today:
 - Thesis Monitor
 - Watchlist
 - Theme Baskets
-- Reminders placeholder/status
+- Reminders
 
 It also shows static readiness information, including manual workflows
 available, live data integrations, brokerage connections, and pending MVP areas.
