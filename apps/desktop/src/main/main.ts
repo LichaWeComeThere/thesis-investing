@@ -1,5 +1,8 @@
 import { BrowserWindow, app } from 'electron';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const mainDirname = dirname(fileURLToPath(import.meta.url));
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -11,7 +14,7 @@ function createWindow(): void {
     title: 'Thesis Investing',
     webPreferences: {
       contextIsolation: true,
-      preload: join(__dirname, '../preload/preload.mjs'),
+      preload: join(mainDirname, '../preload/preload.mjs'),
       sandbox: true
     }
   });
@@ -21,7 +24,7 @@ function createWindow(): void {
     return;
   }
 
-  void mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+  void mainWindow.loadFile(join(mainDirname, '../renderer/index.html'));
 }
 
 void app.whenReady().then(() => {
