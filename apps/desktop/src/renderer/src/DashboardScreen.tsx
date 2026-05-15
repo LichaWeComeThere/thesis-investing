@@ -51,10 +51,10 @@ const dashboardAreas: DashboardArea[] = [
   },
   {
     title: 'Reminders',
-    status: 'pending',
+    status: 'available',
     summary:
-      'Placeholder for future manual earnings and thesis review reminders.',
-    note: 'Not wired into a workflow yet.'
+      'Track manually entered earnings, thesis review, and custom dates locally.',
+    note: 'No system notifications, background scheduling, APIs, or calendars.'
   }
 ];
 
@@ -65,7 +65,7 @@ const readinessItems: ReadinessItem[] = [
   { label: 'Thesis notes and monitoring', status: 'built' },
   { label: 'Manual watchlist', status: 'built' },
   { label: 'Static theme baskets', status: 'built' },
-  { label: 'Manual reminders', status: 'pending' },
+  { label: 'Manual reminders', status: 'built' },
   { label: 'Windows MVP release build', status: 'pending' }
 ];
 
@@ -113,7 +113,7 @@ export function DashboardScreen(): JSX.Element {
           </div>
           <div className="dashboard-metric">
             <span>Pending MVP areas</span>
-            <strong>2</strong>
+            <strong>1</strong>
           </div>
         </div>
       </Card>
