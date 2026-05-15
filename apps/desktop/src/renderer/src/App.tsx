@@ -14,6 +14,7 @@ import {
 import { DashboardScreen } from './DashboardScreen';
 import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
+import { RemindersScreen } from './RemindersScreen';
 import { ThemeBasketsScreen } from './ThemeBasketsScreen';
 import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 import { WatchlistScreen } from './WatchlistScreen';
@@ -73,7 +74,7 @@ const navigationViews: NavigationView[] = [
     title: 'Reminders',
     navLabel: 'Reminders',
     description:
-      'Future place for manually entered earnings and thesis review reminders. This feature is not built yet.'
+      'Local place for manually entered earnings, thesis review, and custom reminder dates.'
   },
   {
     id: 'settings-about',
@@ -212,6 +213,8 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           <WatchlistScreen />
         ) : selectedView.id === 'theme-baskets' ? (
           <ThemeBasketsScreen />
+        ) : selectedView.id === 'reminders' ? (
+          <RemindersScreen />
         ) : (
           <>
             <PageHeader
