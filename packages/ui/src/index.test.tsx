@@ -11,38 +11,11 @@ import {
 
 describe('@thesis-investing/ui', () => {
   it('exports design tokens and theme variables', () => {
-    expect(tokens.colors.background).toBe('#07090d');
-    expect(tokens.radii.md).toBe(14);
-    expect(tokens.radii.bento).toBe(24);
-    expect(tokens.typography.fontSize.xs).toBe(12);
-    expect(tokens.typography.fontSize.xxl).toBe(30);
-    expect(themeCssVariables).toHaveProperty(
-      '--ti-radius-lg',
-      `${tokens.radii.lg}px`
-    );
-    expect(themeCssVariables).toHaveProperty(
-      '--ti-space-card',
-      `${tokens.spacing.card}px`
-    );
-    expect(themeCssVariables).toHaveProperty(
-      '--ti-font-size-md',
-      `${tokens.typography.fontSize.md}px`
-    );
+    expect(tokens.colors.background).toBe('#eef3f6');
+    expect(tokens.radii.md).toBe(8);
     expect(themeCssVariables).toHaveProperty(
       '--ti-color-background',
       tokens.colors.background
-    );
-    expect(themeCssVariables).toHaveProperty(
-      '--ti-color-text-quiet',
-      tokens.colors.textQuiet
-    );
-    expect(themeCssVariables).toHaveProperty(
-      '--ti-color-teal-deep',
-      tokens.colors.tealDeep
-    );
-    expect(themeCssVariables).toHaveProperty(
-      '--ti-shadow-card-emphasis',
-      tokens.shadows.cardEmphasis
     );
   });
 

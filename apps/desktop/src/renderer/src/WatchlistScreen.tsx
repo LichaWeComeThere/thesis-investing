@@ -203,7 +203,7 @@ export function WatchlistScreen({
       <div className="watchlist-layout">
         <Card title="Local watchlist items">
           {items.length > 0 ? (
-            <div className="ti-table-panel watchlist-table-wrap">
+            <div className="watchlist-table-wrap">
               <table className="watchlist-table">
                 <thead>
                   <tr>

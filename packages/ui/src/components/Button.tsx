@@ -13,13 +13,15 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const baseButtonStyle: CSSProperties = {
   alignItems: 'center',
+  borderRadius: tokens.radii.md,
   cursor: 'pointer',
   display: 'inline-flex',
   fontWeight: tokens.typography.fontWeight.semibold,
   gap: tokens.spacing.sm,
   justifyContent: 'center',
   letterSpacing: 0,
-  textDecoration: 'none'
+  textDecoration: 'none',
+  transition: 'background 140ms ease, border-color 140ms ease, color 140ms ease'
 };
 
 const sizeStyles: Record<ButtonSize, CSSProperties> = {
@@ -43,14 +45,13 @@ function getVariantStyle(
     return {
       background: tokens.colors.primary,
       border: `1px solid ${tokens.colors.primary}`,
-      boxShadow: '0 1px 0 rgba(255, 255, 255, 0.12) inset',
-      color: tokens.colors.onPrimary
+      color: tokens.colors.surface
     };
   }
 
   if (variant === 'secondary') {
     return {
-      background: tokens.colors.surfaceMuted,
+      background: tokens.colors.surface,
       border: `1px solid ${tokens.colors.border}`,
       color: tokens.colors.text
     };
@@ -58,15 +59,11 @@ function getVariantStyle(
 
   if (variant === 'sidebar') {
     return {
-      background: isActive
-        ? tokens.colors.sidebarNavActiveBg
-        : 'transparent',
+      background: isActive ? tokens.colors.surface : 'transparent',
       border: `1px solid ${
-        isActive ? tokens.colors.sidebarNavActiveBorder : 'transparent'
+        isActive ? tokens.colors.borderStrong : 'transparent'
       }`,
-      color: isActive
-        ? tokens.colors.sidebarTextStrong
-        : tokens.colors.sidebarText,
+      color: isActive ? tokens.colors.sidebar : tokens.colors.sidebarText,
       justifyContent: 'flex-start'
     };
   }
@@ -80,7 +77,6 @@ function getVariantStyle(
 
 export function Button({
   children,
-  className,
   disabled,
   fullWidth = false,
   isActive = false,
@@ -89,19 +85,9 @@ export function Button({
   variant = 'primary',
   ...buttonProps
 }: ButtonProps): JSX.Element {
-  const composedClassName = [
-    'ti-button',
-    `ti-button--${variant}`,
-    fullWidth ? 'ti-button--full' : '',
-    className
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
     <button
       {...buttonProps}
-      className={composedClassName}
       disabled={disabled}
       style={{
         ...baseButtonStyle,

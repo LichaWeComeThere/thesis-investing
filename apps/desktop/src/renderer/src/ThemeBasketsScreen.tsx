@@ -96,7 +96,7 @@ export function ThemeBasketsScreen({
 
             <section className="theme-basket-section">
               <h3>Example companies</h3>
-              <div className="ti-table-panel theme-basket-example-table-wrap">
+              <div className="theme-basket-example-table-wrap">
                 <table className="theme-basket-example-table">
                   <thead>
                     <tr>
