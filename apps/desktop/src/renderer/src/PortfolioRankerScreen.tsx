@@ -35,6 +35,9 @@ export function PortfolioRankerScreen({
     () => rankManualPortfolioItems(rankerInput),
     [rankerInput]
   );
+  const rankedCount = rankedItems.filter((item) => item.status === 'ranked').length;
+  const topRankedItem =
+    rankedItems.find((item) => item.status === 'ranked') ?? null;
 
   function updateRow(
     rowId: string,
@@ -85,19 +88,46 @@ export function PortfolioRankerScreen({
         title="Portfolio Ranker"
       />
 
-      <Card title="Manual holdings and ideas">
+      <div className="portfolio-ranker-layout">
+        <Card title="Holdings workspace">
         <div className="portfolio-ranker-disclaimer">
           Inputs are manually entered by the user. No live data, brokerage
           connection, trading execution, external API, or AI analysis is used.
         </div>
 
+        <div className="portfolio-ranker-toolbar">
+          <div>
+            <h2>Manual holdings</h2>
+            <p>
+              Compact cards keep each idea scannable. Expand a card when you
+              need to edit its ticker, score, company, or notes.
+            </p>
+          </div>
+          <Button onClick={addRow} type="button">
+            Add holding
+          </Button>
+        </div>
+
         <div className="portfolio-ranker-rows">
           {rows.map((row, index) => (
-            <div className="portfolio-ranker-row" key={row.id}>
+            <article className="portfolio-ranker-row" key={row.id}>
               <div className="portfolio-ranker-row-header">
-                <h3>Entry {index + 1}</h3>
+                <div className="portfolio-ranker-row-summary">
+                  <span className="portfolio-ranker-entry-number">
+                    Entry {index + 1}
+                  </span>
+                  <h3>{formatTickerPreview(row)}</h3>
+                  <p>{formatCompanyPreview(row)}</p>
+                </div>
+                <div className="portfolio-ranker-row-stats">
+                  <span>
+                    Score <strong>{row.manualScore || 'Missing'}</strong>
+                  </span>
+                  <span>{formatNotesPreview(row)}</span>
+                </div>
                 <Button
                   onClick={() => removeRow(row.id)}
+                  size="sm"
                   type="button"
                   variant="secondary"
                 >
@@ -105,83 +135,100 @@ export function PortfolioRankerScreen({
                 </Button>
               </div>
 
-              <div className="portfolio-ranker-entry-grid">
-                <label className="portfolio-ranker-field">
-                  <span>Ticker</span>
-                  <input
-                    aria-label={`Ticker ${index + 1}`}
+              <details className="portfolio-ranker-editor">
+                <summary>Edit details</summary>
+                <div className="portfolio-ranker-entry-grid">
+                  <label className="portfolio-ranker-field">
+                    <span>Ticker</span>
+                    <input
+                      aria-label={`Ticker ${index + 1}`}
+                      onChange={(event) =>
+                        updateRow(row.id, 'ticker', event.currentTarget.value)
+                      }
+                      placeholder="MSFT"
+                      type="text"
+                      value={row.ticker}
+                    />
+                  </label>
+
+                  <label className="portfolio-ranker-field">
+                    <span>Company name</span>
+                    <input
+                      aria-label={`Company name ${index + 1}`}
+                      onChange={(event) =>
+                        updateRow(
+                          row.id,
+                          'companyName',
+                          event.currentTarget.value
+                        )
+                      }
+                      placeholder="Optional"
+                      type="text"
+                      value={row.companyName}
+                    />
+                  </label>
+
+                  <label className="portfolio-ranker-field">
+                    <span>Manual score</span>
+                    <input
+                      aria-label={`Manual score ${index + 1}`}
+                      inputMode="decimal"
+                      onChange={(event) =>
+                        updateRow(
+                          row.id,
+                          'manualScore',
+                          event.currentTarget.value
+                        )
+                      }
+                      placeholder={`${PORTFOLIO_RANKER_MIN_SCORE}-${PORTFOLIO_RANKER_MAX_SCORE}`}
+                      type="text"
+                      value={row.manualScore}
+                    />
+                  </label>
+                </div>
+
+                <label className="portfolio-ranker-field portfolio-ranker-notes">
+                  <span>Optional notes</span>
+                  <textarea
+                    aria-label={`Notes ${index + 1}`}
                     onChange={(event) =>
-                      updateRow(row.id, 'ticker', event.currentTarget.value)
+                      updateRow(row.id, 'notes', event.currentTarget.value)
                     }
-                    placeholder="MSFT"
-                    type="text"
-                    value={row.ticker}
+                    placeholder="User-entered context for this score."
+                    rows={3}
+                    value={row.notes}
                   />
                 </label>
-
-                <label className="portfolio-ranker-field">
-                  <span>Company name</span>
-                  <input
-                    aria-label={`Company name ${index + 1}`}
-                    onChange={(event) =>
-                      updateRow(
-                        row.id,
-                        'companyName',
-                        event.currentTarget.value
-                      )
-                    }
-                    placeholder="Optional"
-                    type="text"
-                    value={row.companyName}
-                  />
-                </label>
-
-                <label className="portfolio-ranker-field">
-                  <span>Manual score</span>
-                  <input
-                    aria-label={`Manual score ${index + 1}`}
-                    inputMode="decimal"
-                    onChange={(event) =>
-                      updateRow(
-                        row.id,
-                        'manualScore',
-                        event.currentTarget.value
-                      )
-                    }
-                    placeholder={`${PORTFOLIO_RANKER_MIN_SCORE}-${PORTFOLIO_RANKER_MAX_SCORE}`}
-                    type="text"
-                    value={row.manualScore}
-                  />
-                </label>
-              </div>
-
-              <label className="portfolio-ranker-field portfolio-ranker-notes">
-                <span>Optional notes</span>
-                <textarea
-                  aria-label={`Notes ${index + 1}`}
-                  onChange={(event) =>
-                    updateRow(row.id, 'notes', event.currentTarget.value)
-                  }
-                  placeholder="User-entered context for this score."
-                  rows={3}
-                  value={row.notes}
-                />
-              </label>
-            </div>
+              </details>
+            </article>
           ))}
         </div>
 
         <div className="portfolio-ranker-actions">
-          <Button onClick={addRow} type="button">
-            Add entry
-          </Button>
           <Button onClick={clearRows} type="button" variant="secondary">
             Clear entries
           </Button>
         </div>
       </Card>
 
-      <Card title="Deterministic ranking output">
+      <Card emphasis title="Deterministic ranking output">
+        <div className="portfolio-ranker-output-hero">
+          <div>
+            <span>Ranked holdings</span>
+            <strong>
+              {rankedCount} / {rows.length}
+            </strong>
+          </div>
+          <div>
+            <span>Current leader</span>
+            <strong>
+              {topRankedItem
+                ? topRankedItem.normalizedTicker
+                : 'None yet'}
+            </strong>
+          </div>
+        </div>
+
         {rankedItems.length > 0 ? (
           <div className="portfolio-ranker-results">
             <table className="portfolio-ranker-table">
@@ -234,13 +281,32 @@ export function PortfolioRankerScreen({
             </div>
           </div>
         ) : (
-          <p>
-            Add a ticker and manual score to see a local deterministic ranking.
-          </p>
+          <div className="portfolio-ranker-empty-state">
+            <h3>No positions ranked yet</h3>
+            <p>
+              Add your first holding with a ticker and manual score to generate
+              a deterministic ranking.
+            </p>
+          </div>
         )}
       </Card>
+      </div>
     </div>
   );
+}
+
+function formatTickerPreview(row: PortfolioRankerRowState): string {
+  const ticker = row.ticker.trim();
+  return ticker || 'Untitled holding';
+}
+
+function formatCompanyPreview(row: PortfolioRankerRowState): string {
+  const companyName = row.companyName.trim();
+  return companyName || 'Company not provided';
+}
+
+function formatNotesPreview(row: PortfolioRankerRowState): string {
+  return row.notes.trim() ? 'Notes added' : 'No notes';
 }
 
 function formatRank(item: ManualPortfolioRankedItem): string {

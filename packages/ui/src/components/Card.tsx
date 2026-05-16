@@ -6,26 +6,40 @@ export type CardProps = PropsWithChildren<
     title?: string;
     eyebrow?: string;
     footer?: ReactNode;
+    emphasis?: boolean;
   }
 >;
 
 export function Card({
   children,
+  className,
+  emphasis = false,
   eyebrow,
   footer,
   style,
   title,
   ...sectionProps
 }: CardProps): JSX.Element {
+  const sectionClassName = [
+    'ti-card',
+    emphasis ? 'ti-card--emphasis' : '',
+    className
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <section
       {...sectionProps}
+      className={sectionClassName}
       style={{
-        background: tokens.colors.surface,
+        background: `linear-gradient(145deg, ${tokens.colors.surfaceElevated}, ${tokens.colors.surface})`,
         border: `1px solid ${tokens.colors.border}`,
-        borderRadius: tokens.radii.md,
-        boxShadow: tokens.shadows.card,
-        padding: tokens.spacing.xxl,
+        borderRadius: tokens.radii.bento,
+        boxShadow: emphasis ? tokens.shadows.cardEmphasis : tokens.shadows.card,
+        padding: tokens.spacing.card,
+        transition:
+          'border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease',
         ...style
       }}
     >
@@ -35,6 +49,7 @@ export function Card({
             color: tokens.colors.primary,
             fontSize: tokens.typography.fontSize.xs,
             fontWeight: tokens.typography.fontWeight.bold,
+            letterSpacing: '0.08em',
             lineHeight: tokens.typography.lineHeight.normal,
             margin: `0 0 ${tokens.spacing.sm}px`,
             textTransform: 'uppercase'
@@ -47,8 +62,9 @@ export function Card({
       {title ? (
         <h2
           style={{
-            color: tokens.colors.text,
+            color: tokens.colors.textSection,
             fontSize: tokens.typography.fontSize.xl,
+            fontWeight: tokens.typography.fontWeight.bold,
             lineHeight: tokens.typography.lineHeight.tight,
             margin: 0
           }}
@@ -60,7 +76,7 @@ export function Card({
       <div
         style={{
           color: tokens.colors.textMuted,
-          fontSize: tokens.typography.fontSize.lg,
+          fontSize: tokens.typography.fontSize.md,
           lineHeight: tokens.typography.lineHeight.relaxed,
           marginTop: title || eyebrow ? tokens.spacing.lg : 0
         }}

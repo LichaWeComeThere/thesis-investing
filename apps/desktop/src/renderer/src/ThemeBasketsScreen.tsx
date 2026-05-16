@@ -1,4 +1,4 @@
-import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
+import { Badge, Card, PageHeader } from '@thesis-investing/ui';
 import { useMemo, useState } from 'react';
 import {
   STATIC_THEME_BASKETS,
@@ -31,7 +31,7 @@ export function ThemeBasketsScreen({
         title="Theme Baskets"
       />
 
-      <Card title="Static basket library">
+      <Card className="theme-baskets-library-card" title="Static basket library">
         <div className="theme-baskets-disclaimer">
           Baskets are static educational organization aids. No live updates,
           stock APIs, brokerage connection, trading execution, AI analysis, or
@@ -125,21 +125,6 @@ export function ThemeBasketsScreen({
           </article>
         </div>
       </Card>
-
-      <div className="theme-baskets-actions">
-        {STATIC_THEME_BASKETS.map((basket) => (
-          <Button
-            isActive={basket.id === selectedBasket.id}
-            key={basket.id}
-            onClick={() => setSelectedBasketId(basket.id)}
-            size="sm"
-            type="button"
-            variant={basket.id === selectedBasket.id ? 'primary' : 'secondary'}
-          >
-            {basket.name}
-          </Button>
-        ))}
-      </div>
     </div>
   );
 }

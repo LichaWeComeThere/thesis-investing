@@ -1,8 +1,9 @@
 .watchlist-screen {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 1120px;
+  gap: 30px;
+  max-width: none;
+  width: min(100%, 1360px);
 }
 
 .watchlist-disclaimer {
@@ -37,7 +38,7 @@
 
 .watchlist-field input,
 .watchlist-field textarea {
-  background: var(--ti-color-surface);
+  background: var(--ti-color-surface-soft);
   border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-md);
   color: var(--ti-color-text);
@@ -59,10 +60,10 @@
 }
 
 .watchlist-validation {
-  background: #fff4d6;
-  border: 1px solid #f3ce74;
+  background: var(--ti-color-callout-warning-bg);
+  border: 1px solid var(--ti-color-callout-warning-border);
   border-radius: var(--ti-radius-md);
-  color: #5f3d00;
+  color: var(--ti-color-callout-warning-text);
   font-size: 15px;
   line-height: 1.5;
   margin-top: 18px;
@@ -70,7 +71,7 @@
 }
 
 .watchlist-validation h3 {
-  color: #5f3d00;
+  color: var(--ti-color-callout-warning-text);
   font-size: 16px;
   line-height: 1.35;
   margin: 0 0 10px;
@@ -92,11 +93,14 @@
 
 .watchlist-layout {
   display: grid;
-  gap: 24px;
-  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 30px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
 }
 
 .watchlist-table-wrap {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--ti-color-border);
+  border-radius: var(--ti-radius-lg);
   overflow-x: auto;
 }
 
@@ -132,7 +136,15 @@
 .watchlist-details {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+}
+
+.watchlist-table tbody tr {
+  transition: background 160ms ease;
+}
+
+.watchlist-table tbody tr:hover {
+  background: var(--ti-color-row-hover);
 }
 
 .watchlist-details-header {
@@ -153,7 +165,7 @@
 
 .watchlist-details h3 {
   color: var(--ti-color-text);
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1.25;
   margin: 0;
 }
@@ -166,10 +178,7 @@
 }
 
 .watchlist-meta-grid div {
-  background: var(--ti-color-surface-muted);
-  border: 1px solid var(--ti-color-border);
-  border-radius: var(--ti-radius-md);
-  padding: 12px;
+  padding: 14px;
 }
 
 .watchlist-meta-grid dt {
@@ -198,6 +207,24 @@
   font-size: 16px;
   line-height: 1.35;
   margin: 0 0 8px;
+}
+
+.watchlist-form-card {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
+    var(--ti-color-surface) !important;
+}
+
+.watchlist-layout .ti-card p {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 22px;
+  color: var(--ti-color-text-muted);
+  font-size: 15px;
+  line-height: 1.55;
+  padding: 18px;
 }
 
 @media (max-width: 780px) {
