@@ -59,6 +59,10 @@ export function ThesisMonitorScreen({
     () => notes.find((note) => note.id === selectedNoteId) ?? null,
     [notes, selectedNoteId]
   );
+  const notesWithReviewDates = notes.filter((note) => note.reviewDueAt).length;
+  const activeNoteCount = notes.filter(
+    (note) => note.status === 'active' || note.status === 'watch'
+  ).length;
   const shouldShowValidation =
     saveAttempted || (hasThesisFormContent(form) && !formResult.validation.valid);
   const visibleValidationErrors = shouldShowValidation
@@ -126,133 +130,167 @@ export function ThesisMonitorScreen({
         title="Thesis Monitor"
       />
 
-      <Card title="Create or edit thesis note">
-        <div className="thesis-monitor-disclaimer">
-          Notes are manually authored by the user. No live data, automated news
-          monitoring, AI commentary, brokerage connection, sync, or trading
-          execution is used.
-        </div>
-
-        <div className="thesis-form-grid">
-          <label className="thesis-field">
-            <span>Title</span>
-            <input
-              aria-label="Thesis title"
-              onChange={(event) => updateForm('title', event.currentTarget.value)}
-              placeholder="Why this business belongs on the research list"
-              type="text"
-              value={form.title}
-            />
-          </label>
-
-          <label className="thesis-field">
-            <span>Ticker</span>
-            <input
-              aria-label="Thesis ticker"
-              onChange={(event) => updateForm('ticker', event.currentTarget.value)}
-              placeholder="Optional"
-              type="text"
-              value={form.ticker}
-            />
-          </label>
-
-          <label className="thesis-field">
-            <span>Status</span>
-            <select
-              aria-label="Thesis status"
-              onChange={(event) =>
-                updateForm(
-                  'status',
-                  event.currentTarget.value as ThesisNoteFormState['status']
-                )
-              }
-              value={form.status}
-            >
-              {THESIS_STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>
-                  {statusLabels[status]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="thesis-field">
-            <span>Conviction</span>
-            <select
-              aria-label="Thesis conviction"
-              onChange={(event) =>
-                updateForm(
-                  'conviction',
-                  event.currentTarget.value as ThesisNoteFormState['conviction']
-                )
-              }
-              value={form.conviction}
-            >
-              <option value="">Not set</option>
-              {THESIS_CONVICTION_OPTIONS.map((conviction) => (
-                <option key={conviction} value={conviction}>
-                  {convictionLabels[conviction]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="thesis-field">
-            <span>Review due date</span>
-            <input
-              aria-label="Thesis review due date"
-              onChange={(event) =>
-                updateForm('reviewDueAt', event.currentTarget.value)
-              }
-              placeholder="YYYY-MM-DD"
-              type="text"
-              value={form.reviewDueAt}
-            />
-          </label>
-        </div>
-
-        <label className="thesis-field thesis-body-field">
-          <span>Thesis body</span>
-          <textarea
-            aria-label="Thesis body"
-            onChange={(event) => updateForm('body', event.currentTarget.value)}
-            placeholder="Write the user-authored thesis, key assumptions, and what would challenge it."
-            rows={6}
-            value={form.body}
-          />
-        </label>
-
-        <label className="thesis-field thesis-body-field">
-          <span>Optional review checklist</span>
-          <textarea
-            aria-label="Thesis checklist"
-            onChange={(event) => updateForm('checklist', event.currentTarget.value)}
-            placeholder="Manual checklist items to revisit later."
-            rows={4}
-            value={form.checklist}
-          />
-        </label>
-
-        {visibleValidationErrors.length > 0 ? (
-          <div className="thesis-validation" role="alert">
-            <h3>Validation</h3>
-            <ul>
-              {visibleValidationErrors.map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
+      <div className="thesis-workspace-grid">
+        <Card className="thesis-form-card" title="Create or edit thesis note">
+          <div className="thesis-monitor-disclaimer">
+            Notes are manually authored by the user. No live data, automated news
+            monitoring, AI commentary, brokerage connection, sync, or trading
+            execution is used.
           </div>
-        ) : null}
 
-        <div className="thesis-actions">
-          <Button onClick={saveNote} type="button">
-            Save note
-          </Button>
-          <Button onClick={startNewNote} type="button" variant="secondary">
-            New note
-          </Button>
-        </div>
-      </Card>
+          <div className="thesis-form-grid">
+            <label className="thesis-field">
+              <span>Title</span>
+              <input
+                aria-label="Thesis title"
+                onChange={(event) => updateForm('title', event.currentTarget.value)}
+                placeholder="Why this business belongs on the research list"
+                type="text"
+                value={form.title}
+              />
+            </label>
+
+            <label className="thesis-field">
+              <span>Ticker</span>
+              <input
+                aria-label="Thesis ticker"
+                onChange={(event) => updateForm('ticker', event.currentTarget.value)}
+                placeholder="Optional"
+                type="text"
+                value={form.ticker}
+              />
+            </label>
+
+            <label className="thesis-field">
+              <span>Status</span>
+              <select
+                aria-label="Thesis status"
+                onChange={(event) =>
+                  updateForm(
+                    'status',
+                    event.currentTarget.value as ThesisNoteFormState['status']
+                  )
+                }
+                value={form.status}
+              >
+                {THESIS_STATUS_OPTIONS.map((status) => (
+                  <option key={status} value={status}>
+                    {statusLabels[status]}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="thesis-field">
+              <span>Conviction</span>
+              <select
+                aria-label="Thesis conviction"
+                onChange={(event) =>
+                  updateForm(
+                    'conviction',
+                    event.currentTarget.value as ThesisNoteFormState['conviction']
+                  )
+                }
+                value={form.conviction}
+              >
+                <option value="">Not set</option>
+                {THESIS_CONVICTION_OPTIONS.map((conviction) => (
+                  <option key={conviction} value={conviction}>
+                    {convictionLabels[conviction]}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="thesis-field">
+              <span>Review due date</span>
+              <input
+                aria-label="Thesis review due date"
+                onChange={(event) =>
+                  updateForm('reviewDueAt', event.currentTarget.value)
+                }
+                placeholder="YYYY-MM-DD"
+                type="text"
+                value={form.reviewDueAt}
+              />
+            </label>
+          </div>
+
+          <label className="thesis-field thesis-body-field">
+            <span>Thesis body</span>
+            <textarea
+              aria-label="Thesis body"
+              onChange={(event) => updateForm('body', event.currentTarget.value)}
+              placeholder="Write the user-authored thesis, key assumptions, and what would challenge it."
+              rows={6}
+              value={form.body}
+            />
+          </label>
+
+          <label className="thesis-field thesis-body-field">
+            <span>Optional review checklist</span>
+            <textarea
+              aria-label="Thesis checklist"
+              onChange={(event) => updateForm('checklist', event.currentTarget.value)}
+              placeholder="Manual checklist items to revisit later."
+              rows={4}
+              value={form.checklist}
+            />
+          </label>
+
+          {visibleValidationErrors.length > 0 ? (
+            <div className="thesis-validation" role="alert">
+              <h3>Validation</h3>
+              <ul>
+                {visibleValidationErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <div className="thesis-actions">
+            <Button onClick={saveNote} type="button">
+              Save note
+            </Button>
+            <Button onClick={startNewNote} type="button" variant="secondary">
+              New note
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="thesis-health-card" emphasis title="Thesis health">
+          <div className="thesis-health-hero">
+            <span>Local notes</span>
+            <strong>{notes.length}</strong>
+            <Badge variant={activeNoteCount > 0 ? 'accent' : 'neutral'}>
+              {activeNoteCount} active/watch
+            </Badge>
+          </div>
+
+          <div className="thesis-health-grid">
+            <div>
+              <span>With review date</span>
+              <strong>{notesWithReviewDates}</strong>
+            </div>
+            <div>
+              <span>Selected status</span>
+              <strong>
+                {selectedNote ? statusLabels[selectedNote.status] : 'None'}
+              </strong>
+            </div>
+          </div>
+
+          <div className="thesis-next-action">
+            <h3>Next action</h3>
+            <p>
+              {selectedNote
+                ? 'Review the selected thesis detail card below or update the manual checklist.'
+                : 'Save or select a thesis note to populate the detail panel.'}
+            </p>
+          </div>
+        </Card>
+      </div>
 
       <div className="thesis-monitor-layout">
         <Card title="Local thesis notes">

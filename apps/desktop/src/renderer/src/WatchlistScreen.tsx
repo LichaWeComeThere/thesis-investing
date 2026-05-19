@@ -42,6 +42,9 @@ export function WatchlistScreen({
     () => items.find((item) => item.id === selectedItemId) ?? null,
     [items, selectedItemId]
   );
+  const taggedItemCount = items.filter(
+    (item) => item.tags && item.tags.length > 0
+  ).length;
   const shouldShowValidation =
     saveAttempted || (hasWatchlistFormContent(form) && !formResult.validation.valid);
   const visibleValidationErrors = shouldShowValidation
@@ -111,94 +114,126 @@ export function WatchlistScreen({
         title="Watchlist"
       />
 
-      <Card title="Add or edit watchlist item">
-        <div className="watchlist-disclaimer">
-          Items are manually entered by the user. No live prices, external APIs,
-          price alerts, brokerage connection, trading execution, AI analysis, or
-          cloud sync is used.
-        </div>
-
-        <div className="watchlist-form-grid">
-          <label className="watchlist-field">
-            <span>Ticker</span>
-            <input
-              aria-label="Watchlist ticker"
-              onChange={(event) => updateForm('ticker', event.currentTarget.value)}
-              placeholder="MSFT"
-              type="text"
-              value={form.ticker}
-            />
-          </label>
-
-          <label className="watchlist-field">
-            <span>Company name</span>
-            <input
-              aria-label="Watchlist company name"
-              onChange={(event) =>
-                updateForm('companyName', event.currentTarget.value)
-              }
-              placeholder="Optional"
-              type="text"
-              value={form.companyName}
-            />
-          </label>
-
-          <label className="watchlist-field">
-            <span>Tags</span>
-            <input
-              aria-label="Watchlist tags"
-              onChange={(event) => updateForm('tags', event.currentTarget.value)}
-              placeholder="quality, software, review"
-              type="text"
-              value={form.tags}
-            />
-          </label>
-
-          <label className="watchlist-field">
-            <span>Thesis reference</span>
-            <input
-              aria-label="Watchlist thesis reference"
-              onChange={(event) =>
-                updateForm('thesisReference', event.currentTarget.value)
-              }
-              placeholder="Optional local note reference"
-              type="text"
-              value={form.thesisReference}
-            />
-          </label>
-        </div>
-
-        <label className="watchlist-field watchlist-note-field">
-          <span>Optional note</span>
-          <textarea
-            aria-label="Watchlist note"
-            onChange={(event) => updateForm('note', event.currentTarget.value)}
-            placeholder="Manual context for why this belongs on the watchlist."
-            rows={4}
-            value={form.note}
-          />
-        </label>
-
-        {visibleValidationErrors.length > 0 ? (
-          <div className="watchlist-validation" role="alert">
-            <h3>Validation</h3>
-            <ul>
-              {visibleValidationErrors.map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
+      <div className="watchlist-workspace-grid">
+        <Card className="watchlist-form-card" title="Add or edit watchlist item">
+          <div className="watchlist-disclaimer">
+            Items are manually entered by the user. No live prices, external APIs,
+            price alerts, brokerage connection, trading execution, AI analysis, or
+            cloud sync is used.
           </div>
-        ) : null}
 
-        <div className="watchlist-actions">
-          <Button onClick={saveItem} type="button">
-            Save item
-          </Button>
-          <Button onClick={startNewItem} type="button" variant="secondary">
-            New item
-          </Button>
-        </div>
-      </Card>
+          <div className="watchlist-form-grid">
+            <label className="watchlist-field">
+              <span>Ticker</span>
+              <input
+                aria-label="Watchlist ticker"
+                onChange={(event) => updateForm('ticker', event.currentTarget.value)}
+                placeholder="MSFT"
+                type="text"
+                value={form.ticker}
+              />
+            </label>
+
+            <label className="watchlist-field">
+              <span>Company name</span>
+              <input
+                aria-label="Watchlist company name"
+                onChange={(event) =>
+                  updateForm('companyName', event.currentTarget.value)
+                }
+                placeholder="Optional"
+                type="text"
+                value={form.companyName}
+              />
+            </label>
+
+            <label className="watchlist-field">
+              <span>Tags</span>
+              <input
+                aria-label="Watchlist tags"
+                onChange={(event) => updateForm('tags', event.currentTarget.value)}
+                placeholder="quality, software, review"
+                type="text"
+                value={form.tags}
+              />
+            </label>
+
+            <label className="watchlist-field">
+              <span>Thesis reference</span>
+              <input
+                aria-label="Watchlist thesis reference"
+                onChange={(event) =>
+                  updateForm('thesisReference', event.currentTarget.value)
+                }
+                placeholder="Optional local note reference"
+                type="text"
+                value={form.thesisReference}
+              />
+            </label>
+          </div>
+
+          <label className="watchlist-field watchlist-note-field">
+            <span>Optional note</span>
+            <textarea
+              aria-label="Watchlist note"
+              onChange={(event) => updateForm('note', event.currentTarget.value)}
+              placeholder="Manual context for why this belongs on the watchlist."
+              rows={4}
+              value={form.note}
+            />
+          </label>
+
+          {visibleValidationErrors.length > 0 ? (
+            <div className="watchlist-validation" role="alert">
+              <h3>Validation</h3>
+              <ul>
+                {visibleValidationErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <div className="watchlist-actions">
+            <Button onClick={saveItem} type="button">
+              Save item
+            </Button>
+            <Button onClick={startNewItem} type="button" variant="secondary">
+              New item
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="watchlist-summary-card" emphasis title="Watchlist pulse">
+          <div className="watchlist-summary-hero">
+            <span>Tracked ideas</span>
+            <strong>{items.length}</strong>
+            <Badge variant={items.length > 0 ? 'accent' : 'neutral'}>
+              Manual only
+            </Badge>
+          </div>
+
+          <div className="watchlist-summary-grid">
+            <div>
+              <span>Tagged</span>
+              <strong>{taggedItemCount}</strong>
+            </div>
+            <div>
+              <span>Selected</span>
+              <strong>{selectedItem ? selectedItem.ticker : 'None'}</strong>
+            </div>
+          </div>
+
+          <div className="watchlist-next-action">
+            <h3>Next action</h3>
+            <p>
+              {selectedItem
+                ? 'Review the selected idea detail card below or update its local note.'
+                : 'Save or select a watchlist item to populate the detail panel.'}
+            </p>
+          </div>
+        </Card>
+      </div>
 
       <div className="watchlist-layout">
         <Card title="Local watchlist items">

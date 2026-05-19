@@ -22,7 +22,8 @@ export function PageHeader({
         alignItems: 'flex-start',
         display: 'flex',
         gap: tokens.spacing.xl,
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        width: '100%'
       }}
     >
       <div>
@@ -30,10 +31,12 @@ export function PageHeader({
           <p
             style={{
               color: tokens.colors.textSubtle,
-              fontSize: tokens.typography.fontSize.sm,
+              fontSize: tokens.typography.fontSize.xs,
               fontWeight: tokens.typography.fontWeight.bold,
+              letterSpacing: '0.08em',
               lineHeight: tokens.typography.lineHeight.normal,
-              margin: `0 0 ${tokens.spacing.sm}px`
+              margin: `0 0 ${tokens.spacing.sm}px`,
+              textTransform: 'uppercase'
             }}
           >
             {eyebrow}
@@ -52,6 +55,7 @@ export function PageHeader({
             style={{
               color: tokens.colors.text,
               fontSize: tokens.typography.fontSize.xxl,
+              fontWeight: tokens.typography.fontWeight.bold,
               lineHeight: tokens.typography.lineHeight.tight,
               margin: 0
             }}

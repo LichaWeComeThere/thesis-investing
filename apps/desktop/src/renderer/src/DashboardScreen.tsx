@@ -1,7 +1,8 @@
-import { Badge, Card, PageHeader } from '@thesis-investing/ui';
+import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
 import './dashboard.css';
 
 type DashboardArea = {
+  id: string;
   title: string;
   status: 'available' | 'pending';
   summary: string;
@@ -15,6 +16,7 @@ type ReadinessItem = {
 
 const dashboardAreas: DashboardArea[] = [
   {
+    id: 'mbs-scorer',
     title: 'Manual MBS Scorer',
     status: 'available',
     summary:
@@ -22,6 +24,7 @@ const dashboardAreas: DashboardArea[] = [
     note: 'Manual user input only. Notes do not affect scoring.'
   },
   {
+    id: 'portfolio-ranker',
     title: 'Portfolio Ranker',
     status: 'available',
     summary:
@@ -29,6 +32,7 @@ const dashboardAreas: DashboardArea[] = [
     note: 'No prices, imports, allocations, or trade recommendations.'
   },
   {
+    id: 'thesis-monitor',
     title: 'Thesis Monitor',
     status: 'available',
     summary:
@@ -36,6 +40,7 @@ const dashboardAreas: DashboardArea[] = [
     note: 'No automated news monitoring or generated analyst commentary.'
   },
   {
+    id: 'watchlist',
     title: 'Watchlist',
     status: 'available',
     summary:
@@ -43,6 +48,7 @@ const dashboardAreas: DashboardArea[] = [
     note: 'No live prices, alerts, APIs, or auto-filled company data.'
   },
   {
+    id: 'theme-baskets',
     title: 'Theme Baskets',
     status: 'available',
     summary:
@@ -50,6 +56,7 @@ const dashboardAreas: DashboardArea[] = [
     note: 'Not personalized, ranked, weighted, or a model portfolio.'
   },
   {
+    id: 'reminders',
     title: 'Reminders',
     status: 'available',
     summary:
@@ -73,6 +80,10 @@ const builtWorkflowCount = dashboardAreas.filter(
   (area) => area.status === 'available'
 ).length;
 
+type DashboardScreenProps = {
+  onOpenWorkspace?: (workspaceId: string) => void;
+};
+
 function statusBadge(status: DashboardArea['status']): JSX.Element {
   return status === 'available' ? (
     <Badge variant="accent">Available</Badge>
@@ -81,7 +92,9 @@ function statusBadge(status: DashboardArea['status']): JSX.Element {
   );
 }
 
-export function DashboardScreen(): JSX.Element {
+export function DashboardScreen({
+  onOpenWorkspace
+}: DashboardScreenProps): JSX.Element {
   return (
     <div className="dashboard-screen">
       <PageHeader
@@ -90,6 +103,47 @@ export function DashboardScreen(): JSX.Element {
         eyebrow="Phase 1 Dashboard"
         title="Dashboard"
       />
+
+      <section className="dashboard-hero-grid" aria-label="Dashboard overview">
+        <Card emphasis title="Continue where you left off">
+          <div className="dashboard-continue">
+            <p>
+              Start with scoring, ranking, or thesis notes. Every module stays
+              local, manual, and non-advisory.
+            </p>
+            <div className="dashboard-primary-actions">
+              <Button
+                onClick={() => onOpenWorkspace?.('mbs-scorer')}
+                type="button"
+              >
+                Open MBS Scorer
+              </Button>
+              <Button
+                onClick={() => onOpenWorkspace?.('portfolio-ranker')}
+                type="button"
+                variant="secondary"
+              >
+                Rank portfolio
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="Recent activity">
+          <div className="dashboard-empty-state">
+            <span className="dashboard-empty-icon" aria-hidden="true">
+              +
+            </span>
+            <div>
+              <h3>No activity timeline yet</h3>
+              <p>
+                Saved activity is not aggregated in this MVP. Use the modules
+                below to continue manual work.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </section>
 
       <Card title="Offline MVP snapshot">
         <div className="dashboard-disclaimer">
@@ -118,7 +172,7 @@ export function DashboardScreen(): JSX.Element {
         </div>
       </Card>
 
-      <Card title="Current workspaces">
+      <Card title="Quick actions">
         <div className="dashboard-area-grid">
           {dashboardAreas.map((area) => (
             <article className="dashboard-area-card" key={area.title}>
@@ -128,7 +182,14 @@ export function DashboardScreen(): JSX.Element {
               </div>
               <p>{area.summary}</p>
               <small>{area.note}</small>
-              <span className="dashboard-next-step">Open from the sidebar</span>
+              <button
+                className="dashboard-next-step"
+                disabled={area.status !== 'available'}
+                onClick={() => onOpenWorkspace?.(area.id)}
+                type="button"
+              >
+                {area.status === 'available' ? 'Open workspace' : 'Coming soon'}
+              </button>
             </article>
           ))}
         </div>

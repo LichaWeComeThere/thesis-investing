@@ -11,11 +11,15 @@ import {
 
 describe('@thesis-investing/ui', () => {
   it('exports design tokens and theme variables', () => {
-    expect(tokens.colors.background).toBe('#eef3f6');
-    expect(tokens.radii.md).toBe(8);
+    expect(tokens.colors.background).toBe('#05080C');
+    expect(tokens.radii.bento).toBe(26);
     expect(themeCssVariables).toHaveProperty(
       '--ti-color-background',
       tokens.colors.background
+    );
+    expect(themeCssVariables).toHaveProperty(
+      '--ti-radius-bento',
+      `${tokens.radii.bento}px`
     );
   });
 

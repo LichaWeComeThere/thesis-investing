@@ -21,7 +21,8 @@ const baseButtonStyle: CSSProperties = {
   justifyContent: 'center',
   letterSpacing: 0,
   textDecoration: 'none',
-  transition: 'background 140ms ease, border-color 140ms ease, color 140ms ease'
+  transition:
+    'background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease, filter 180ms ease, transform 180ms ease'
 };
 
 const sizeStyles: Record<ButtonSize, CSSProperties> = {
@@ -43,15 +44,17 @@ function getVariantStyle(
 ): CSSProperties {
   if (variant === 'primary') {
     return {
-      background: tokens.colors.primary,
+      background: `linear-gradient(180deg, ${tokens.colors.primaryHover}, ${tokens.colors.primary})`,
       border: `1px solid ${tokens.colors.primary}`,
-      color: tokens.colors.surface
+      boxShadow:
+        '0 12px 28px rgba(72, 224, 204, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.28)',
+      color: tokens.colors.onPrimary
     };
   }
 
   if (variant === 'secondary') {
     return {
-      background: tokens.colors.surface,
+      background: tokens.colors.surfaceSoft,
       border: `1px solid ${tokens.colors.border}`,
       color: tokens.colors.text
     };
@@ -59,17 +62,22 @@ function getVariantStyle(
 
   if (variant === 'sidebar') {
     return {
-      background: isActive ? tokens.colors.surface : 'transparent',
+      background: isActive
+        ? 'rgba(72, 224, 204, 0.10)'
+        : 'rgba(255, 255, 255, 0.01)',
       border: `1px solid ${
         isActive ? tokens.colors.borderStrong : 'transparent'
       }`,
-      color: isActive ? tokens.colors.sidebar : tokens.colors.sidebarText,
+      boxShadow: isActive
+        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+        : undefined,
+      color: isActive ? tokens.colors.sidebarTextStrong : tokens.colors.sidebarText,
       justifyContent: 'flex-start'
     };
   }
 
   return {
-    background: isActive ? tokens.colors.surfaceMuted : 'transparent',
+    background: isActive ? tokens.colors.surfaceSoft : 'transparent',
     border: '1px solid transparent',
     color: tokens.colors.textMuted
   };
@@ -77,6 +85,7 @@ function getVariantStyle(
 
 export function Button({
   children,
+  className,
   disabled,
   fullWidth = false,
   isActive = false,
@@ -85,9 +94,20 @@ export function Button({
   variant = 'primary',
   ...buttonProps
 }: ButtonProps): JSX.Element {
+  const buttonClassName = [
+    'ti-button',
+    `ti-button--${variant}`,
+    isActive ? 'ti-button--active' : '',
+    fullWidth ? 'ti-button--full' : '',
+    className
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <button
       {...buttonProps}
+      className={buttonClassName}
       disabled={disabled}
       style={{
         ...baseButtonStyle,
