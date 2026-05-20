@@ -1,0 +1,15 @@
+appId: com.thesisinvesting.desktop
+productName: Thesis Investing
+asar: true
+npmRebuild: false
+directories:
+  output: release/windows
+files:
+  - out/**
+  - package.json
+win:
+  signAndEditExecutable: false
+  target:
+    - target: dir
+      arch:
+        - x64
