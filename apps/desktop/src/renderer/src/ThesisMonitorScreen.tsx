@@ -35,6 +35,98 @@ const convictionLabels: Record<
   medium: 'Medium'
 };
 
+type DemoThesisQueueItem = {
+  id: string;
+  ticker: string;
+  title: string;
+  status: LocalThesisNote['status'];
+  statusLabel?: string;
+  score: number;
+  reviewLabel: string;
+};
+
+const demoThesisQueueItems: DemoThesisQueueItem[] = [
+  {
+    id: 'demo-nvda',
+    ticker: 'NVDA',
+    title: 'AI infrastructure leadership',
+    status: 'active',
+    score: 79,
+    reviewLabel: 'Due soon'
+  },
+  {
+    id: 'demo-crwd',
+    ticker: 'CRWD',
+    title: 'Cybersecurity resilience',
+    status: 'watch',
+    score: 68,
+    reviewLabel: 'Draft'
+  },
+  {
+    id: 'demo-msft',
+    ticker: 'MSFT',
+    title: 'Cloud and AI platform strength',
+    status: 'active',
+    score: 82,
+    reviewLabel: 'Reviewed'
+  },
+  {
+    id: 'demo-tsla',
+    ticker: 'TSLA',
+    title: 'Margin pressure thesis',
+    status: 'challenged',
+    statusLabel: 'Caution',
+    score: 52,
+    reviewLabel: 'Needs review'
+  }
+];
+
+function statusBadgeVariant(
+  status: LocalThesisNote['status']
+): 'accent' | 'neutral' | 'success' | 'warning' | 'risk' {
+  switch (status) {
+    case 'active':
+      return 'success';
+    case 'watch':
+      return 'accent';
+    case 'draft':
+    case 'challenged':
+      return 'warning';
+    case 'broken':
+      return 'risk';
+    case 'closed':
+      return 'neutral';
+  }
+}
+
+function scoreForNote(note: LocalThesisNote): number | null {
+  if (note.conviction === 'high') {
+    return 82;
+  }
+
+  if (note.conviction === 'medium') {
+    return 68;
+  }
+
+  if (note.conviction === 'low') {
+    return 54;
+  }
+
+  return null;
+}
+
+function reviewLabelForNote(note: LocalThesisNote): string {
+  if (note.reviewDueAt) {
+    return `Review ${note.reviewDueAt}`;
+  }
+
+  if (note.status === 'draft') {
+    return 'Draft';
+  }
+
+  return 'No review date';
+}
+
 export function ThesisMonitorScreen({
   initialForm,
   initialNotes = [],
@@ -45,6 +137,9 @@ export function ThesisMonitorScreen({
   );
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(
     initialSelectedNoteId ?? initialNotes[0]?.id ?? null
+  );
+  const [selectedDemoQueueId, setSelectedDemoQueueId] = useState(
+    demoThesisQueueItems[0].id
   );
   const [nextNoteNumber, setNextNoteNumber] = useState(initialNotes.length + 1);
   const [saveAttempted, setSaveAttempted] = useState(false);
@@ -63,6 +158,11 @@ export function ThesisMonitorScreen({
   const activeNoteCount = notes.filter(
     (note) => note.status === 'active' || note.status === 'watch'
   ).length;
+  const hasLocalNotes = notes.length > 0;
+  const selectedDemoQueueItem =
+    demoThesisQueueItems.find((item) => item.id === selectedDemoQueueId) ??
+    demoThesisQueueItems[0];
+  const selectedNoteScore = selectedNote ? scoreForNote(selectedNote) : null;
   const shouldShowValidation =
     saveAttempted || (hasThesisFormContent(form) && !formResult.validation.valid);
   const visibleValidationErrors = shouldShowValidation
@@ -131,6 +231,87 @@ export function ThesisMonitorScreen({
       />
 
       <div className="thesis-workspace-grid">
+        <aside className="thesis-queue-rail" aria-label="Thesis Queue">
+          <div className="thesis-queue-header">
+            <div>
+              <h2>Thesis Queue</h2>
+              <p>Review, rank, and update stock theses</p>
+            </div>
+            <Button onClick={startNewNote} type="button" variant="secondary">
+              + New Thesis
+            </Button>
+          </div>
+
+          <div className="thesis-queue-list" role="list">
+            {hasLocalNotes
+              ? notes.map((note) => {
+                  const score = scoreForNote(note);
+                  const isSelected = note.id === selectedNoteId;
+
+                  return (
+                    <button
+                      aria-current={isSelected ? 'true' : undefined}
+                      className="thesis-queue-card"
+                      key={note.id}
+                      onClick={() => selectNote(note)}
+                      role="listitem"
+                      type="button"
+                    >
+                      <span className="thesis-queue-card-topline">
+                        <strong>{note.ticker ?? 'NOTE'}</strong>
+                        <Badge variant={statusBadgeVariant(note.status)}>
+                          {statusLabels[note.status]}
+                        </Badge>
+                      </span>
+                      <span className="thesis-queue-title">{note.title}</span>
+                      <span className="thesis-queue-meta">
+                        <small>{reviewLabelForNote(note)}</small>
+                        {score ? <small>Score {score}</small> : null}
+                      </span>
+                      <span className="thesis-queue-open">Open</span>
+                    </button>
+                  );
+                })
+              : demoThesisQueueItems.map((item) => {
+                  const isSelected = item.id === selectedDemoQueueId;
+
+                  return (
+                    <button
+                      aria-current={isSelected ? 'true' : undefined}
+                      className="thesis-queue-card thesis-queue-card--demo"
+                      key={item.id}
+                      onClick={() => setSelectedDemoQueueId(item.id)}
+                      role="listitem"
+                      type="button"
+                    >
+                      <span className="thesis-queue-card-topline">
+                        <strong>{item.ticker}</strong>
+                        <Badge variant={statusBadgeVariant(item.status)}>
+                          {item.statusLabel ?? statusLabels[item.status]}
+                        </Badge>
+                      </span>
+                      <span className="thesis-queue-title">{item.title}</span>
+                      <span className="thesis-queue-meta">
+                        <small>{item.reviewLabel}</small>
+                        <small>Score {item.score}</small>
+                      </span>
+                      <span className="thesis-queue-open">Preview</span>
+                    </button>
+                  );
+                })}
+          </div>
+
+          <div className="thesis-queue-workflow">
+            <h3>Review workflow</h3>
+            <div>
+              <span>Draft</span>
+              <span>Active</span>
+              <span>Watch</span>
+              <span>Broken</span>
+            </div>
+          </div>
+        </aside>
+
         <Card className="thesis-form-card" title="Create or edit thesis note">
           <div className="thesis-monitor-disclaimer">
             Notes are manually authored by the user. No live data, automated news
@@ -286,83 +467,82 @@ export function ThesisMonitorScreen({
             <p>
               {selectedNote
                 ? 'Review the selected thesis detail card below or update the manual checklist.'
-                : 'Save or select a thesis note to populate the detail panel.'}
+                : 'Save or select a thesis note to populate the selected snapshot.'}
             </p>
           </div>
-        </Card>
-      </div>
 
-      <div className="thesis-monitor-layout">
-        <Card title="Local thesis notes">
-          {notes.length > 0 ? (
-            <div className="thesis-note-list">
-              {notes.map((note) => {
-                const isSelected = note.id === selectedNoteId;
-
-                return (
-                  <button
-                    aria-current={isSelected ? 'true' : undefined}
-                    className="thesis-note-list-item"
-                    key={note.id}
-                    onClick={() => selectNote(note)}
-                    type="button"
-                  >
-                    <span>{note.title}</span>
-                    <small>
-                      {note.ticker ?? 'No ticker'} - {statusLabels[note.status]}
-                    </small>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <p>No local thesis notes yet.</p>
-          )}
-        </Card>
-
-        <Card title="Selected thesis details">
-          {selectedNote ? (
-            <article className="thesis-details">
-              <div className="thesis-details-header">
-                <div>
-                  <p className="thesis-details-eyebrow">
-                    {selectedNote.ticker ?? 'No ticker'}
-                  </p>
-                  <h3>{selectedNote.title}</h3>
+          <div className="thesis-selected-snapshot">
+            <h3>Selected thesis snapshot</h3>
+            {selectedNote ? (
+              <article className="thesis-details thesis-details--compact">
+                <div className="thesis-details-header">
+                  <div>
+                    <p className="thesis-details-eyebrow">
+                      {selectedNote.ticker ?? 'No ticker'}
+                    </p>
+                    <h3>{selectedNote.title}</h3>
+                  </div>
+                  <Badge variant={statusBadgeVariant(selectedNote.status)}>
+                    {statusLabels[selectedNote.status]}
+                  </Badge>
                 </div>
-                <Badge variant="neutral">{statusLabels[selectedNote.status]}</Badge>
-              </div>
 
-              <dl className="thesis-meta-grid">
-                <div>
-                  <dt>Conviction</dt>
-                  <dd>
-                    {selectedNote.conviction
-                      ? convictionLabels[selectedNote.conviction]
-                      : 'Not set'}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Review due</dt>
-                  <dd>{selectedNote.reviewDueAt ?? 'Not set'}</dd>
-                </div>
-              </dl>
+                <dl className="thesis-meta-grid">
+                  <div>
+                    <dt>Score</dt>
+                    <dd>{selectedNoteScore ?? 'Not set'}</dd>
+                  </div>
+                  <div>
+                    <dt>Review due</dt>
+                    <dd>{selectedNote.reviewDueAt ?? 'Not set'}</dd>
+                  </div>
+                </dl>
 
-              <div className="thesis-detail-section">
-                <h4>Thesis</h4>
-                <p>{selectedNote.body}</p>
-              </div>
-
-              {selectedNote.checklist ? (
                 <div className="thesis-detail-section">
-                  <h4>Review checklist</h4>
-                  <p>{selectedNote.checklist}</p>
+                  <h4>Preview</h4>
+                  <p>{selectedNote.body}</p>
                 </div>
-              ) : null}
-            </article>
-          ) : (
-            <p>Select or save a local thesis note to review its details.</p>
-          )}
+
+                {selectedNote.checklist ? (
+                  <div className="thesis-detail-section">
+                    <h4>Review checklist</h4>
+                    <p>{selectedNote.checklist}</p>
+                  </div>
+                ) : null}
+              </article>
+            ) : (
+              <article className="thesis-details thesis-details--compact">
+                <div className="thesis-details-header">
+                  <div>
+                    <p className="thesis-details-eyebrow">
+                      {selectedDemoQueueItem.ticker}
+                    </p>
+                    <h3>{selectedDemoQueueItem.title}</h3>
+                  </div>
+                  <Badge variant={statusBadgeVariant(selectedDemoQueueItem.status)}>
+                    {selectedDemoQueueItem.statusLabel ??
+                      statusLabels[selectedDemoQueueItem.status]}
+                  </Badge>
+                </div>
+
+                <dl className="thesis-meta-grid">
+                  <div>
+                    <dt>Score</dt>
+                    <dd>{selectedDemoQueueItem.score}</dd>
+                  </div>
+                  <div>
+                    <dt>Review</dt>
+                    <dd>{selectedDemoQueueItem.reviewLabel}</dd>
+                  </div>
+                </dl>
+
+                <div className="thesis-detail-section">
+                  <h4>Preview</h4>
+                  <p>Select a saved thesis to load it into the editor.</p>
+                </div>
+              </article>
+            )}
+          </div>
         </Card>
       </div>
     </div>

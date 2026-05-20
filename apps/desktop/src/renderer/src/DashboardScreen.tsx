@@ -1,4 +1,5 @@
 import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
+import { MarketPulseFeed } from './MarketPulseFeed';
 import './dashboard.css';
 
 type DashboardArea = {
@@ -104,127 +105,139 @@ export function DashboardScreen({
         title="Dashboard"
       />
 
-      <section className="dashboard-hero-grid" aria-label="Dashboard overview">
-        <Card emphasis title="Continue where you left off">
-          <div className="dashboard-continue">
-            <p>
-              Start with scoring, ranking, or thesis notes. Every module stays
-              local, manual, and non-advisory.
-            </p>
-            <div className="dashboard-primary-actions">
-              <Button
-                onClick={() => onOpenWorkspace?.('mbs-scorer')}
-                type="button"
-              >
-                Open MBS Scorer
-              </Button>
-              <Button
-                onClick={() => onOpenWorkspace?.('portfolio-ranker')}
-                type="button"
-                variant="secondary"
-              >
-                Rank portfolio
-              </Button>
-            </div>
-          </div>
-        </Card>
+      <div className="dashboard-content-layout">
+        <MarketPulseFeed />
 
-        <Card title="Recent activity">
-          <div className="dashboard-empty-state">
-            <span className="dashboard-empty-icon" aria-hidden="true">
-              +
-            </span>
-            <div>
-              <h3>No activity timeline yet</h3>
-              <p>
-                Saved activity is not aggregated in this MVP. Use the modules
-                below to continue manual work.
-              </p>
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      <Card title="Offline MVP snapshot">
-        <div className="dashboard-disclaimer">
-          This dashboard is static and local for this stage. No live prices,
-          stock APIs, brokerage import, trading execution, AI summaries, analyst
-          commentary, cloud sync, or personalized financial advice are used.
-        </div>
-
-        <div className="dashboard-metrics" aria-label="Dashboard metrics">
-          <div className="dashboard-metric">
-            <span>Manual workflows available</span>
-            <strong>{builtWorkflowCount}</strong>
-          </div>
-          <div className="dashboard-metric">
-            <span>Live data integrations</span>
-            <strong>0</strong>
-          </div>
-          <div className="dashboard-metric">
-            <span>Brokerage connections</span>
-            <strong>0</strong>
-          </div>
-          <div className="dashboard-metric">
-            <span>Pending MVP areas</span>
-            <strong>1</strong>
-          </div>
-        </div>
-      </Card>
-
-      <Card title="Quick actions">
-        <div className="dashboard-area-grid">
-          {dashboardAreas.map((area) => (
-            <article className="dashboard-area-card" key={area.title}>
-              <div className="dashboard-area-card-header">
-                <h2>{area.title}</h2>
-                {statusBadge(area.status)}
+        <div className="dashboard-main-stack">
+          <section
+            className="dashboard-hero-grid"
+            aria-label="Dashboard overview"
+          >
+            <Card emphasis title="Continue where you left off">
+              <div className="dashboard-continue">
+                <p>
+                  Start with scoring, ranking, or thesis notes. Every module
+                  stays local, manual, and non-advisory.
+                </p>
+                <div className="dashboard-primary-actions">
+                  <Button
+                    onClick={() => onOpenWorkspace?.('mbs-scorer')}
+                    type="button"
+                  >
+                    Open MBS Scorer
+                  </Button>
+                  <Button
+                    onClick={() => onOpenWorkspace?.('portfolio-ranker')}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Rank portfolio
+                  </Button>
+                </div>
               </div>
-              <p>{area.summary}</p>
-              <small>{area.note}</small>
-              <button
-                className="dashboard-next-step"
-                disabled={area.status !== 'available'}
-                onClick={() => onOpenWorkspace?.(area.id)}
-                type="button"
-              >
-                {area.status === 'available' ? 'Open workspace' : 'Coming soon'}
-              </button>
-            </article>
-          ))}
-        </div>
-      </Card>
+            </Card>
 
-      <div className="dashboard-lower-grid">
-        <Card title="MVP readiness checklist">
-          <ul className="dashboard-checklist">
-            {readinessItems.map((item) => (
-              <li key={item.label}>
-                <span>{item.label}</span>
-                <Badge
-                  variant={item.status === 'built' ? 'accent' : 'neutral'}
-                >
-                  {item.status === 'built' ? 'Built' : 'Pending'}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        </Card>
+            <Card title="Recent activity">
+              <div className="dashboard-empty-state">
+                <span className="dashboard-empty-icon" aria-hidden="true">
+                  +
+                </span>
+                <div>
+                  <h3>No activity timeline yet</h3>
+                  <p>
+                    Saved activity is not aggregated in this MVP. Use the
+                    modules below to continue manual work.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </section>
 
-        <Card title="Use this dashboard for">
-          <div className="dashboard-guide">
-            <p>
-              Start here to see which local MVP areas are available, then open a
-              workspace from the sidebar. Each built area still uses
-              user-directed manual inputs.
-            </p>
-            <p>
-              This overview is educational software only. It is not a
-              recommendation to buy, sell, hold, size, rank, or allocate any
-              security.
-            </p>
+          <Card title="Offline MVP snapshot">
+            <div className="dashboard-disclaimer">
+              This dashboard is static and local for this stage. No live prices,
+              stock APIs, brokerage import, trading execution, AI summaries,
+              analyst commentary, cloud sync, or personalized financial advice
+              are used.
+            </div>
+
+            <div className="dashboard-metrics" aria-label="Dashboard metrics">
+              <div className="dashboard-metric">
+                <span>Manual workflows available</span>
+                <strong>{builtWorkflowCount}</strong>
+              </div>
+              <div className="dashboard-metric">
+                <span>Live data integrations</span>
+                <strong>0</strong>
+              </div>
+              <div className="dashboard-metric">
+                <span>Brokerage connections</span>
+                <strong>0</strong>
+              </div>
+              <div className="dashboard-metric">
+                <span>Pending MVP areas</span>
+                <strong>1</strong>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Quick actions">
+            <div className="dashboard-area-grid">
+              {dashboardAreas.map((area) => (
+                <article className="dashboard-area-card" key={area.title}>
+                  <div className="dashboard-area-card-header">
+                    <h2>{area.title}</h2>
+                    {statusBadge(area.status)}
+                  </div>
+                  <p>{area.summary}</p>
+                  <small>{area.note}</small>
+                  <button
+                    className="dashboard-next-step"
+                    disabled={area.status !== 'available'}
+                    onClick={() => onOpenWorkspace?.(area.id)}
+                    type="button"
+                  >
+                    {area.status === 'available'
+                      ? 'Open workspace'
+                      : 'Coming soon'}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </Card>
+
+          <div className="dashboard-lower-grid">
+            <Card title="MVP readiness checklist">
+              <ul className="dashboard-checklist">
+                {readinessItems.map((item) => (
+                  <li key={item.label}>
+                    <span>{item.label}</span>
+                    <Badge
+                      variant={item.status === 'built' ? 'accent' : 'neutral'}
+                    >
+                      {item.status === 'built' ? 'Built' : 'Pending'}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            <Card title="Use this dashboard for">
+              <div className="dashboard-guide">
+                <p>
+                  Start here to see which local MVP areas are available, then
+                  open a workspace from the sidebar. Each built area still uses
+                  user-directed manual inputs.
+                </p>
+                <p>
+                  This overview is educational software only. It is not a
+                  recommendation to buy, sell, hold, size, rank, or allocate any
+                  security.
+                </p>
+              </div>
+            </Card>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

@@ -38,4 +38,18 @@ describe('DashboardScreen', () => {
     expect(html).toContain('Manual reminders');
     expect(html).toContain('Built');
   });
+
+  it('renders the static latest market pulse feed', () => {
+    const html = renderToStaticMarkup(<DashboardScreen />);
+
+    expect(html).toContain('Latest');
+    expect(html).toContain('Demo feed');
+    expect(html).toContain(
+      'Google, Blackstone to create new AI cloud company, WSJ reports'
+    );
+    expect(html).toContain("Japan&#x27;s economy grew more than expected in Q1");
+    expect(html).toContain(
+      'Semiconductor leaders continue showing relative strength'
+    );
+  });
 });

@@ -309,7 +309,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
         ) : selectedView.id === 'mbs-scorer' ? (
           <ManualMbsScorerScreen />
         ) : selectedView.id === 'portfolio-ranker' ? (
-          <PortfolioRankerScreen />
+          <PortfolioRankerScreen onOpenWorkspace={setSelectedViewId} />
         ) : selectedView.id === 'thesis-monitor' ? (
           <ThesisMonitorScreen />
         ) : selectedView.id === 'watchlist' ? (

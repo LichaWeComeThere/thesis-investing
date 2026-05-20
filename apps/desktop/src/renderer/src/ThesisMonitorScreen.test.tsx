@@ -26,10 +26,25 @@ describe('ThesisMonitorScreen', () => {
     );
 
     expect(html).toContain('User-authored notes');
+    expect(html).toContain('Thesis Queue');
     expect(html).toContain('No live data, automated news');
     expect(html).toContain('Durable software thesis');
     expect(html).toContain('MSFT');
     expect(html).toContain('Review customer retention');
+  });
+
+  it('renders demo thesis queue cards when no local notes exist', () => {
+    const html = renderToStaticMarkup(<ThesisMonitorScreen />);
+
+    expect(html).toContain('Review, rank, and update stock theses');
+    expect(html).toContain('+ New Thesis');
+    expect(html).toContain('NVDA');
+    expect(html).toContain('AI infrastructure leadership');
+    expect(html).toContain('CRWD');
+    expect(html).toContain('Cybersecurity resilience');
+    expect(html).toContain('Caution');
+    expect(html).toContain('Selected thesis snapshot');
+    expect(html).toContain('Review workflow');
   });
 
   it('renders validation errors for invalid populated input', () => {
