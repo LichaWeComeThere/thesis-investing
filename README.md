@@ -23,6 +23,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm package:windows
 ```
 
 ## Workspace Layout
@@ -51,6 +52,7 @@ pnpm build
 - [Watchlist](docs/WATCHLIST.md)
 - [Theme Baskets](docs/THEME_BASKETS.md)
 - [Reminders](docs/REMINDERS.md)
+- [Windows Release Prep](docs/WINDOWS_RELEASE.md)
 - [First-Run Onboarding](docs/ONBOARDING.md)
 - [Persistence](docs/PERSISTENCE.md)
 

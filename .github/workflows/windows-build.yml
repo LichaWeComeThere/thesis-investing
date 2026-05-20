@@ -7,13 +7,14 @@ on:
     paths:
       - apps/desktop/**
       - packages/**
+      - .github/workflows/windows-build.yml
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
 
 jobs:
-  windows-build-placeholder:
-    name: Windows build placeholder
+  windows-package:
+    name: Windows package
     runs-on: windows-latest
 
     steps:
@@ -33,8 +34,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build desktop app
-        run: pnpm --filter @thesis-investing/desktop build
+      - name: Build all workspaces
+        run: pnpm build
 
-      - name: Artifact placeholder
-        run: echo "Windows packaging artifacts will be added in a later phase."
+      - name: Package Windows app
+        run: pnpm package:windows
+
+      - name: Upload Windows unpacked artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: thesis-investing-windows-unpacked
+          path: apps/desktop/release/windows/win-unpacked/**
+          if-no-files-found: error
