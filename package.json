@@ -10,7 +10,8 @@
     "test": "pnpm -r --if-present test",
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present typecheck",
-    "package:windows": "pnpm --filter @thesis-investing/desktop package:windows"
+    "package:windows": "pnpm --filter @thesis-investing/desktop package:windows",
+    "verify:storage": "pnpm --filter @thesis-investing/desktop verify:storage"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
