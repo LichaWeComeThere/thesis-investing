@@ -56,6 +56,7 @@ pnpm package:windows
 - [Release Smoke Test](docs/RELEASE_SMOKE_TEST.md)
 - [First-Run Onboarding](docs/ONBOARDING.md)
 - [Persistence](docs/PERSISTENCE.md)
+- [Persistence Wiring Plan](docs/PERSISTENCE_WIRING_PLAN.md)
 
 ## Financial Disclaimer
 

@@ -1,0 +1,272 @@
+# Persistence Wiring Plan
+
+Phase 1, Stage 16 is a planning stage for safely wiring the existing local storage boundary into the visible Windows MVP screens. It intentionally does not wire SQLite into product screens yet.
+
+Thesis Investing remains offline educational software. This plan does not add live stock APIs, AI analyst features, brokerage integrations, trading execution, Supabase/auth, cloud sync, or personalized financial advice.
+
+## Current Storage Boundary
+
+Local persistence currently lives in `apps/desktop/src/storage`.
+
+The storage boundary includes:
+
+- `repositories.ts`: stable repository interfaces for holdings, watchlist items, thesis notes, and reminders.
+- `sqlite.ts`: the first SQLite adapter and `createSqliteStorage()` entrypoint.
+- `schema.ts`: migration runner and the initial schema.
+- `sqliteRepositories.ts`: SQLite repository implementations that normalize tickers and validate domain data before writes.
+- `index.test.ts`: repository boundary, migration, validation, and CRUD coverage.
+
+The initial schema creates:
+
+- `holdings`
+- `watchlist_items`
+- `thesis_notes`
+- `reminders`
+- `schema_migrations`
+
+The adapter currently uses `node:sqlite`. This is an experimental first adapter only. Electron runtime support must be verified before this adapter is wired into user-visible workflows. The repository interfaces are intentionally designed so the adapter can be swapped later if needed.
+
+## Current Screen State
+
+The visible MVP screens are still mostly React-state-only:
+
+| Screen | Current state owner | Existing storage fit |
+| --- | --- | --- |
+| Watchlist | `useState` with watchlist form helpers | `watchlistItems` repository is a direct fit, except `thesisReference` is currently UI-only text |
+| Thesis Monitor | `useState` with thesis note form helpers | `thesisNotes` repository is a direct fit, except `checklist` is currently UI-only text |
+| Reminders | `useState` with reminder form helpers | `reminders` repository is a direct fit, but UI `completed` maps to persisted `completedAt` |
+| Portfolio Ranker | `useState` rows with manual scores | No direct repository yet; do not force ranker rows into `holdings` |
+| MBS Scorer | `useState` category values and notes | No repository yet; scoring output is deterministic and can be recomputed |
+| Dashboard | Static/local overview and route links | Should read summaries only after individual screens are persisted |
+| Theme Baskets | Static local data | Should remain static repo data for now |
+| Onboarding | `localStorage` preference | Keep as-is for now |
+
+## Recommended Architecture
+
+Keep persistence out of `packages/core`. Core should remain pure TypeScript domain logic and validators.
+
+Recommended runtime boundary:
+
+1. Electron main process owns database open/close, migration execution, and repository instances.
+2. Preload exposes a narrow, typed storage API through IPC.
+3. Renderer screens depend on a small storage client interface, not raw SQLite or `node:sqlite`.
+4. Tests use fake storage clients for renderer behavior and real repositories for storage behavior.
+
+This avoids importing Node SQLite details into React renderer code, preserves sandbox/context isolation, and keeps adapter replacement possible.
+
+## Recommended Wiring Order
+
+Do not wire all persistence in one pull request. Each future stage should ship one screen or data family, with tests and a small migration footprint.
+
+### Stage 17: Persist Watchlist
+
+Data to persist:
+
+- ticker
+- optional company name
+- tags
+- note
+- optional thesis note link when it becomes a structured ID
+- created/updated timestamps when supplied by the app layer
+
+Repository:
+
+- Use `watchlistItems`.
+
+Notes:
+
+- `thesisReference` is currently free text and is not in the core `WatchlistItem` type or schema. Keep it local-only or convert it to `thesisNoteId` only when a structured relationship exists.
+- Load persisted items on screen start.
+- Save creates/updates through the repository.
+- Delete through the repository.
+- Keep selected item ID as transient UI state.
+
+### Stage 18: Persist Thesis Notes
+
+Data to persist:
+
+- title
+- body
+- status
+- optional ticker
+- optional conviction
+- optional review due date
+- created/updated timestamps when supplied by the app layer
+
+Repository:
+
+- Use `thesisNotes`.
+
+Notes:
+
+- `checklist` is currently UI-only text and is not in the core `ThesisNote` type or schema. Either keep it transient or add a deliberate migration in a future stage.
+- Preserve user-authored content exactly after validation and trimming rules already used by the form helper.
+- Keep selected note ID and selected demo queue item as transient UI state.
+
+### Stage 19: Persist Reminders
+
+Data to persist:
+
+- title
+- reminder type
+- optional ticker
+- due date
+- optional note
+- completion state
+- created/updated timestamps when supplied by the app layer
+
+Repository:
+
+- Use `reminders`.
+
+Notes:
+
+- The repository stores `completedAt`, while the current UI stores a boolean `completed`. Map `completed: true` to a deterministic app-supplied completion timestamp or defer exact timestamp capture until the app layer defines a date policy.
+- Do not add OS notifications, background scheduling, earnings APIs, or calendar integration.
+- Keep selected reminder ID as transient UI state.
+
+### Stage 20: Persist Portfolio Ranker Inputs
+
+Data to persist:
+
+- ticker
+- optional company name
+- manual score
+- optional notes
+- row order or stable display order
+
+Repository:
+
+- Add a dedicated `portfolioRankerItems` repository and migration, or a named ranker snapshot repository.
+
+Notes:
+
+- Do not force ranker rows into `holdings`. The existing `HoldingRepository` requires shares and represents owned positions, while the current ranker supports ideas and manually scored rows.
+- Keep ranking output derived from persisted inputs using `rankManualPortfolioItems()`.
+- Keep sort/filter/search UI state transient.
+
+### Stage 21: Persist MBS Scorer Drafts Or Snapshots
+
+Data to persist:
+
+- manual category inputs
+- optional notes
+- optional ticker/company link if a future screen adds it
+- calculated output snapshot only if needed for audit/history
+
+Repository:
+
+- Add a dedicated MBS draft or score snapshot repository and migration.
+
+Notes:
+
+- Do not duplicate scoring logic in storage. Persist inputs and recompute with `calculateMbsScore()` unless a future audit/history requirement needs immutable output snapshots.
+- Keep incomplete drafts separate from completed score snapshots.
+- Do not add live fundamentals or AI scoring.
+
+### Stage 22: Dashboard Reads Persisted Local Summaries
+
+Data to read:
+
+- watchlist count
+- thesis note count by status
+- reminder count by due/completed status
+- portfolio ranker item count after Stage 20
+- MBS draft/snapshot count after Stage 21
+
+Repository:
+
+- Read from the repositories wired in earlier stages. Add summary query helpers only if repeated renderer aggregation becomes awkward.
+
+Notes:
+
+- Dashboard should remain local and non-advisory.
+- Do not show live prices, performance, account balances, allocation advice, or recommendations.
+
+## What Should Remain Local-Only For Now
+
+Do not persist these yet:
+
+- selected sidebar route
+- selected item IDs
+- search text, filters, and sort toggles
+- static theme basket data
+- Market Pulse demo feed state
+- onboarding completion storage, which can remain in `localStorage` until a preferences stage
+- free-text `thesisReference` unless it becomes a structured `thesisNoteId`
+- thesis checklist text unless a migration explicitly adds it
+- MBS scorer drafts before a dedicated MBS persistence stage
+- ranker rows before a dedicated ranker persistence stage
+
+## Migration Risks
+
+Key risks:
+
+- `node:sqlite` may not be available in the target Electron runtime.
+- Renderer code cannot safely import raw Node database modules under the current Electron sandbox.
+- Existing form helpers include UI-only fields not represented in the current schema.
+- Future migrations could accidentally drop or rewrite user-authored notes.
+- Date fields are strings today; any timestamp policy must be consistent before broad persistence wiring.
+- The current schema includes created/updated columns in several tables, but repositories do not generate timestamps as side effects.
+
+Mitigations:
+
+- Verify `createSqliteStorage()` inside the packaged Electron runtime before wiring visible workflows.
+- Keep storage in the main process and expose typed IPC methods.
+- Use additive migrations whenever possible.
+- Back up the database file before any migration that changes existing tables.
+- Keep repository validation as the final gate before writes.
+- Add migration tests that start from older schema fixtures once real user data exists.
+
+## Testing Strategy
+
+Each wiring stage should include:
+
+- Storage repository tests for create/read/update/delete behavior.
+- Migration idempotency tests.
+- Validation tests for rejected writes.
+- Renderer tests using a fake storage client.
+- A screen smoke render test with loaded persisted data.
+- A manual dev route check after `pnpm dev`.
+- A Windows package smoke test with `pnpm package:windows` before release-facing changes.
+
+Before the first visible wiring stage, add a small Electron runtime spike or smoke test that proves the selected SQLite adapter works in the packaged app. If `node:sqlite` fails in Electron, swap the adapter behind the repository interfaces before wiring screens.
+
+## Rollback Strategy
+
+Each future persistence wiring stage should be reversible without data loss:
+
+- Keep one screen per PR.
+- Prefer additive schema changes.
+- Never remove existing columns in a feature stage.
+- Back up the database file before new migrations in release builds.
+- If a screen load fails, show an error state and keep the app usable instead of crashing.
+- If a write fails validation, keep the user-entered form data in React state.
+- Keep repository interfaces stable so an adapter swap does not affect screen code.
+
+## User Data Safety Rules
+
+Future wiring should follow these rules:
+
+- Validate before writing.
+- Normalize tickers consistently.
+- Use transactions for multi-step writes.
+- Avoid destructive migrations.
+- Avoid silent data deletion.
+- Preserve user-authored thesis text and notes.
+- Keep IDs stable after creation.
+- Treat database open or migration failure as a recoverable app state.
+- Do not sync local data to any cloud service in Phase 1.
+
+## Out Of Scope For This Plan
+
+This plan does not add:
+
+- SQLite wiring into visible screens.
+- Full app-wide persistence.
+- Installer, updater, or code-signing changes.
+- Live stock APIs or price feeds.
+- Brokerage import or trading execution.
+- AI analyst features.
+- Supabase/auth/cloud sync.
+- Personalized financial advice.
