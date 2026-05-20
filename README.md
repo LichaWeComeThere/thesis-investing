@@ -53,6 +53,7 @@ pnpm package:windows
 - [Theme Baskets](docs/THEME_BASKETS.md)
 - [Reminders](docs/REMINDERS.md)
 - [Windows Release Prep](docs/WINDOWS_RELEASE.md)
+- [Release Smoke Test](docs/RELEASE_SMOKE_TEST.md)
 - [First-Run Onboarding](docs/ONBOARDING.md)
 - [Persistence](docs/PERSISTENCE.md)
 
