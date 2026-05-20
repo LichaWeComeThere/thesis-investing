@@ -14,6 +14,8 @@ The storage boundary includes:
 - `sqlite.ts`: the first SQLite adapter and `createSqliteStorage()` entrypoint.
 - `schema.ts`: migration runner and the initial schema.
 - `sqliteRepositories.ts`: SQLite repository implementations that normalize tickers and validate domain data before writes.
+- `runtimeVerification.ts`: in-memory repository-bound verification helper for the SQLite adapter.
+- `src/main/verifyStorageRuntime.ts`: Electron main-process entry point for storage verification.
 - `index.test.ts`: repository boundary, migration, validation, and CRUD coverage.
 
 The initial schema creates:
@@ -25,6 +27,8 @@ The initial schema creates:
 - `schema_migrations`
 
 The adapter currently uses `node:sqlite`. This is an experimental first adapter only. Electron runtime support must be verified before this adapter is wired into user-visible workflows. The repository interfaces are intentionally designed so the adapter can be swapped later if needed.
+
+Phase 1, Stage 17 adds that verification gate through `pnpm verify:storage`. The verification uses an in-memory database, runs in the Electron main process, and performs create/read/update/delete through the repository boundary without touching real user data.
 
 ## Current Screen State
 
@@ -58,7 +62,9 @@ This avoids importing Node SQLite details into React renderer code, preserves sa
 
 Do not wire all persistence in one pull request. Each future stage should ship one screen or data family, with tests and a small migration footprint.
 
-### Stage 17: Persist Watchlist
+Before visible persistence wiring starts, `pnpm verify:storage` should pass in the target Electron runtime.
+
+### Stage 18: Persist Watchlist
 
 Data to persist:
 
@@ -81,7 +87,7 @@ Notes:
 - Delete through the repository.
 - Keep selected item ID as transient UI state.
 
-### Stage 18: Persist Thesis Notes
+### Stage 19: Persist Thesis Notes
 
 Data to persist:
 
@@ -103,7 +109,7 @@ Notes:
 - Preserve user-authored content exactly after validation and trimming rules already used by the form helper.
 - Keep selected note ID and selected demo queue item as transient UI state.
 
-### Stage 19: Persist Reminders
+### Stage 20: Persist Reminders
 
 Data to persist:
 
@@ -125,7 +131,7 @@ Notes:
 - Do not add OS notifications, background scheduling, earnings APIs, or calendar integration.
 - Keep selected reminder ID as transient UI state.
 
-### Stage 20: Persist Portfolio Ranker Inputs
+### Stage 21: Persist Portfolio Ranker Inputs
 
 Data to persist:
 
@@ -145,7 +151,7 @@ Notes:
 - Keep ranking output derived from persisted inputs using `rankManualPortfolioItems()`.
 - Keep sort/filter/search UI state transient.
 
-### Stage 21: Persist MBS Scorer Drafts Or Snapshots
+### Stage 22: Persist MBS Scorer Drafts Or Snapshots
 
 Data to persist:
 
@@ -164,15 +170,15 @@ Notes:
 - Keep incomplete drafts separate from completed score snapshots.
 - Do not add live fundamentals or AI scoring.
 
-### Stage 22: Dashboard Reads Persisted Local Summaries
+### Stage 23: Dashboard Reads Persisted Local Summaries
 
 Data to read:
 
 - watchlist count
 - thesis note count by status
 - reminder count by due/completed status
-- portfolio ranker item count after Stage 20
-- MBS draft/snapshot count after Stage 21
+- portfolio ranker item count after Stage 21
+- MBS draft/snapshot count after Stage 22
 
 Repository:
 
@@ -230,7 +236,7 @@ Each wiring stage should include:
 - A manual dev route check after `pnpm dev`.
 - A Windows package smoke test with `pnpm package:windows` before release-facing changes.
 
-Before the first visible wiring stage, add a small Electron runtime spike or smoke test that proves the selected SQLite adapter works in the packaged app. If `node:sqlite` fails in Electron, swap the adapter behind the repository interfaces before wiring screens.
+The Stage 17 storage runtime verification proves the selected SQLite adapter can initialize inside Electron before visible screen wiring starts. If `node:sqlite` fails in Electron, swap the adapter behind the repository interfaces before wiring screens.
 
 ## Rollback Strategy
 

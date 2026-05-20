@@ -24,6 +24,7 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm package:windows
+pnpm verify:storage
 ```
 
 ## Workspace Layout
@@ -57,6 +58,7 @@ pnpm package:windows
 - [First-Run Onboarding](docs/ONBOARDING.md)
 - [Persistence](docs/PERSISTENCE.md)
 - [Persistence Wiring Plan](docs/PERSISTENCE_WIRING_PLAN.md)
+- [Storage Runtime Verification](docs/STORAGE_RUNTIME_VERIFICATION.md)
 
 ## Financial Disclaimer
 

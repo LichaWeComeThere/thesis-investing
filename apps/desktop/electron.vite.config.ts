@@ -9,7 +9,13 @@ export default defineConfig({
   main: {
     build: {
       rollupOptions: {
-        input: resolve(configDirname, 'src/main/main.ts')
+        input: {
+          main: resolve(configDirname, 'src/main/main.ts'),
+          verifyStorageRuntime: resolve(
+            configDirname,
+            'src/main/verifyStorageRuntime.ts'
+          )
+        }
       }
     }
   },
