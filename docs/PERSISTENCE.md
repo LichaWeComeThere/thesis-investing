@@ -27,6 +27,8 @@ The current adapter can create an in-memory database for tests or open a filenam
 
 The repository interfaces are intentionally the stable boundary. Future work can swap this SQLite adapter for another implementation if packaging, runtime support, or performance requirements make that the better choice.
 
+For the staged plan to wire this boundary into visible screens, see the [persistence wiring plan](PERSISTENCE_WIRING_PLAN.md).
+
 ## Schema And Migrations
 
 Migrations are defined in `apps/desktop/src/storage/schema.ts`.
