@@ -46,3 +46,4 @@ jobs:
           name: thesis-investing-windows-unpacked
           path: apps/desktop/release/windows/win-unpacked/**
           if-no-files-found: error
+          retention-days: 30

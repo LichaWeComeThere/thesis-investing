@@ -52,6 +52,8 @@ Executable signing and Windows resource editing are disabled for this early arti
 
 The `Windows Build` workflow runs on Windows, installs dependencies with the frozen lockfile, builds the workspaces, packages the unpacked Windows app, and uploads the unpacked app folder as a workflow artifact named `thesis-investing-windows-unpacked`.
 
+For manual download and verification steps, see the [release smoke test checklist](RELEASE_SMOKE_TEST.md).
+
 ## Release Readiness Checklist
 
 - [ ] `pnpm install --frozen-lockfile` passes.
@@ -70,6 +72,7 @@ The `Windows Build` workflow runs on Windows, installs dependencies with the fro
 - [ ] Settings/About opens from the sidebar.
 - [ ] No live APIs, trading execution, brokerage integration, AI analyst behavior, sync, or personalized financial advice behavior is present.
 - [ ] Windows package artifact is produced or the package limitation is documented.
+- [ ] Release smoke test checklist is completed before sharing an artifact.
 
 ## Known Limitations
 
