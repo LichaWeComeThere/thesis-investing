@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { remindersStorageChannels } from '../shared/remindersStorage';
 import { thesisNotesStorageChannels } from '../shared/thesisNotesStorage';
 import {
   watchlistStorageChannels,
@@ -7,6 +8,11 @@ import {
 
 const thesisInvestingApi: ThesisInvestingApi = {
   platform: process.platform,
+  reminders: {
+    list: () => ipcRenderer.invoke(remindersStorageChannels.list),
+    remove: (id) => ipcRenderer.invoke(remindersStorageChannels.remove, id),
+    save: (reminder) => ipcRenderer.invoke(remindersStorageChannels.save, reminder)
+  },
   thesisNotes: {
     list: () => ipcRenderer.invoke(thesisNotesStorageChannels.list),
     save: (note) => ipcRenderer.invoke(thesisNotesStorageChannels.save, note)

@@ -38,7 +38,7 @@ The visible MVP screens are still mostly React-state-only:
 | --- | --- | --- |
 | Watchlist | Persisted through `window.thesisInvesting.watchlist`, with transient form/selected state in React | Stage 18 implemented `watchlistItems`; `thesisReference` remains UI-only text |
 | Thesis Monitor | Persisted through `window.thesisInvesting.thesisNotes`, with transient form/selected state in React | Stage 19 implemented `thesisNotes`; `checklist` remains UI-only text |
-| Reminders | `useState` with reminder form helpers | `reminders` repository is a direct fit, but UI `completed` maps to persisted `completedAt` |
+| Reminders | Persisted through `window.thesisInvesting.reminders`, with transient form/selected state in React | Stage 20 implemented `reminders`; UI `completed` maps to persisted `completedAt` |
 | Portfolio Ranker | `useState` rows with manual scores | No direct repository yet; do not force ranker rows into `holdings` |
 | MBS Scorer | `useState` category values and notes | No repository yet; scoring output is deterministic and can be recomputed |
 | Dashboard | Static/local overview and route links | Should read summaries only after individual screens are persisted |
@@ -114,6 +114,8 @@ Notes:
 
 ### Stage 20: Persist Reminders
 
+Status: implemented.
+
 Data to persist:
 
 - title
@@ -122,7 +124,6 @@ Data to persist:
 - due date
 - optional note
 - completion state
-- created/updated timestamps when supplied by the app layer
 
 Repository:
 
@@ -130,7 +131,8 @@ Repository:
 
 Notes:
 
-- The repository stores `completedAt`, while the current UI stores a boolean `completed`. Map `completed: true` to a deterministic app-supplied completion timestamp or defer exact timestamp capture until the app layer defines a date policy.
+- The repository stores `completedAt`, while the current UI stores a boolean `completed`. Marking a reminder complete stores a local ISO date in `completedAt`; reopening clears `completedAt`.
+- The renderer calls a narrow preload API; SQLite stays in the Electron main process.
 - Do not add OS notifications, background scheduling, earnings APIs, or calendar integration.
 - Keep selected reminder ID as transient UI state.
 
@@ -271,7 +273,7 @@ Future wiring should follow these rules:
 
 This plan does not add:
 
-- SQLite wiring beyond the Watchlist and Thesis Monitor screens.
+- SQLite wiring beyond the Watchlist, Thesis Monitor, and Reminders screens.
 - Full app-wide persistence.
 - Installer, updater, or code-signing changes.
 - Live stock APIs or price feeds.
