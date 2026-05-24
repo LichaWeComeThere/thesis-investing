@@ -33,14 +33,13 @@ describe('STATIC_THEME_BASKETS', () => {
 });
 
 describe('ThemeBasketsScreen', () => {
-  it('renders the static basket library and non-advisory copy', () => {
+  it('renders the theme library copy', () => {
     const html = renderToStaticMarkup(<ThemeBasketsScreen />);
 
     expect(html).toContain('Theme Baskets');
-    expect(html).toContain('Static education only');
-    expect(html).toContain('not personalized recommendations');
-    expect(html).toContain('No live updates');
-    expect(html).toContain('not a personalized recommendation');
+    expect(html).toContain('Theme Library');
+    expect(html).toContain('Browse curated research themes');
+    expect(html).toContain('Why it matters');
   });
 
   it('renders selected basket details', () => {

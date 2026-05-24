@@ -7,8 +7,7 @@ describe('App onboarding', () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain('Thesis Investing');
-    expect(html).toContain('educational software');
-    expect(html).toContain('No brokerage connections or trading execution.');
+    expect(html).toContain('Build a repeatable thesis workflow.');
     expect(html).toContain('Continue');
   });
 });

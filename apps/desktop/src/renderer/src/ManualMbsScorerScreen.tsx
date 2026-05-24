@@ -1,4 +1,4 @@
-import {
+﻿import {
   calculateMbsScore,
   MBS_CATEGORIES,
   MBS_CATEGORY_MAX_SCORE,
@@ -19,11 +19,20 @@ import {
   createInitialMbsCategoryValues,
   type ManualMbsCategoryValueState
 } from './manualMbsScorerInput';
+import {
+  cloneMockInvestmentIdeas,
+  createMockInvestmentIdeaFromMbsScore,
+  saveMockMbsScoreToInvestmentIdea,
+  type MockInvestmentIdea
+} from './mockInvestmentIdeas';
 
 type ManualMbsScorerScreenProps = {
   initialCategoryValues?: ManualMbsCategoryValueState;
+  initialInvestmentIdeas?: MockInvestmentIdea[];
   initialNotes?: string;
 };
+
+const CREATE_NEW_THESIS_ID = '__create-new-thesis__';
 
 const categoryLabels: Record<ManualBusinessScoreCategory, string> = {
   businessQuality: 'Business quality',
@@ -45,18 +54,171 @@ const categoryDescriptions: Record<ManualBusinessScoreCategory, string> = {
   risk: 'Manual view of downside, cyclicality, concentration, disruption, or fragility.'
 };
 
-const scoreRatingBadgeVariants: Record<ManualBusinessScoreRating, BadgeVariant> = {
-  exceptional: 'success',
-  incomplete: 'warning',
-  mixed: 'neutral',
-  strong: 'accent',
-  weak: 'risk'
+type ScoreDriver = {
+  category: ManualBusinessScoreCategory;
+  label: string;
+  value: number;
 };
+
+type ScoreStatus = {
+  label: string;
+  rating: ManualBusinessScoreRating | 'expensive';
+  variant: BadgeVariant;
+};
+
+function getCompletedDrivers(
+  input: Partial<Record<ManualBusinessScoreCategory, number>>
+): ScoreDriver[] {
+  return MBS_CATEGORIES.flatMap((category) => {
+    const value = input[category];
+
+    if (
+      typeof value !== 'number' ||
+      !Number.isFinite(value) ||
+      value < MBS_CATEGORY_MIN_SCORE ||
+      value > MBS_CATEGORY_MAX_SCORE
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        category,
+        label: categoryLabels[category],
+        value
+      }
+    ];
+  });
+}
+
+function getStrongestDrivers(
+  input: Partial<Record<ManualBusinessScoreCategory, number>>,
+  limit = 2
+): ScoreDriver[] {
+  return [...getCompletedDrivers(input)]
+    .sort((first, second) => second.value - first.value)
+    .slice(0, limit);
+}
+
+function getWeakestDrivers(
+  input: Partial<Record<ManualBusinessScoreCategory, number>>,
+  limit = 2
+): ScoreDriver[] {
+  return [...getCompletedDrivers(input)]
+    .sort((first, second) => first.value - second.value)
+    .slice(0, limit);
+}
+
+function isValuationWeakestDriver(weakestDrivers: ScoreDriver[]): boolean {
+  return weakestDrivers.some((driver) => driver.category === 'valuation');
+}
+
+function getScoreStatusLabel(
+  output: ReturnType<typeof calculateMbsScore>,
+  weakestDrivers: ScoreDriver[]
+): ScoreStatus {
+  if (output.missingCriteria.length > 0 || output.errors.length > 0) {
+    return {
+      label: 'Incomplete',
+      rating: 'incomplete',
+      variant: 'warning'
+    };
+  }
+
+  if (output.percentage >= 85) {
+    return {
+      label: 'Exceptional thesis',
+      rating: 'exceptional',
+      variant: 'success'
+    };
+  }
+
+  if (output.percentage >= 70 && isValuationWeakestDriver(weakestDrivers)) {
+    return {
+      label: 'Strong but expensive',
+      rating: 'expensive',
+      variant: 'warning'
+    };
+  }
+
+  if (output.percentage >= 70) {
+    return {
+      label: 'Strong thesis',
+      rating: 'strong',
+      variant: 'accent'
+    };
+  }
+
+  if (output.percentage >= 50) {
+    return {
+      label: 'Mixed thesis',
+      rating: 'mixed',
+      variant: 'neutral'
+    };
+  }
+
+  return {
+    label: 'Weak thesis',
+    rating: 'weak',
+    variant: 'risk'
+  };
+}
+
+function getScoreInterpretation(
+  output: ReturnType<typeof calculateMbsScore>,
+  strongestDrivers: ScoreDriver[],
+  weakestDrivers: ScoreDriver[]
+): string {
+  if (output.missingCriteria.length > 0 || output.errors.length > 0) {
+    return 'The thesis is incomplete. Add missing category scores before relying on the output.';
+  }
+
+  if (output.percentage >= 85) {
+    return 'Exceptional thesis profile. The strongest categories suggest high conviction, but still review risks and valuation.';
+  }
+
+  if (output.percentage >= 70 && isValuationWeakestDriver(weakestDrivers)) {
+    return 'High-quality thesis, but valuation may limit upside.';
+  }
+
+  if (output.percentage >= 70) {
+    return 'Strong thesis profile supported by the highest-scoring categories.';
+  }
+
+  if (output.percentage >= 50) {
+    return 'Mixed thesis. Some strengths exist, but weaker categories need review.';
+  }
+
+  const weakestDriverLabel = weakestDrivers[0]?.label.toLowerCase();
+
+  return weakestDriverLabel
+    ? `Weak thesis profile. Review ${weakestDriverLabel} before ranking this idea.`
+    : 'Weak thesis profile. Review the lowest-scoring categories before ranking this idea.';
+}
 
 export function ManualMbsScorerScreen({
   initialCategoryValues,
+  initialInvestmentIdeas,
   initialNotes = ''
 }: ManualMbsScorerScreenProps): JSX.Element {
+  const [investmentIdeas, setInvestmentIdeas] = useState<MockInvestmentIdea[]>(
+    () =>
+      initialInvestmentIdeas
+        ? initialInvestmentIdeas.map((idea) => ({
+            ...idea,
+            decisionLog: idea.decisionLog.map((entry) => ({ ...entry }))
+          }))
+        : cloneMockInvestmentIdeas()
+  );
+  const [selectedThesisId, setSelectedThesisId] = useState(() =>
+    initialInvestmentIdeas?.[0]?.id ?? cloneMockInvestmentIdeas()[0]?.id ?? CREATE_NEW_THESIS_ID
+  );
+  const [newThesisFields, setNewThesisFields] = useState({
+    companyName: '',
+    theme: '',
+    ticker: ''
+  });
+  const [thesisActionMessage, setThesisActionMessage] = useState('');
   const [categoryValues, setCategoryValues] =
     useState<ManualMbsCategoryValueState>(() =>
       createInitialMbsCategoryValues(initialCategoryValues)
@@ -74,6 +236,27 @@ export function ManualMbsScorerScreen({
   const completedPercent = Math.round(
     (scoreOutput.completedCriteria / MBS_CATEGORIES.length) * 100
   );
+  const strongestDrivers = useMemo(
+    () => getStrongestDrivers(scoreOutput.input),
+    [scoreOutput.input]
+  );
+  const weakestDrivers = useMemo(
+    () => getWeakestDrivers(scoreOutput.input),
+    [scoreOutput.input]
+  );
+  const scoreStatus = useMemo(
+    () => getScoreStatusLabel(scoreOutput, weakestDrivers),
+    [scoreOutput, weakestDrivers]
+  );
+  const scoreInterpretation = useMemo(
+    () => getScoreInterpretation(scoreOutput, strongestDrivers, weakestDrivers),
+    [scoreOutput, strongestDrivers, weakestDrivers]
+  );
+  const selectedThesis = useMemo(
+    () => investmentIdeas.find((idea) => idea.id === selectedThesisId) ?? null,
+    [investmentIdeas, selectedThesisId]
+  );
+  const isCreatingNewThesis = selectedThesisId === CREATE_NEW_THESIS_ID;
 
   function updateCategoryValue(
     category: ManualBusinessScoreCategory,
@@ -90,21 +273,189 @@ export function ManualMbsScorerScreen({
     setNotes('');
   }
 
+  function updateNewThesisField(
+    field: keyof typeof newThesisFields,
+    value: string
+  ): void {
+    setNewThesisFields((currentFields) => ({
+      ...currentFields,
+      [field]: value
+    }));
+  }
+
+  function saveScoreToSelectedThesis(): void {
+    if (!selectedThesis || isCreatingNewThesis) {
+      return;
+    }
+
+    const updatedAt = new Date().toISOString();
+
+    setInvestmentIdeas((currentIdeas) =>
+      saveMockMbsScoreToInvestmentIdea(
+        currentIdeas,
+        selectedThesis.id,
+        scoreOutput.score,
+        updatedAt
+      )
+    );
+    setThesisActionMessage('Score saved to thesis.');
+  }
+
+  function createNewThesisFromScore(): void {
+    const createdAt = new Date().toISOString();
+    const nextIdea = createMockInvestmentIdeaFromMbsScore(investmentIdeas, {
+      companyName: newThesisFields.companyName,
+      createdAt,
+      mbsScore: scoreOutput.score,
+      notes,
+      riskScore:
+        typeof scoreOutput.input.risk === 'number'
+          ? scoreOutput.input.risk
+          : undefined,
+      theme: newThesisFields.theme,
+      ticker: newThesisFields.ticker
+    });
+
+    setInvestmentIdeas((currentIdeas) => [...currentIdeas, nextIdea]);
+    setSelectedThesisId(nextIdea.id);
+    setNewThesisFields({
+      companyName: '',
+      theme: '',
+      ticker: ''
+    });
+    setThesisActionMessage('New thesis created.');
+  }
+
   return (
     <div className="mbs-screen">
       <PageHeader
-        badge={<Badge variant="accent">Manual inputs only</Badge>}
-        description="Enter your own category scores from 0 to 10. Thesis Investing uses deterministic local scoring only; this is educational software, not a buy, sell, or hold recommendation."
-        eyebrow="Phase 1 Manual Business Score"
+        badge={<Badge variant="accent">Local Scoring</Badge>}
+        description="Score a business across seven core criteria and keep the thesis context beside the output."
+        eyebrow="Business Score"
         title="MBS Scorer"
       />
 
       <div className="mbs-workspace-grid">
         <Card className="mbs-form-card" title="Guided manual scoring">
-          <div className="mbs-disclaimer">
-            Values are manually entered by the user. No live data, brokerage
-            connection, trading execution, or AI analysis is used.
-          </div>
+          <section className="mbs-thesis-link-panel" aria-label="Selected thesis">
+            <div className="mbs-thesis-link-header">
+              <div>
+                <span>Investment Idea</span>
+                <h2>Connect score to thesis</h2>
+              </div>
+              {thesisActionMessage ? (
+                <Badge variant="success">{thesisActionMessage}</Badge>
+              ) : null}
+            </div>
+
+            <label className="mbs-thesis-select-field">
+              <span>Selected thesis</span>
+              <select
+                aria-label="Selected thesis"
+                onChange={(event) => {
+                  setSelectedThesisId(event.currentTarget.value);
+                  setThesisActionMessage('');
+                }}
+                value={selectedThesisId}
+              >
+                {investmentIdeas.map((idea) => (
+                  <option key={idea.id} value={idea.id}>
+                    {idea.ticker} - {idea.companyName}
+                  </option>
+                ))}
+                <option value={CREATE_NEW_THESIS_ID}>
+                  Create new thesis from this score
+                </option>
+              </select>
+            </label>
+
+            {selectedThesis && !isCreatingNewThesis ? (
+              <div className="mbs-selected-thesis-card">
+                <div>
+                  <span>Ticker</span>
+                  <strong>{selectedThesis.ticker}</strong>
+                  <small>{selectedThesis.companyName}</small>
+                </div>
+                <div>
+                  <span>Theme</span>
+                  <strong>{selectedThesis.theme}</strong>
+                  <small>{selectedThesis.status}</small>
+                </div>
+                <div>
+                  <span>Saved MBS</span>
+                  <strong>{selectedThesis.mbsScore} / 100</strong>
+                  <small>
+                    Previous{' '}
+                    {selectedThesis.previousMbsScore ?? 'Not available'}
+                  </small>
+                </div>
+                <div>
+                  <span>Conviction</span>
+                  <strong>{selectedThesis.conviction}</strong>
+                  <small>Risk: {selectedThesis.risk}</small>
+                </div>
+              </div>
+            ) : (
+              <div className="mbs-new-thesis-grid">
+                <label className="mbs-thesis-select-field">
+                  <span>Ticker</span>
+                  <input
+                    aria-label="New thesis ticker"
+                    onChange={(event) =>
+                      updateNewThesisField('ticker', event.currentTarget.value)
+                    }
+                    placeholder="Optional"
+                    type="text"
+                    value={newThesisFields.ticker}
+                  />
+                </label>
+                <label className="mbs-thesis-select-field">
+                  <span>Company name</span>
+                  <input
+                    aria-label="New thesis company name"
+                    onChange={(event) =>
+                      updateNewThesisField(
+                        'companyName',
+                        event.currentTarget.value
+                      )
+                    }
+                    placeholder="New thesis"
+                    type="text"
+                    value={newThesisFields.companyName}
+                  />
+                </label>
+                <label className="mbs-thesis-select-field">
+                  <span>Theme</span>
+                  <input
+                    aria-label="New thesis theme"
+                    onChange={(event) =>
+                      updateNewThesisField('theme', event.currentTarget.value)
+                    }
+                    placeholder="Uncategorized"
+                    type="text"
+                    value={newThesisFields.theme}
+                  />
+                </label>
+              </div>
+            )}
+
+            <div className="mbs-thesis-actions">
+              <Button
+                disabled={!selectedThesis || isCreatingNewThesis}
+                onClick={saveScoreToSelectedThesis}
+                type="button"
+              >
+                Save score to selected thesis
+              </Button>
+              <Button
+                onClick={createNewThesisFromScore}
+                type="button"
+                variant="secondary"
+              >
+                Create new thesis from score
+              </Button>
+            </div>
+          </section>
 
           <div className="mbs-section-kicker">
             <Badge variant="neutral">Step 1</Badge>
@@ -131,10 +482,10 @@ export function ManualMbsScorerScreen({
                   onChange={(event) =>
                     updateCategoryValue(category, event.currentTarget.value)
                   }
-                  placeholder="0-10"
-                  type="text"
-                  value={categoryValues[category] ?? ''}
-                />
+                placeholder="0-10"
+                type="text"
+                value={categoryValues[category] ?? ''}
+              />
               </label>
             ))}
           </div>
@@ -153,7 +504,7 @@ export function ManualMbsScorerScreen({
               </span>
               <textarea
                 onChange={(event) => setNotes(event.currentTarget.value)}
-                placeholder="Write context for your manual scoring assumptions."
+                placeholder="Write context for your scoring assumptions."
                 rows={4}
                 value={notes}
               />
@@ -173,15 +524,15 @@ export function ManualMbsScorerScreen({
         >
           <div className="mbs-output-panel">
             <div className={`mbs-hero-score mbs-hero-score--${scoreOutput.rating}`}>
-              <span className="mbs-score-label">Manual Business Score</span>
+              <span className="mbs-score-label">Score</span>
               <strong>
                 {scoreOutput.score} / {scoreOutput.maxScore}
               </strong>
               <Badge
-                className={`mbs-rating-badge mbs-rating-badge--${scoreOutput.rating}`}
-                variant={scoreRatingBadgeVariants[scoreOutput.rating]}
+                className={`mbs-rating-badge mbs-rating-badge--${scoreStatus.rating}`}
+                variant={scoreStatus.variant}
               >
-                {scoreOutput.rating}
+                {scoreStatus.label}
               </Badge>
             </div>
 
@@ -202,9 +553,57 @@ export function ManualMbsScorerScreen({
               </div>
             </div>
 
-            <details className="mbs-output-section mbs-output-section--missing" open>
-              <summary>Missing criteria</summary>
-              {scoreOutput.missingCriteria.length > 0 ? (
+            <div className="mbs-driver-grid" aria-label="Score drivers">
+              <section className="mbs-driver-card">
+                <div className="mbs-driver-card-header">
+                  <span className="mbs-score-label">Strongest drivers</span>
+                </div>
+                {strongestDrivers.length > 0 ? (
+                  <ul className="mbs-driver-list">
+                    {strongestDrivers.map((driver) => (
+                      <li key={driver.category}>
+                        <span>{driver.label}</span>
+                        <strong>{driver.value}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No completed scores yet.</p>
+                )}
+              </section>
+
+              <section className="mbs-driver-card mbs-driver-card--weakest">
+                <div className="mbs-driver-card-header">
+                  <span className="mbs-score-label">Weakest drivers</span>
+                </div>
+                {weakestDrivers.length > 0 ? (
+                  <ul className="mbs-driver-list">
+                    {weakestDrivers.map((driver) => (
+                      <li key={driver.category}>
+                        <span>{driver.label}</span>
+                        <strong>{driver.value}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No completed scores yet.</p>
+                )}
+              </section>
+            </div>
+
+            <section className="mbs-interpretation-card">
+              <span className="mbs-score-label">Interpretation</span>
+              <p>{scoreInterpretation}</p>
+            </section>
+
+            {scoreOutput.missingCriteria.length > 0 ? (
+              <details className="mbs-output-section mbs-output-section--missing">
+                <summary>
+                  <span>Missing criteria</span>
+                  <Badge variant="warning">
+                    {scoreOutput.missingCriteria.length}
+                  </Badge>
+                </summary>
                 <ul className="mbs-chip-list">
                   {scoreOutput.missingCriteria.map((category) => (
                     <li className="mbs-chip" key={category}>
@@ -212,10 +611,18 @@ export function ManualMbsScorerScreen({
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <p>No missing criteria.</p>
-              )}
-            </details>
+              </details>
+            ) : scoreOutput.errors.length === 0 ? (
+              <div className="mbs-complete-indicator">
+                <span aria-hidden="true">OK</span>
+                <strong>All criteria complete</strong>
+              </div>
+            ) : (
+              <div className="mbs-complete-indicator mbs-complete-indicator--warning">
+                <span aria-hidden="true">!</span>
+                <strong>Review validation warnings</strong>
+              </div>
+            )}
 
             <details className="mbs-output-section mbs-output-section--warnings">
               <summary>Warnings and errors</summary>
@@ -240,3 +647,4 @@ export function ManualMbsScorerScreen({
     </div>
   );
 }
+

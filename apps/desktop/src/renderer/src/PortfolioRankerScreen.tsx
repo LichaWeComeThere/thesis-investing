@@ -4,7 +4,13 @@ import {
   rankManualPortfolioItems,
   type ManualPortfolioRankedItem
 } from '@thesis-investing/core';
-import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
+import {
+  Badge,
+  type BadgeVariant,
+  Button,
+  Card,
+  PageHeader
+} from '@thesis-investing/ui';
 import { useMemo, useState } from 'react';
 import {
   buildPortfolioRankerInput,
@@ -17,18 +23,16 @@ type PortfolioRankerScreenProps = {
   onOpenWorkspace?: (workspaceId: string) => void;
 };
 
+type ThesisStatusDisplay = {
+  label: string;
+  variant: BadgeVariant;
+};
+
 const defaultRows = [
   createEmptyPortfolioRankerRow('idea-1'),
   createEmptyPortfolioRankerRow('idea-2'),
   createEmptyPortfolioRankerRow('idea-3')
 ];
-
-const weakestIdeaMockup = {
-  ticker: 'CRWD',
-  score: 65,
-  message:
-    'Mock example: CRWD has the lowest score and may need review. Revisit the thesis, score assumptions, or notes before comparing it with stronger ideas.'
-};
 
 export function PortfolioRankerScreen({
   initialRows = defaultRows,
@@ -67,6 +71,9 @@ export function PortfolioRankerScreen({
           item.manualScore < lowest.manualScore ? item : lowest
         )
       : null;
+  const weakestIdeaReason = weakestIdea
+    ? getWeakestIdeaReason(weakestIdea)
+    : null;
   const hasIncompleteRankerItems = rankedItems.some(
     (item) => item.status !== 'ranked'
   );
@@ -114,29 +121,24 @@ export function PortfolioRankerScreen({
   return (
     <div className="portfolio-ranker-screen">
       <PageHeader
-        badge={<Badge variant="accent">Manual ranking only</Badge>}
-        description="Enter your own holdings or ideas and a manual score from 0 to 100. Rankings are deterministic, educational, and non-advisory; they are not buy, sell, or hold recommendations."
-        eyebrow="Phase 1 Portfolio Ranker"
-        title="Portfolio Ranker"
+        badge={<Badge variant="accent">Demo Rankings</Badge>}
+        description="Rank investment ideas by thesis score, status, conviction, risk, and review priority."
+        eyebrow="Idea Ranking Board"
+        title="Thesis Rankings"
       />
 
       <div className="portfolio-ranker-layout">
-        <Card className="portfolio-ranker-workspace-card" title="Holdings workspace">
-          <div className="portfolio-ranker-disclaimer">
-            Inputs are manually entered by the user. No live data, brokerage
-            connection, trading execution, external API, or AI analysis is used.
-          </div>
-
+        <Card className="portfolio-ranker-workspace-card" title="Thesis ranking board">
           <div className="portfolio-ranker-toolbar">
             <div>
-              <h2>Manual holdings</h2>
+              <h2>Investment ideas</h2>
               <p>
-                Compact cards keep each idea scannable. Expand a card when you
-                need to edit its ticker, score, company, or notes.
+                Compact ranking cards keep score, thesis context, and review
+                status visible while you compare ideas.
               </p>
             </div>
             <Button onClick={addRow} type="button">
-              + Add holding
+              + Add idea
             </Button>
           </div>
 
@@ -144,16 +146,16 @@ export function PortfolioRankerScreen({
             <label className="portfolio-ranker-search">
               <span>Search</span>
               <input
-                aria-label="Search holdings"
-                placeholder="Search holdings..."
+                aria-label="Search ideas"
+                placeholder="Search ideas..."
                 readOnly
                 type="search"
               />
             </label>
             <label className="portfolio-ranker-filter">
               <span>Filter</span>
-              <select aria-label="Filter holdings" defaultValue="all">
-                <option value="all">All entries</option>
+              <select aria-label="Filter ideas" defaultValue="all">
+                <option value="all">All ideas</option>
               </select>
             </label>
             <label className="portfolio-ranker-filter">
@@ -167,6 +169,7 @@ export function PortfolioRankerScreen({
           <div className="portfolio-ranker-rows">
             {rows.map((row, index) => {
               const rankedItem = rankedItemsById.get(row.id);
+              const thesisStatus = getThesisStatus(rankedItem);
 
               return (
                 <article className="portfolio-ranker-row" key={row.id}>
@@ -176,39 +179,43 @@ export function PortfolioRankerScreen({
                     </div>
                     <div className="portfolio-ranker-row-summary">
                       <span className="portfolio-ranker-entry-number">
-                        Entry {index + 1}
+                        Idea {index + 1}
                       </span>
                       <h3>{formatTickerPreview(row)}</h3>
                       <p>{formatCompanyPreview(row)}</p>
-                      <span className="portfolio-ranker-sector-badge">
-                        Manual thesis
-                      </span>
                     </div>
-                    <div className="portfolio-ranker-row-stats">
-                      <span>
-                        Score <strong>{formatRowScorePreview(row)}</strong>
-                      </span>
-                      <span>
-                        Rank{' '}
-                        <strong>
-                          {rankedItem?.rank ?? formatStatus(rankedItem)}
-                        </strong>
-                      </span>
-                    </div>
+                    <Badge
+                      className={`portfolio-ranker-score-badge ${getScoreToneClass(rankedItem)}`}
+                      variant={getScoreBadgeVariant(rankedItem)}
+                    >
+                      MBS {formatRowScorePreview(row)}
+                    </Badge>
                   </div>
 
-                  <div className="portfolio-ranker-row-body">
-                    <div>
-                      <span>Notes</span>
-                      <p>{formatNotesPreview(row)}</p>
-                    </div>
-                    <div>
-                      <span>Last updated</span>
-                      <p>Local draft</p>
-                    </div>
+                  <div className="portfolio-ranker-thesis-meta">
+                    <Badge variant={thesisStatus.variant}>
+                      {thesisStatus.label}
+                    </Badge>
+                    <span className="portfolio-ranker-meta-chip">
+                      Conviction: Not set
+                    </span>
+                    <span className="portfolio-ranker-meta-chip portfolio-ranker-meta-chip--risk">
+                      Risk: Not set
+                    </span>
+                    <span className="portfolio-ranker-meta-chip">
+                      Theme: Not set
+                    </span>
                   </div>
 
                   <div className="portfolio-ranker-row-actions">
+                    <div className="portfolio-ranker-review-dates">
+                      <span>
+                        Last reviewed <strong>Not set</strong>
+                      </span>
+                      <span>
+                        Next review <strong>Not set</strong>
+                      </span>
+                    </div>
                     <details className="portfolio-ranker-editor">
                       <summary>Edit details</summary>
                       <div className="portfolio-ranker-entry-grid">
@@ -291,7 +298,7 @@ export function PortfolioRankerScreen({
 
           <div className="portfolio-ranker-actions">
             <Button onClick={addRow} type="button" variant="secondary">
-              + Add another holding
+              + Add another idea
             </Button>
             <Button onClick={clearRows} type="button" variant="secondary">
               Clear entries
@@ -302,11 +309,11 @@ export function PortfolioRankerScreen({
         <Card
           className="portfolio-ranker-output-card"
           emphasis
-          title="Deterministic ranking output"
+          title="Ranking output"
         >
           <div className="portfolio-ranker-output-hero">
             <div>
-              <span>Ranked holdings</span>
+              <span>Ranked ideas</span>
               <strong>
                 {rankedCount} / {rows.length}
               </strong>
@@ -333,8 +340,8 @@ export function PortfolioRankerScreen({
                 {rankedItems.map((item) => (
                   <div className="portfolio-ranker-preview-row" key={item.id}>
                     <strong>{formatRank(item)}</strong>
-                    <span>{item.normalizedTicker}</span>
-                    <span>{item.companyName ?? 'Not provided'}</span>
+                    <span>{formatPreviewTicker(item)}</span>
+                    <span>{item.companyName ?? 'Not set'}</span>
                     <span>{formatScore(item)}</span>
                   </div>
                 ))}
@@ -349,7 +356,7 @@ export function PortfolioRankerScreen({
                         .filter((item) => item.errors.length > 0)
                         .map((item) => (
                           <li key={item.id}>
-                            {item.normalizedTicker || 'Untitled entry'}:{' '}
+                            {formatPreviewTicker(item)}:{' '}
                             {item.errors.join(' ')}
                           </li>
                         ))}
@@ -362,9 +369,9 @@ export function PortfolioRankerScreen({
             </div>
           ) : (
             <div className="portfolio-ranker-empty-state">
-              <h3>No positions ranked yet</h3>
+              <h3>No ideas ranked yet</h3>
               <p>
-                Add your first holding with a ticker and manual score to generate
+                Add your first idea with a ticker and manual score to generate
                 a deterministic ranking.
               </p>
             </div>
@@ -375,7 +382,7 @@ export function PortfolioRankerScreen({
             <div>
               <span className="portfolio-ranker-guide-dot portfolio-ranker-guide-dot--risk" />
               <p>
-                <strong>0</strong> Very weak thesis / high risk
+                <strong>0</strong> Weak thesis / high risk
               </p>
             </div>
             <div>
@@ -387,7 +394,7 @@ export function PortfolioRankerScreen({
             <div>
               <span className="portfolio-ranker-guide-dot portfolio-ranker-guide-dot--growth" />
               <p>
-                <strong>100</strong> Very strong thesis / high conviction
+                <strong>100</strong> Strong thesis / high conviction
               </p>
             </div>
           </div>
@@ -403,10 +410,10 @@ export function PortfolioRankerScreen({
               {weakestIdea || validRankedItems.length === 0 ? (
                 <button
                   className="portfolio-ranker-weakest-action"
-                  onClick={() => onOpenWorkspace?.('thesis-monitor')}
+                  onClick={() => onOpenWorkspace?.('mbs-scorer')}
                   type="button"
                 >
-                  Re-evaluate your thesis
+                  Re-evaluate thesis
                   <span className="portfolio-ranker-weakest-action-arrow" aria-hidden="true">
                     <svg
                       fill="none"
@@ -437,37 +444,37 @@ export function PortfolioRankerScreen({
             {weakestIdea ? (
               <>
                 <div className="portfolio-ranker-weakest-score">
-                  <span>Score</span>
+                  <span>{weakestIdea.normalizedTicker}</span>
                   <strong>
                     {weakestIdea.manualScore} / {PORTFOLIO_RANKER_MAX_SCORE}
                   </strong>
                 </div>
+                <dl className="portfolio-ranker-weakest-detail-list">
+                  <div>
+                    <dt>Reason</dt>
+                    <dd>{weakestIdeaReason}</dd>
+                  </div>
+                  <div>
+                    <dt>Action</dt>
+                    <dd>Re-evaluate thesis</dd>
+                  </div>
+                </dl>
                 <p>
-                  {weakestIdea.normalizedTicker} has the lowest valid score and
-                  may need review. Revisit the thesis, score assumptions, or
-                  notes before comparing it with stronger ideas.
+                  {weakestIdea.normalizedTicker} is the lowest valid scored idea
+                  on the current board.
                 </p>
               </>
             ) : validRankedItems.length === 1 ? (
               <p>
-                Only one holding ranked. Add more holdings to compare weakest
-                ideas.
+                Add more ideas to compare weakest thesis.
               </p>
             ) : (
-              <>
-                <div className="portfolio-ranker-weakest-score">
-                  <span>{weakestIdeaMockup.ticker}</span>
-                  <strong>
-                    {weakestIdeaMockup.score} / {PORTFOLIO_RANKER_MAX_SCORE}
-                  </strong>
-                </div>
-                <p>{weakestIdeaMockup.message}</p>
-              </>
+              <p>Add scores to identify the weakest idea.</p>
             )}
 
             {hasIncompleteRankerItems ? (
               <small>
-                Incomplete holdings are excluded until they have a valid score.
+                Incomplete ideas are excluded until they have a valid score.
               </small>
             ) : null}
           </div>
@@ -479,24 +486,18 @@ export function PortfolioRankerScreen({
 
 function formatTickerPreview(row: PortfolioRankerRowState): string {
   const ticker = row.ticker.trim();
-  return ticker || 'Untitled holding';
+  return ticker ? ticker.toUpperCase() : 'Add ticker';
 }
 
 function formatCompanyPreview(row: PortfolioRankerRowState): string {
   const companyName = row.companyName.trim();
-  return companyName || 'Company not provided';
-}
-
-function formatNotesPreview(row: PortfolioRankerRowState): string {
-  return row.notes.trim()
-    ? row.notes.trim()
-    : 'No notes added yet. Add user-entered context for this manual score.';
+  return companyName || 'New idea';
 }
 
 function formatRowScorePreview(row: PortfolioRankerRowState): string {
   return row.manualScore.trim()
     ? `${row.manualScore.trim()} / ${PORTFOLIO_RANKER_MAX_SCORE}`
-    : 'Missing';
+    : 'Not set';
 }
 
 function formatRank(item: ManualPortfolioRankedItem): string {
@@ -505,8 +506,67 @@ function formatRank(item: ManualPortfolioRankedItem): string {
 
 function formatScore(item: ManualPortfolioRankedItem): string {
   return item.manualScore === undefined
-    ? 'Missing'
+    ? 'Not set'
     : `${item.manualScore} / ${PORTFOLIO_RANKER_MAX_SCORE}`;
+}
+
+function formatPreviewTicker(item: ManualPortfolioRankedItem): string {
+  return item.normalizedTicker || 'Add ticker';
+}
+
+function getThesisStatus(
+  _item: ManualPortfolioRankedItem | undefined
+): ThesisStatusDisplay {
+  return {
+    label: 'Thesis: Not set',
+    variant: 'neutral'
+  };
+}
+
+function getScoreBadgeVariant(
+  item: ManualPortfolioRankedItem | undefined
+): BadgeVariant {
+  if (!item || item.status === 'incomplete') {
+    return 'warning';
+  }
+
+  if (item.status === 'invalid') {
+    return 'risk';
+  }
+
+  if ((item.manualScore ?? 0) >= 70) {
+    return 'success';
+  }
+
+  if ((item.manualScore ?? 0) >= 50) {
+    return 'accent';
+  }
+
+  return 'risk';
+}
+
+function getScoreToneClass(item: ManualPortfolioRankedItem | undefined): string {
+  if (!item || item.status === 'incomplete') {
+    return 'portfolio-ranker-score-badge--warning';
+  }
+
+  if (item.status === 'invalid') {
+    return 'portfolio-ranker-score-badge--risk';
+  }
+
+  if ((item.manualScore ?? 0) >= 70) {
+    return 'portfolio-ranker-score-badge--strong';
+  }
+
+  if ((item.manualScore ?? 0) >= 50) {
+    return 'portfolio-ranker-score-badge--mixed';
+  }
+
+  return 'portfolio-ranker-score-badge--risk';
+}
+
+function getWeakestIdeaReason(_item: ManualPortfolioRankedItem): string {
+  return 'Lowest current thesis score.';
 }
 
 function formatStatus(item: ManualPortfolioRankedItem | undefined): string {

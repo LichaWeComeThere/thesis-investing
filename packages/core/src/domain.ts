@@ -168,3 +168,37 @@ export type Reminder = {
   completedAt?: IsoDateString;
   createdAt?: IsoDateString;
 };
+
+export type InvestmentIdeaWatchlistStatus =
+  | 'none'
+  | 'watchlisted'
+  | 'archived';
+
+export type InvestmentIdeaDecisionLogEntry = {
+  id: EntityId;
+  decision: string;
+  note?: string;
+  createdAt?: IsoDateString;
+};
+
+export type InvestmentIdea = {
+  id: EntityId;
+  ticker: TickerSymbol;
+  companyName?: string;
+  theme?: string;
+  watchlistStatus: InvestmentIdeaWatchlistStatus;
+  mbsScore?: ManualBusinessScoreInput;
+  adjustedScore?: number;
+  conviction?: 'low' | 'medium' | 'high';
+  thesisStatus: ThesisStatus;
+  bullCase?: string;
+  bearCase?: string;
+  risks?: string;
+  catalysts?: string;
+  reviewDate?: IsoDateString;
+  notes?: string;
+  decisionLog: InvestmentIdeaDecisionLogEntry[];
+  reminder?: Reminder;
+  createdAt?: IsoDateString;
+  updatedAt?: IsoDateString;
+};

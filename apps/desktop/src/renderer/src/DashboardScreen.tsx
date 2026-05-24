@@ -1,97 +1,110 @@
-import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
+import { Badge, Card, PageHeader } from '@thesis-investing/ui';
 import { MarketPulseFeed } from './MarketPulseFeed';
 import './dashboard.css';
 
-type DashboardArea = {
-  id: string;
-  title: string;
-  status: 'available' | 'pending';
-  summary: string;
-  note: string;
-};
+type ThesisHealthTone = 'tracked' | 'strong' | 'review' | 'weakening';
 
-type ReadinessItem = {
+type ThesisHealthItem = {
   label: string;
-  status: 'built' | 'pending';
+  value: number;
+  tone: ThesisHealthTone;
 };
 
-const dashboardAreas: DashboardArea[] = [
+type ReviewPriorityItem = {
+  label: string;
+  ticker: string;
+  detail: string;
+  tone: ThesisHealthTone;
+};
+
+type RecentActivityItem = {
+  ticker: string;
+  action: string;
+  detail: string;
+  tone: ThesisHealthTone;
+};
+
+type QuickAction = {
+  label: string;
+  workspaceId: string;
+  description: string;
+};
+
+const thesisHealthItems: ThesisHealthItem[] = [
+  { label: 'Theses tracked', value: 8, tone: 'tracked' },
+  { label: 'Needs review', value: 2, tone: 'review' },
+  { label: 'Weakening', value: 1, tone: 'weakening' },
+  { label: 'Strong conviction', value: 3, tone: 'strong' }
+];
+
+const reviewPriorityItems: ReviewPriorityItem[] = [
   {
-    id: 'mbs-scorer',
-    title: 'Manual MBS Scorer',
-    status: 'available',
-    summary:
-      'Enter category scores by hand and view the deterministic Manual Business Score output.',
-    note: 'Manual user input only. Notes do not affect scoring.'
+    label: 'Weakest Idea',
+    ticker: 'CRWD',
+    detail: 'Thesis score needs a fresh risk review.',
+    tone: 'weakening'
   },
   {
-    id: 'portfolio-ranker',
-    title: 'Portfolio Ranker',
-    status: 'available',
-    summary:
-      'Rank locally entered ideas by user-provided manual scores without brokerage data.',
-    note: 'No prices, imports, allocations, or trade recommendations.'
+    label: 'Biggest Score Drop',
+    ticker: 'TSLA',
+    detail: 'Margin pressure moved the thesis into caution.',
+    tone: 'review'
   },
   {
-    id: 'thesis-monitor',
-    title: 'Thesis Monitor',
-    status: 'available',
-    summary:
-      'Write and review user-authored thesis notes with user-controlled status labels.',
-    note: 'No automated news monitoring or generated analyst commentary.'
-  },
-  {
-    id: 'watchlist',
-    title: 'Watchlist',
-    status: 'available',
-    summary:
-      'Track manually entered symbols, company names, tags, and local notes.',
-    note: 'No live prices, alerts, APIs, or auto-filled company data.'
-  },
-  {
-    id: 'theme-baskets',
-    title: 'Theme Baskets',
-    status: 'available',
-    summary:
-      'Browse static educational groupings for organizing research ideas by theme.',
-    note: 'Not personalized, ranked, weighted, or a model portfolio.'
-  },
-  {
-    id: 'reminders',
-    title: 'Reminders',
-    status: 'available',
-    summary:
-      'Track manually entered earnings, thesis review, and custom dates locally.',
-    note: 'No system notifications, background scheduling, APIs, or calendars.'
+    label: 'Review Due Soon',
+    ticker: 'NVDA',
+    detail: 'AI infrastructure thesis is ready for the next check-in.',
+    tone: 'tracked'
   }
 ];
 
-const readinessItems: ReadinessItem[] = [
-  { label: 'First-run onboarding', status: 'built' },
-  { label: 'Manual MBS scoring', status: 'built' },
-  { label: 'Local portfolio ranking', status: 'built' },
-  { label: 'Thesis notes and monitoring', status: 'built' },
-  { label: 'Manual watchlist', status: 'built' },
-  { label: 'Static theme baskets', status: 'built' },
-  { label: 'Manual reminders', status: 'built' },
-  { label: 'Windows MVP release build', status: 'pending' }
+const recentActivityItems: RecentActivityItem[] = [
+  {
+    ticker: 'NVDA',
+    action: 'score updated',
+    detail: 'Business quality and moat assumptions refreshed.',
+    tone: 'strong'
+  },
+  {
+    ticker: 'CRWD',
+    action: 'moved to Watch',
+    detail: 'Retention and growth durability need another pass.',
+    tone: 'review'
+  },
+  {
+    ticker: 'TSLA',
+    action: 'flagged as Caution',
+    detail: 'Bear case expanded after margin pressure.',
+    tone: 'weakening'
+  }
 ];
 
-const builtWorkflowCount = dashboardAreas.filter(
-  (area) => area.status === 'available'
-).length;
+const quickActions: QuickAction[] = [
+  {
+    label: 'Open MBS Scorer',
+    workspaceId: 'mbs-scorer',
+    description: 'Refresh score assumptions.'
+  },
+  {
+    label: 'Review Thesis Rankings',
+    workspaceId: 'portfolio-ranker',
+    description: 'Compare scored ideas.'
+  },
+  {
+    label: 'Open Thesis Monitor',
+    workspaceId: 'thesis-monitor',
+    description: 'Update thesis health.'
+  },
+  {
+    label: 'Check Watchlist',
+    workspaceId: 'watchlist',
+    description: 'Review tracked ideas.'
+  }
+];
 
 type DashboardScreenProps = {
   onOpenWorkspace?: (workspaceId: string) => void;
 };
-
-function statusBadge(status: DashboardArea['status']): JSX.Element {
-  return status === 'available' ? (
-    <Badge variant="accent">Available</Badge>
-  ) : (
-    <Badge variant="neutral">Pending</Badge>
-  );
-}
 
 export function DashboardScreen({
   onOpenWorkspace
@@ -99,9 +112,9 @@ export function DashboardScreen({
   return (
     <div className="dashboard-screen">
       <PageHeader
-        badge={<Badge variant="accent">Local overview</Badge>}
-        description="A read-only dashboard for the current offline MVP areas. It summarizes local/manual workflows and does not aggregate saved data yet."
-        eyebrow="Phase 1 Dashboard"
+        badge={<Badge variant="accent">Command Center</Badge>}
+        description="Review thesis health, priority ideas, market context, and the next research actions."
+        eyebrow="Investor Command Center"
         title="Dashboard"
       />
 
@@ -109,134 +122,91 @@ export function DashboardScreen({
         <MarketPulseFeed />
 
         <div className="dashboard-main-stack">
-          <section
-            className="dashboard-hero-grid"
-            aria-label="Dashboard overview"
-          >
-            <Card emphasis title="Continue where you left off">
-              <div className="dashboard-continue">
-                <p>
-                  Start with scoring, ranking, or thesis notes. Every module
-                  stays local, manual, and non-advisory.
-                </p>
-                <div className="dashboard-primary-actions">
-                  <Button
-                    onClick={() => onOpenWorkspace?.('mbs-scorer')}
-                    type="button"
+          <section className="dashboard-health-section" aria-label="Thesis health">
+            <div className="dashboard-section-heading">
+              <h2>Thesis Health Overview</h2>
+              <p>Today&apos;s local research queue.</p>
+            </div>
+            <div className="dashboard-health-grid">
+              {thesisHealthItems.map((item) => (
+                <Card
+                  className={`dashboard-health-card dashboard-health-card--${item.tone}`}
+                  key={item.label}
+                >
+                  <div className="dashboard-health-card-content">
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          <section className="dashboard-command-grid" aria-label="Review focus">
+            <Card className="review-priority-card" emphasis title="Review Priority">
+              <div className="review-priority-list">
+                {reviewPriorityItems.map((item) => (
+                  <article
+                    className={`review-priority-item review-priority-item--${item.tone}`}
+                    key={item.label}
                   >
-                    Open MBS Scorer
-                  </Button>
-                  <Button
-                    onClick={() => onOpenWorkspace?.('portfolio-ranker')}
-                    type="button"
-                    variant="secondary"
-                  >
-                    Rank portfolio
-                  </Button>
-                </div>
+                    <div>
+                      <span>{item.label}</span>
+                      <strong>{item.ticker}</strong>
+                    </div>
+                    <p>{item.detail}</p>
+                  </article>
+                ))}
               </div>
             </Card>
 
-            <Card title="Recent activity">
-              <div className="dashboard-empty-state">
-                <span className="dashboard-empty-icon" aria-hidden="true">
-                  +
-                </span>
-                <div>
-                  <h3>No activity timeline yet</h3>
-                  <p>
-                    Saved activity is not aggregated in this MVP. Use the
-                    modules below to continue manual work.
-                  </p>
-                </div>
+            <Card className="market-regime-card" title="Market Regime">
+              <div className="market-regime-hero">
+                <span>Regime</span>
+                <strong>Under Pressure</strong>
+              </div>
+              <p>Growth stocks need caution.</p>
+              <div className="market-regime-tags">
+                <Badge variant="warning">Risk check</Badge>
+                <Badge variant="neutral">Research context</Badge>
               </div>
             </Card>
           </section>
 
-          <Card title="Offline MVP snapshot">
-            <div className="dashboard-disclaimer">
-              This dashboard is static and local for this stage. No live prices,
-              stock APIs, brokerage import, trading execution, AI summaries,
-              analyst commentary, cloud sync, or personalized financial advice
-              are used.
-            </div>
+          <section className="dashboard-lower-grid" aria-label="Activity and actions">
+            <Card title="Recent Thesis Activity">
+              <div className="recent-activity-list">
+                {recentActivityItems.map((item) => (
+                  <article
+                    className={`recent-activity-item recent-activity-item--${item.tone}`}
+                    key={`${item.ticker}-${item.action}`}
+                  >
+                    <span>{item.ticker}</span>
+                    <div>
+                      <strong>{item.action}</strong>
+                      <p>{item.detail}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </Card>
 
-            <div className="dashboard-metrics" aria-label="Dashboard metrics">
-              <div className="dashboard-metric">
-                <span>Manual workflows available</span>
-                <strong>{builtWorkflowCount}</strong>
-              </div>
-              <div className="dashboard-metric">
-                <span>Live data integrations</span>
-                <strong>0</strong>
-              </div>
-              <div className="dashboard-metric">
-                <span>Brokerage connections</span>
-                <strong>0</strong>
-              </div>
-              <div className="dashboard-metric">
-                <span>Pending MVP areas</span>
-                <strong>1</strong>
-              </div>
-            </div>
-          </Card>
-
-          <Card title="Quick actions">
-            <div className="dashboard-area-grid">
-              {dashboardAreas.map((area) => (
-                <article className="dashboard-area-card" key={area.title}>
-                  <div className="dashboard-area-card-header">
-                    <h2>{area.title}</h2>
-                    {statusBadge(area.status)}
-                  </div>
-                  <p>{area.summary}</p>
-                  <small>{area.note}</small>
+            <Card title="Continue Research">
+              <div className="quick-action-grid">
+                {quickActions.map((action) => (
                   <button
-                    className="dashboard-next-step"
-                    disabled={area.status !== 'available'}
-                    onClick={() => onOpenWorkspace?.(area.id)}
+                    className="quick-action-card"
+                    key={action.workspaceId}
+                    onClick={() => onOpenWorkspace?.(action.workspaceId)}
                     type="button"
                   >
-                    {area.status === 'available'
-                      ? 'Open workspace'
-                      : 'Coming soon'}
+                    <span>{action.label}</span>
+                    <small>{action.description}</small>
                   </button>
-                </article>
-              ))}
-            </div>
-          </Card>
-
-          <div className="dashboard-lower-grid">
-            <Card title="MVP readiness checklist">
-              <ul className="dashboard-checklist">
-                {readinessItems.map((item) => (
-                  <li key={item.label}>
-                    <span>{item.label}</span>
-                    <Badge
-                      variant={item.status === 'built' ? 'accent' : 'neutral'}
-                    >
-                      {item.status === 'built' ? 'Built' : 'Pending'}
-                    </Badge>
-                  </li>
                 ))}
-              </ul>
-            </Card>
-
-            <Card title="Use this dashboard for">
-              <div className="dashboard-guide">
-                <p>
-                  Start here to see which local MVP areas are available, then
-                  open a workspace from the sidebar. Each built area still uses
-                  user-directed manual inputs.
-                </p>
-                <p>
-                  This overview is educational software only. It is not a
-                  recommendation to buy, sell, hold, size, rank, or allocate any
-                  security.
-                </p>
               </div>
             </Card>
-          </div>
+          </section>
         </div>
       </div>
     </div>

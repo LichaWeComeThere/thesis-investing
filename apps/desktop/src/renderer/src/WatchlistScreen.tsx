@@ -108,20 +108,14 @@ export function WatchlistScreen({
   return (
     <div className="watchlist-screen">
       <PageHeader
-        badge={<Badge variant="accent">Manual entries only</Badge>}
-        description="Track user-entered symbols or companies locally. This watchlist is educational and non-advisory, with no live prices, alerts, APIs, brokerage, trading execution, AI, or sync."
-        eyebrow="Phase 1 Watchlist"
+        badge={<Badge variant="accent">Local Watchlist</Badge>}
+        description="Track companies, tags, thesis references, and research context in one focused list."
+        eyebrow="Research Workspace"
         title="Watchlist"
       />
 
       <div className="watchlist-workspace-grid">
         <Card className="watchlist-form-card" title="Add or edit watchlist item">
-          <div className="watchlist-disclaimer">
-            Items are manually entered by the user. No live prices, external APIs,
-            price alerts, brokerage connection, trading execution, AI analysis, or
-            cloud sync is used.
-          </div>
-
           <div className="watchlist-form-grid">
             <label className="watchlist-field">
               <span>Ticker</span>
@@ -177,7 +171,7 @@ export function WatchlistScreen({
             <textarea
               aria-label="Watchlist note"
               onChange={(event) => updateForm('note', event.currentTarget.value)}
-              placeholder="Manual context for why this belongs on the watchlist."
+              placeholder="Context for why this belongs on the watchlist."
               rows={4}
               value={form.note}
             />
@@ -209,7 +203,7 @@ export function WatchlistScreen({
             <span>Tracked ideas</span>
             <strong>{items.length}</strong>
             <Badge variant={items.length > 0 ? 'accent' : 'neutral'}>
-              Manual only
+              Local
             </Badge>
           </div>
 
@@ -294,7 +288,7 @@ export function WatchlistScreen({
                   </p>
                   <h3>{selectedItem.companyName ?? 'Company not provided'}</h3>
                 </div>
-                <Badge variant="neutral">Manual</Badge>
+                <Badge variant="neutral">Local</Badge>
               </div>
 
               <dl className="watchlist-meta-grid">

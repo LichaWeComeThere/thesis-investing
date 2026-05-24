@@ -25,19 +25,13 @@ export function ThemeBasketsScreen({
   return (
     <div className="theme-baskets-screen">
       <PageHeader
-        badge={<Badge variant="accent">Static education only</Badge>}
-        description="Browse fixed educational groupings for organizing research ideas by theme. These baskets are not personalized recommendations, model portfolios, allocation advice, or buy/sell/hold lists."
-        eyebrow="Phase 1 Theme Baskets"
+        badge={<Badge variant="accent">Theme Library</Badge>}
+        description="Browse curated research themes and example companies to organize new ideas."
+        eyebrow="Research Library"
         title="Theme Baskets"
       />
 
-      <Card className="theme-baskets-library-card" title="Static basket library">
-        <div className="theme-baskets-disclaimer">
-          Baskets are static educational organization aids. No live updates,
-          stock APIs, brokerage connection, trading execution, AI analysis, or
-          cloud sync is used.
-        </div>
-
+      <Card className="theme-baskets-library-card" title="Theme library">
         <div className="theme-baskets-layout">
           <div
             aria-label="Static theme basket list"
@@ -67,7 +61,7 @@ export function ThemeBasketsScreen({
             <div className="theme-basket-details-header">
               <div>
                 <p className="theme-basket-details-eyebrow">
-                  Educational theme
+                  Research theme
                 </p>
                 <h2>{selectedBasket.name}</h2>
               </div>
@@ -79,7 +73,7 @@ export function ThemeBasketsScreen({
             </p>
 
             <section className="theme-basket-section">
-              <h3>Educational rationale</h3>
+              <h3>Why it matters</h3>
               <p>{selectedBasket.educationalRationale}</p>
             </section>
 
@@ -110,7 +104,7 @@ export function ThemeBasketsScreen({
                       <tr key={`${selectedBasket.id}-${example.companyName}`}>
                         <td>{example.ticker ?? 'N/A'}</td>
                         <td>{example.companyName}</td>
-                        <td>{example.note ?? 'Static educational example.'}</td>
+                        <td>{example.note ?? 'Research example.'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -118,10 +112,6 @@ export function ThemeBasketsScreen({
               </div>
             </section>
 
-            <div className="theme-basket-safety-note">
-              {selectedBasket.nonAdvisoryNote} Examples are not ranked, weighted,
-              or tied to allocation guidance.
-            </div>
           </article>
         </div>
       </Card>

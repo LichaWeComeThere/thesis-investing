@@ -170,6 +170,10 @@ select {
   margin: 0;
 }
 
+.local-mode-badge {
+  margin-top: 14px;
+}
+
 .navigation-list {
   display: flex;
   flex: 1;
@@ -840,6 +844,11 @@ select:focus-visible {
   color: var(--ti-color-text);
   font-size: 23px;
   letter-spacing: 0;
+}
+
+.local-mode-badge {
+  align-self: flex-start;
+  margin-top: 14px;
 }
 
 .brand-eyebrow {
@@ -1676,6 +1685,117 @@ select:focus-visible {
   color: var(--ti-color-accent) !important;
 }
 
+.mbs-thesis-link-panel {
+  background:
+    radial-gradient(circle at 94% 4%, rgba(72, 224, 204, 0.09), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.022);
+  border: 1px solid rgba(72, 224, 204, 0.16);
+  border-radius: 22px;
+  box-shadow: var(--ti-shadow-surface-inset);
+  display: grid;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 18px;
+}
+
+.mbs-thesis-link-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.mbs-thesis-link-header span,
+.mbs-thesis-select-field span,
+.mbs-selected-thesis-card span {
+  color: var(--ti-color-text-subtle);
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1.25;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.mbs-thesis-link-header h2 {
+  color: var(--ti-color-text);
+  font-size: 20px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.mbs-thesis-select-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mbs-thesis-select-field input,
+.mbs-thesis-select-field select {
+  background: var(--ti-color-surface-soft);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  box-shadow: var(--ti-shadow-surface-inset);
+  color: var(--ti-color-text);
+  min-height: 44px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.mbs-thesis-select-field input:focus,
+.mbs-thesis-select-field select:focus {
+  border-color: rgba(72, 224, 204, 0.55);
+  box-shadow:
+    0 0 0 3px rgba(72, 224, 204, 0.12),
+    var(--ti-shadow-surface-inset);
+  outline: none;
+}
+
+.mbs-selected-thesis-card,
+.mbs-new-thesis-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mbs-selected-thesis-card div {
+  background: rgba(27, 37, 48, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 16px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.mbs-selected-thesis-card strong {
+  color: var(--ti-color-text);
+  display: block;
+  font-size: 16px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.mbs-selected-thesis-card small {
+  color: var(--ti-color-text-muted);
+  display: block;
+  font-size: var(--ti-font-size-xs);
+  line-height: 1.35;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.mbs-new-thesis-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mbs-thesis-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .mbs-input-grid {
   gap: 16px;
   grid-template-columns: repeat(2, minmax(260px, 1fr));
@@ -1833,6 +1953,12 @@ select:focus-visible {
   color: var(--ti-color-risk) !important;
 }
 
+.mbs-rating-badge--expensive {
+  background: rgba(242, 184, 75, 0.14) !important;
+  border-color: rgba(242, 184, 75, 0.38) !important;
+  color: var(--ti-color-warning) !important;
+}
+
 .mbs-score-summary {
   gap: 12px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1846,6 +1972,137 @@ select:focus-visible {
 
 .mbs-score-card strong {
   font-size: clamp(22px, 2.2vw, 30px);
+}
+
+.mbs-driver-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mbs-driver-card,
+.mbs-interpretation-card,
+.mbs-complete-indicator {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
+    rgba(255, 255, 255, 0.024);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: var(--ti-shadow-surface-inset);
+  padding: 14px;
+}
+
+.mbs-driver-card {
+  border-color: rgba(72, 224, 204, 0.16);
+}
+
+.mbs-driver-card--weakest {
+  border-color: rgba(242, 184, 75, 0.18);
+}
+
+.mbs-driver-card-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.mbs-driver-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.mbs-driver-list li {
+  align-items: center;
+  background: rgba(27, 37, 48, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  color: var(--ti-color-text);
+  display: flex;
+  font-size: var(--ti-font-size-sm);
+  font-weight: 700;
+  justify-content: space-between;
+  line-height: 1.25;
+  min-height: 42px;
+  padding: 9px 10px;
+}
+
+.mbs-driver-list strong {
+  color: var(--ti-color-accent);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mbs-driver-card--weakest .mbs-driver-list strong {
+  color: var(--ti-color-warning);
+}
+
+.mbs-driver-card p {
+  color: var(--ti-color-text-muted);
+  font-size: var(--ti-font-size-sm);
+  line-height: 1.45;
+  margin: 12px 0 0;
+}
+
+.mbs-interpretation-card {
+  background:
+    radial-gradient(circle at 92% 0%, rgba(76, 141, 255, 0.1), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
+    rgba(255, 255, 255, 0.024);
+  border-color: rgba(76, 141, 255, 0.18);
+}
+
+.mbs-interpretation-card p {
+  color: var(--ti-color-text);
+  font-size: var(--ti-font-size-sm);
+  line-height: 1.55;
+  margin: 9px 0 0;
+}
+
+.mbs-complete-indicator {
+  align-items: center;
+  background:
+    linear-gradient(145deg, rgba(53, 208, 127, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.024);
+  border-color: rgba(53, 208, 127, 0.18);
+  color: var(--ti-color-text);
+  display: flex;
+  gap: 10px;
+}
+
+.mbs-complete-indicator span {
+  align-items: center;
+  background: rgba(53, 208, 127, 0.13);
+  border: 1px solid rgba(53, 208, 127, 0.32);
+  border-radius: var(--ti-radius-pill);
+  color: var(--ti-color-growth);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  height: 26px;
+  justify-content: center;
+  letter-spacing: 0.04em;
+  width: 34px;
+}
+
+.mbs-complete-indicator strong {
+  font-size: var(--ti-font-size-sm);
+}
+
+.mbs-complete-indicator--warning {
+  background:
+    linear-gradient(145deg, rgba(242, 184, 75, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.024);
+  border-color: rgba(242, 184, 75, 0.2);
+}
+
+.mbs-complete-indicator--warning span {
+  background: rgba(242, 184, 75, 0.13);
+  border-color: rgba(242, 184, 75, 0.34);
+  color: var(--ti-color-warning);
 }
 
 .mbs-output-section {
@@ -1955,6 +2212,9 @@ select:focus-visible {
 
 @media (max-width: 720px) {
   .mbs-input-grid,
+  .mbs-driver-grid,
+  .mbs-new-thesis-grid,
+  .mbs-selected-thesis-card,
   .mbs-score-summary {
     grid-template-columns: 1fr;
   }
@@ -2047,7 +2307,7 @@ select:focus-visible {
   background: var(--ti-color-row-hover);
 }
 
-/* Portfolio Ranker premium workspace refresh: layout and presentation only. */
+/* Thesis Rankings premium workspace refresh: layout and presentation only. */
 .portfolio-ranker-screen {
   margin-inline: 0;
   max-width: none;
@@ -2603,6 +2863,176 @@ select:focus-visible {
   line-height: 1.45;
 }
 
+/* Thesis Rankings compact board: display-only refinement. */
+.portfolio-ranker-workspace-card {
+  min-height: auto;
+}
+
+.portfolio-ranker-output-card {
+  min-height: auto;
+}
+
+.portfolio-ranker-row {
+  border-radius: 18px;
+  gap: 12px;
+  padding: 14px;
+}
+
+.portfolio-ranker-toolbar > .ti-button {
+  align-self: center;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.portfolio-ranker-row-header {
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.portfolio-ranker-rank-badge {
+  border-radius: 14px;
+  font-size: 16px;
+  height: 38px;
+  min-width: 38px;
+}
+
+.portfolio-ranker-row-summary {
+  gap: 4px;
+}
+
+.portfolio-ranker-row-summary h3 {
+  font-size: 22px;
+}
+
+.portfolio-ranker-row-summary p {
+  font-size: 13px;
+}
+
+.portfolio-ranker-score-badge {
+  white-space: nowrap;
+}
+
+.portfolio-ranker-score-badge--strong {
+  background: rgba(53, 208, 127, 0.13) !important;
+  border-color: rgba(53, 208, 127, 0.34) !important;
+  color: var(--ti-color-growth) !important;
+}
+
+.portfolio-ranker-score-badge--mixed {
+  background: rgba(76, 141, 255, 0.13) !important;
+  border-color: rgba(76, 141, 255, 0.34) !important;
+  color: var(--ti-color-data) !important;
+}
+
+.portfolio-ranker-score-badge--warning {
+  background: rgba(242, 184, 75, 0.13) !important;
+  border-color: rgba(242, 184, 75, 0.34) !important;
+  color: var(--ti-color-warning) !important;
+}
+
+.portfolio-ranker-score-badge--risk {
+  background: rgba(239, 95, 87, 0.13) !important;
+  border-color: rgba(239, 95, 87, 0.34) !important;
+  color: var(--ti-color-risk) !important;
+}
+
+.portfolio-ranker-thesis-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.portfolio-ranker-meta-chip {
+  background: rgba(27, 37, 48, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: var(--ti-radius-pill);
+  color: var(--ti-color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 7px 9px;
+}
+
+.portfolio-ranker-meta-chip--risk {
+  border-color: rgba(242, 184, 75, 0.14);
+}
+
+.portfolio-ranker-review-dates {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  min-width: min(100%, 300px);
+}
+
+.portfolio-ranker-review-dates span {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 14px;
+  color: var(--ti-color-text-subtle);
+  display: grid;
+  font-size: 11px;
+  font-weight: 900;
+  gap: 3px;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  padding: 9px 10px;
+  text-transform: uppercase;
+}
+
+.portfolio-ranker-review-dates strong {
+  color: var(--ti-color-text-muted);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.portfolio-ranker-row-actions {
+  align-items: center;
+  gap: 10px;
+}
+
+.portfolio-ranker-editor {
+  flex: 0 1 180px;
+  padding: 10px 12px;
+}
+
+.portfolio-ranker-editor summary {
+  align-items: center;
+  display: flex;
+  min-height: 24px;
+}
+
+.portfolio-ranker-weakest-detail-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.portfolio-ranker-weakest-detail-list div {
+  background: rgba(255, 255, 255, 0.026);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 11px 12px;
+}
+
+.portfolio-ranker-weakest-detail-list dt {
+  color: var(--ti-color-text-subtle);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.portfolio-ranker-weakest-detail-list dd {
+  color: var(--ti-color-text);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+}
+
 .thesis-workspace-grid,
 .watchlist-workspace-grid {
   align-items: start;
@@ -2999,6 +3429,41 @@ select:focus-visible {
   gap: 30px;
 }
 
+.settings-about-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 980px;
+}
+
+.settings-about-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.settings-mode-panel,
+.settings-disclaimer {
+  color: var(--ti-color-text-muted);
+  display: grid;
+  font-size: var(--ti-font-size-md);
+  gap: 14px;
+  line-height: 1.6;
+}
+
+.settings-mode-panel .ti-badge {
+  justify-self: flex-start;
+}
+
+.settings-disclaimer {
+  background:
+    linear-gradient(135deg, rgba(72, 224, 204, 0.075), rgba(76, 141, 255, 0.035)),
+    var(--ti-color-surface-muted);
+  border: 1px solid rgba(72, 224, 204, 0.16);
+  border-radius: var(--ti-radius-lg);
+  box-shadow: var(--ti-shadow-surface-inset);
+  padding: 16px 18px;
+}
+
 .planned-workspace-empty {
   align-items: flex-start;
   display: flex;
@@ -3039,6 +3504,7 @@ select:focus-visible {
   .thesis-monitor-screen,
   .watchlist-screen,
   .theme-baskets-screen,
+  .settings-about-screen,
   .planned-workspace-screen {
     width: min(100%, 1420px);
   }

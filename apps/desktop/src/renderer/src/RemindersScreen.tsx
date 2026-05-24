@@ -128,20 +128,13 @@ export function RemindersScreen({
   return (
     <div className="reminders-screen">
       <PageHeader
-        badge={<Badge variant="accent">Manual dates only</Badge>}
-        description="Track user-entered thesis review, earnings, and custom dates locally. Reminders are educational and non-advisory, with no system notifications, scheduling, APIs, calendars, brokerage, trading execution, AI, or sync."
-        eyebrow="Phase 1 Reminders"
+        badge={<Badge variant="accent">Review Dates</Badge>}
+        description="Track thesis reviews, earnings follow-ups, and custom research dates in one local calendar list."
+        eyebrow="Research Calendar"
         title="Reminders"
       />
 
       <Card title="Add or edit reminder">
-        <div className="reminders-disclaimer">
-          Reminders are manually entered by the user. No system notifications,
-          background scheduling, live APIs, earnings feeds, calendar
-          integrations, brokerage connection, trading execution, AI analysis, or
-          cloud sync is used.
-        </div>
-
         <div className="reminders-form-grid">
           <label className="reminders-field">
             <span>Title</span>
@@ -197,7 +190,7 @@ export function RemindersScreen({
           <textarea
             aria-label="Reminder note"
             onChange={(event) => updateForm('note', event.currentTarget.value)}
-            placeholder="Manual context for what to review."
+            placeholder="Context for what to review."
             rows={4}
             value={form.note}
           />
