@@ -37,6 +37,40 @@ export function createEmptyWatchlistForm(
   };
 }
 
+export function getNextWatchlistItemNumber(
+  items: readonly LocalWatchlistItem[],
+  startAt = items.length + 1
+): number {
+  const itemIds = new Set(items.map((item) => item.id));
+  let nextNumber = startAt;
+
+  while (itemIds.has(createId('watchlist', ['local', nextNumber]))) {
+    nextNumber += 1;
+  }
+
+  return nextNumber;
+}
+
+export function ensureWatchlistFormHasAvailableId(
+  form: WatchlistFormState,
+  items: readonly LocalWatchlistItem[],
+  startAt = items.length + 1
+): WatchlistFormState {
+  const isCurrentIdAvailable = !items.some((item) => item.id === form.id);
+
+  if (isCurrentIdAvailable) {
+    return form;
+  }
+
+  return {
+    ...form,
+    id: createId('watchlist', [
+      'local',
+      String(getNextWatchlistItemNumber(items, startAt))
+    ])
+  };
+}
+
 export function watchlistItemToForm(
   item: LocalWatchlistItem
 ): WatchlistFormState {

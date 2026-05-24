@@ -36,7 +36,7 @@ The visible MVP screens are still mostly React-state-only:
 
 | Screen | Current state owner | Existing storage fit |
 | --- | --- | --- |
-| Watchlist | `useState` with watchlist form helpers | `watchlistItems` repository is a direct fit, except `thesisReference` is currently UI-only text |
+| Watchlist | Persisted through `window.thesisInvesting.watchlist`, with transient form/selected state in React | Stage 18 implemented `watchlistItems`; `thesisReference` remains UI-only text |
 | Thesis Monitor | `useState` with thesis note form helpers | `thesisNotes` repository is a direct fit, except `checklist` is currently UI-only text |
 | Reminders | `useState` with reminder form helpers | `reminders` repository is a direct fit, but UI `completed` maps to persisted `completedAt` |
 | Portfolio Ranker | `useState` rows with manual scores | No direct repository yet; do not force ranker rows into `holdings` |
@@ -66,14 +66,14 @@ Before visible persistence wiring starts, `pnpm verify:storage` should pass in t
 
 ### Stage 18: Persist Watchlist
 
-Data to persist:
+Status: implemented.
+
+Data persisted:
 
 - ticker
 - optional company name
 - tags
 - note
-- optional thesis note link when it becomes a structured ID
-- created/updated timestamps when supplied by the app layer
 
 Repository:
 
@@ -81,7 +81,8 @@ Repository:
 
 Notes:
 
-- `thesisReference` is currently free text and is not in the core `WatchlistItem` type or schema. Keep it local-only or convert it to `thesisNoteId` only when a structured relationship exists.
+- `thesisReference` is free text and is not in the core `WatchlistItem` type or schema, so it remains current-session-only.
+- The renderer calls a narrow preload API; SQLite stays in the Electron main process.
 - Load persisted items on screen start.
 - Save creates/updates through the repository.
 - Delete through the repository.
@@ -268,7 +269,7 @@ Future wiring should follow these rules:
 
 This plan does not add:
 
-- SQLite wiring into visible screens.
+- SQLite wiring beyond the Watchlist screen.
 - Full app-wide persistence.
 - Installer, updater, or code-signing changes.
 - Live stock APIs or price feeds.

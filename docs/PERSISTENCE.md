@@ -1,8 +1,10 @@
 # Persistence
 
-Phase 1, Stage 4 adds the first local-only persistence boundary for the Offline Windows MVP.
+Phase 1, Stage 4 added the first local-only persistence boundary for the Offline Windows MVP.
 
-The goal is to give future desktop workflows a repository layer for offline data without wiring any real product screens yet. Persistence is intentionally isolated from the visible app shell.
+The goal is to give desktop workflows a repository layer for offline data while keeping database access isolated from React renderer code.
+
+Phase 1, Stage 18 wires the Watchlist screen as the first visible persisted workflow. Other visible MVP workflows remain React-state-only until their own stages.
 
 ## Package Boundary
 
@@ -10,8 +12,8 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 
 - The storage module depends on `packages/core` domain types and validators.
 - `packages/core` does not depend on storage, SQLite, Electron, React, or Node APIs.
-- UI code should depend on repository interfaces instead of raw SQLite details when persistence is wired into future screens.
-- The current desktop app remains placeholder-only and does not read or write user data yet.
+- UI code should depend on narrow preload/IPC clients instead of raw SQLite details when persistence is wired into screens.
+- The Watchlist screen reads and writes through the local persistence boundary. Other screens are not persisted yet.
 
 ## SQLite Choice
 
@@ -58,10 +60,10 @@ Repository implementations validate core domain data before writing to SQLite an
 
 ## Out Of Scope
 
-This stage does not add:
+This persistence layer does not add:
 
-- Visible product workflows
-- SQLite wiring into app screens
+- Persistence for Thesis Monitor, Reminders, Portfolio Ranker, MBS Scorer, or Dashboard
+- Live dashboard summaries from persisted data
 - Live stock APIs
 - Cloud sync, Supabase, or auth
 - AI analyst features
