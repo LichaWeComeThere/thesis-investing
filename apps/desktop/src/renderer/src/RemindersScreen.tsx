@@ -1,8 +1,10 @@
 import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   buildReminderFromForm,
   createEmptyReminderForm,
+  ensureReminderFormHasAvailableId,
+  getNextReminderNumber,
   hasReminderFormContent,
   reminderToForm,
   removeLocalReminder,
@@ -13,29 +15,46 @@ import {
   type LocalReminder,
   type ReminderFormState
 } from './reminderInput';
+import {
+  getDefaultRemindersStorageClient,
+  toLocalReminder,
+  toPersistedReminder,
+  type RemindersStorageClient
+} from './remindersStorageClient';
 import './reminders.css';
 
 type RemindersScreenProps = {
   initialForm?: ReminderFormState;
   initialReminders?: LocalReminder[];
+  initialStorageErrors?: string[];
   initialSelectedReminderId?: string;
+  storageClient?: RemindersStorageClient | null;
 };
 
 export function RemindersScreen({
   initialForm,
   initialReminders = [],
+  initialStorageErrors = [],
+  storageClient,
   initialSelectedReminderId
 }: RemindersScreenProps): JSX.Element {
+  const resolvedStorageClient =
+    storageClient === undefined
+      ? getDefaultRemindersStorageClient()
+      : storageClient;
   const [reminders, setReminders] = useState<LocalReminder[]>(() =>
     initialReminders.map((reminder) => ({ ...reminder }))
   );
   const [selectedReminderId, setSelectedReminderId] = useState<string | null>(
     initialSelectedReminderId ?? initialReminders[0]?.id ?? null
   );
-  const [nextReminderNumber, setNextReminderNumber] = useState(
-    initialReminders.length + 1
+  const [nextReminderNumber, setNextReminderNumber] = useState(() =>
+    getNextReminderNumber(initialReminders)
   );
   const [saveAttempted, setSaveAttempted] = useState(false);
+  const [storageErrors, setStorageErrors] = useState(initialStorageErrors);
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedStorageClient));
+  const [isWriting, setIsWriting] = useState(false);
   const [form, setForm] = useState<ReminderFormState>(() =>
     initialForm
       ? { ...initialForm }
@@ -55,6 +74,83 @@ export function RemindersScreen({
     ? formResult.validation.errors
     : [];
 
+  useEffect(() => {
+    const client = resolvedStorageClient;
+
+    if (!client) {
+      setIsLoading(false);
+      return;
+    }
+
+    const activeClient = client;
+    let isMounted = true;
+
+    async function loadPersistedReminders(): Promise<void> {
+      setIsLoading(true);
+      setStorageErrors([]);
+
+      try {
+        const result = await activeClient.list();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+
+        const persistedReminders = result.value.map(toLocalReminder);
+        const nextAvailableReminderNumber =
+          getNextReminderNumber(persistedReminders);
+
+        setReminders(persistedReminders);
+        setSelectedReminderId((currentSelectedReminderId) => {
+          if (
+            currentSelectedReminderId &&
+            persistedReminders.some(
+              (reminder) => reminder.id === currentSelectedReminderId
+            )
+          ) {
+            return currentSelectedReminderId;
+          }
+
+          return persistedReminders[0]?.id ?? null;
+        });
+        setNextReminderNumber(nextAvailableReminderNumber);
+
+        if (!initialForm) {
+          setForm((currentForm) =>
+            ensureReminderFormHasAvailableId(
+              currentForm,
+              persistedReminders,
+              nextAvailableReminderNumber
+            )
+          );
+        }
+      } catch (error) {
+        if (isMounted) {
+          setStorageErrors([
+            error instanceof Error
+              ? error.message
+              : 'Unable to load persisted reminders.'
+          ]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadPersistedReminders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialForm, resolvedStorageClient]);
+
   function updateForm<Field extends keyof Omit<ReminderFormState, 'id'>>(
     field: Field,
     value: ReminderFormState[Field]
@@ -65,8 +161,9 @@ export function RemindersScreen({
     }));
   }
 
-  function saveReminder(): void {
+  async function saveReminder(): Promise<void> {
     setSaveAttempted(true);
+    setStorageErrors([]);
 
     if (!formResult.validation.valid) {
       return;
@@ -77,15 +174,57 @@ export function RemindersScreen({
       (reminder) => reminder.id === nextReminder.id
     );
 
-    setReminders((currentReminders) =>
-      upsertLocalReminder(currentReminders, nextReminder)
+    const existingReminder = reminders.find(
+      (reminder) => reminder.id === nextReminder.id
     );
+
+    if (nextReminder.completed && existingReminder?.completedAt) {
+      nextReminder.completedAt = existingReminder.completedAt;
+    }
+
+    if (resolvedStorageClient) {
+      setIsWriting(true);
+
+      try {
+        const result = await resolvedStorageClient.save(
+          toPersistedReminder(nextReminder)
+        );
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+
+        const savedReminder = toLocalReminder(result.value);
+        nextReminder.completed = savedReminder.completed;
+        nextReminder.completedAt = savedReminder.completedAt;
+        nextReminder.createdAt = savedReminder.createdAt;
+        nextReminder.dueDate = savedReminder.dueDate;
+        nextReminder.note = savedReminder.note;
+        nextReminder.ticker = savedReminder.ticker;
+        nextReminder.title = savedReminder.title;
+        nextReminder.type = savedReminder.type;
+      } catch (error) {
+        setStorageErrors([
+          error instanceof Error ? error.message : 'Unable to save reminder.'
+        ]);
+        return;
+      } finally {
+        setIsWriting(false);
+      }
+    }
+
+    const updatedReminders = upsertLocalReminder(reminders, nextReminder);
+
+    setReminders(updatedReminders);
     setSelectedReminderId(nextReminder.id);
     setForm(reminderToForm(nextReminder));
     setSaveAttempted(false);
 
     if (isNewReminder) {
-      setNextReminderNumber((currentNumber) => currentNumber + 1);
+      setNextReminderNumber(
+        getNextReminderNumber(updatedReminders, nextReminderNumber + 1)
+      );
     }
   }
 
@@ -101,23 +240,97 @@ export function RemindersScreen({
     setSaveAttempted(false);
   }
 
-  function removeReminder(reminderId: string): void {
-    setReminders((currentReminders) =>
-      removeLocalReminder(currentReminders, reminderId)
-    );
+  async function removeReminder(reminderId: string): Promise<void> {
+    setStorageErrors([]);
+
+    if (resolvedStorageClient) {
+      setIsWriting(true);
+
+      try {
+        const result = await resolvedStorageClient.remove(reminderId);
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+      } catch (error) {
+        setStorageErrors([
+          error instanceof Error ? error.message : 'Unable to remove reminder.'
+        ]);
+        return;
+      } finally {
+        setIsWriting(false);
+      }
+    }
+
+    const updatedReminders = removeLocalReminder(reminders, reminderId);
+
+    setReminders(updatedReminders);
 
     if (selectedReminderId === reminderId) {
       setSelectedReminderId(null);
-      setForm(createEmptyReminderForm(nextReminderNumber));
+      setForm(createEmptyReminderForm(getNextReminderNumber(updatedReminders)));
       setSaveAttempted(false);
     }
+
+    setNextReminderNumber(
+      getNextReminderNumber(updatedReminders, nextReminderNumber)
+    );
   }
 
-  function toggleReminderCompletion(reminderId: string): void {
-    setReminders((currentReminders) =>
-      toggleLocalReminderCompletion(currentReminders, reminderId)
+  async function toggleReminderCompletion(reminderId: string): Promise<void> {
+    setStorageErrors([]);
+
+    const reminder = reminders.find(
+      (currentReminder) => currentReminder.id === reminderId
     );
 
+    if (!reminder) {
+      return;
+    }
+
+    const toggledReminder = {
+      ...reminder,
+      completed: !reminder.completed,
+      completedAt: reminder.completed ? undefined : reminder.completedAt
+    };
+
+    if (resolvedStorageClient) {
+      setIsWriting(true);
+
+      try {
+        const result = await resolvedStorageClient.save(
+          toPersistedReminder(toggledReminder)
+        );
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+
+        const savedReminder = toLocalReminder(result.value);
+        const updatedReminders = upsertLocalReminder(reminders, savedReminder);
+
+        setReminders(updatedReminders);
+        setForm((currentForm) =>
+          currentForm.id === reminderId
+            ? reminderToForm(savedReminder)
+            : currentForm
+        );
+      } catch (error) {
+        setStorageErrors([
+          error instanceof Error ? error.message : 'Unable to update reminder.'
+        ]);
+      } finally {
+        setIsWriting(false);
+      }
+
+      return;
+    }
+
+    const updatedReminders = toggleLocalReminderCompletion(reminders, reminderId);
+
+    setReminders(updatedReminders);
     setForm((currentForm) =>
       currentForm.id === reminderId
         ? { ...currentForm, completed: !currentForm.completed }
@@ -139,7 +352,8 @@ export function RemindersScreen({
           Reminders are manually entered by the user. No system notifications,
           background scheduling, live APIs, earnings feeds, calendar
           integrations, brokerage connection, trading execution, AI analysis, or
-          cloud sync is used.
+          cloud sync is used. Title, type, ticker, due date, note, and
+          completion status are stored locally on this device.
         </div>
 
         <div className="reminders-form-grid">
@@ -226,11 +440,27 @@ export function RemindersScreen({
           </div>
         ) : null}
 
+        {storageErrors.length > 0 ? (
+          <div className="reminders-validation" role="alert">
+            <h3>Storage</h3>
+            <ul>
+              {storageErrors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         <div className="reminders-actions">
-          <Button onClick={saveReminder} type="button">
-            Save reminder
+          <Button disabled={isWriting || isLoading} onClick={saveReminder} type="button">
+            {isWriting ? 'Saving...' : 'Save reminder'}
           </Button>
-          <Button onClick={startNewReminder} type="button" variant="secondary">
+          <Button
+            disabled={isWriting || isLoading}
+            onClick={startNewReminder}
+            type="button"
+            variant="secondary"
+          >
             New reminder
           </Button>
         </div>
@@ -238,7 +468,9 @@ export function RemindersScreen({
 
       <div className="reminders-layout">
         <Card title="Local reminders">
-          {reminders.length > 0 ? (
+          {isLoading ? (
+            <p>Loading persisted reminders...</p>
+          ) : reminders.length > 0 ? (
             <div className="reminders-table-wrap">
               <table className="reminders-table">
                 <thead>
@@ -269,6 +501,7 @@ export function RemindersScreen({
                         <div className="reminders-row-actions">
                           <Button
                             onClick={() => selectReminder(reminder)}
+                            disabled={isWriting}
                             size="sm"
                             type="button"
                             variant="secondary"
@@ -279,6 +512,7 @@ export function RemindersScreen({
                             onClick={() =>
                               toggleReminderCompletion(reminder.id)
                             }
+                            disabled={isWriting}
                             size="sm"
                             type="button"
                             variant="secondary"
@@ -287,6 +521,7 @@ export function RemindersScreen({
                           </Button>
                           <Button
                             onClick={() => removeReminder(reminder.id)}
+                            disabled={isWriting}
                             size="sm"
                             type="button"
                             variant="secondary"
