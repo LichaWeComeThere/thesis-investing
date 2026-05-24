@@ -1,4 +1,5 @@
 import type { WatchlistItem } from '@thesis-investing/core';
+import type { ThesisNotesStorageApi } from './thesisNotesStorage';
 
 export const watchlistStorageChannels = {
   list: 'watchlist:list',
@@ -24,5 +25,6 @@ export type WatchlistStorageApi = {
 
 export type ThesisInvestingApi = {
   platform: string;
+  thesisNotes: ThesisNotesStorageApi;
   watchlist: WatchlistStorageApi;
 };

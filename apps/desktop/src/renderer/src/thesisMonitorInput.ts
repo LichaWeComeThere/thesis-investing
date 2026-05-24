@@ -59,6 +59,40 @@ export function createEmptyThesisNoteForm(
   };
 }
 
+export function getNextThesisNoteNumber(
+  notes: readonly LocalThesisNote[],
+  startAt = notes.length + 1
+): number {
+  const noteIds = new Set(notes.map((note) => note.id));
+  let nextNumber = startAt;
+
+  while (noteIds.has(createId('thesis', ['local', nextNumber]))) {
+    nextNumber += 1;
+  }
+
+  return nextNumber;
+}
+
+export function ensureThesisNoteFormHasAvailableId(
+  form: ThesisNoteFormState,
+  notes: readonly LocalThesisNote[],
+  startAt = notes.length + 1
+): ThesisNoteFormState {
+  const isCurrentIdAvailable = !notes.some((note) => note.id === form.id);
+
+  if (isCurrentIdAvailable) {
+    return form;
+  }
+
+  return {
+    ...form,
+    id: createId('thesis', [
+      'local',
+      String(getNextThesisNoteNumber(notes, startAt))
+    ])
+  };
+}
+
 export function thesisNoteToForm(note: LocalThesisNote): ThesisNoteFormState {
   return {
     body: note.body,
@@ -113,4 +147,17 @@ export function hasThesisFormContent(form: ThesisNoteFormState): boolean {
     form.reviewDueAt,
     form.checklist
   ].some((value) => value.trim().length > 0);
+}
+
+export function upsertLocalThesisNote(
+  notes: LocalThesisNote[],
+  nextNote: LocalThesisNote
+): LocalThesisNote[] {
+  const existingNoteIndex = notes.findIndex((note) => note.id === nextNote.id);
+
+  if (existingNoteIndex === -1) {
+    return [...notes, nextNote];
+  }
+
+  return notes.map((note) => (note.id === nextNote.id ? nextNote : note));
 }

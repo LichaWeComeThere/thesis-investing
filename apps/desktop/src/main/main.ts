@@ -2,6 +2,7 @@ import { BrowserWindow, app } from 'electron';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { registerThesisNotesIpc } from './thesisNotesIpc';
 import { registerWatchlistIpc } from './watchlistIpc';
 
 const mainDirname = dirname(fileURLToPath(import.meta.url));
@@ -30,6 +31,7 @@ function createWindow(): void {
 }
 
 void app.whenReady().then(() => {
+  registerThesisNotesIpc();
   registerWatchlistIpc();
   createWindow();
 
