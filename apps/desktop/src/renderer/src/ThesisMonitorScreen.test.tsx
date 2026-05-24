@@ -4,7 +4,10 @@ import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 import {
   buildThesisNoteFromForm,
   createEmptyThesisNoteForm,
+  ensureThesisNoteFormHasAvailableId,
+  getNextThesisNoteNumber,
   thesisNoteToForm,
+  upsertLocalThesisNote,
   type LocalThesisNote
 } from './thesisMonitorInput';
 
@@ -31,6 +34,7 @@ describe('ThesisMonitorScreen', () => {
     expect(html).toContain('Durable software thesis');
     expect(html).toContain('MSFT');
     expect(html).toContain('Review customer retention');
+    expect(html).toContain('stored locally on this device');
   });
 
   it('renders demo thesis queue cards when no local notes exist', () => {
@@ -65,6 +69,15 @@ describe('ThesisMonitorScreen', () => {
     expect(html).toContain('Thesis note review date must use YYYY-MM-DD format.');
   });
 
+  it('renders storage errors without crashing', () => {
+    const html = renderToStaticMarkup(
+      <ThesisMonitorScreen initialStorageErrors={['Thesis storage unavailable.']} />
+    );
+
+    expect(html).toContain('Storage');
+    expect(html).toContain('Thesis storage unavailable.');
+  });
+
   it('converts form input into a validated local thesis note', () => {
     const form = thesisNoteToForm(sampleNote);
     const result = buildThesisNoteFromForm({
@@ -81,6 +94,59 @@ describe('ThesisMonitorScreen', () => {
       checklist: 'Revisit pricing power.',
       ticker: 'MSFT',
       title: 'Durable software thesis'
+    });
+  });
+
+  it('upserts local thesis notes deterministically', () => {
+    const updatedNote = {
+      ...sampleNote,
+      title: 'Updated durable software thesis'
+    };
+    const addedNote: LocalThesisNote = {
+      body: 'A second user-authored thesis.',
+      id: 'thesis_added',
+      status: 'draft',
+      title: 'Second thesis'
+    };
+
+    expect(
+      upsertLocalThesisNote(
+        upsertLocalThesisNote([sampleNote], updatedNote),
+        addedNote
+      )
+    ).toEqual([updatedNote, addedNote]);
+  });
+
+  it('finds the next available deterministic local thesis note number', () => {
+    const firstNote = buildThesisNoteFromForm({
+      ...createEmptyThesisNoteForm(1),
+      body: 'First body',
+      title: 'First thesis'
+    }).note;
+    const thirdNote = buildThesisNoteFromForm({
+      ...createEmptyThesisNoteForm(3),
+      body: 'Third body',
+      title: 'Third thesis'
+    }).note;
+
+    expect(getNextThesisNoteNumber([firstNote, thirdNote], 1)).toBe(2);
+    expect(getNextThesisNoteNumber([firstNote, thirdNote], 3)).toBe(4);
+  });
+
+  it('moves a draft form to an available thesis ID after persisted notes load', () => {
+    const draftForm = createEmptyThesisNoteForm(1);
+    const existingNote = buildThesisNoteFromForm({
+      ...draftForm,
+      body: 'Existing body',
+      title: 'Existing thesis'
+    }).note;
+    const reassignedForm = ensureThesisNoteFormHasAvailableId(draftForm, [
+      existingNote
+    ]);
+
+    expect(reassignedForm).toEqual({
+      ...draftForm,
+      id: createEmptyThesisNoteForm(2).id
     });
   });
 });

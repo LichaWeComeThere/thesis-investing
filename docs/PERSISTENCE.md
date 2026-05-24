@@ -4,7 +4,7 @@ Phase 1, Stage 4 added the first local-only persistence boundary for the Offline
 
 The goal is to give desktop workflows a repository layer for offline data while keeping database access isolated from React renderer code.
 
-Phase 1, Stage 18 wires the Watchlist screen as the first visible persisted workflow. Other visible MVP workflows remain React-state-only until their own stages.
+Phase 1, Stage 18 wires the Watchlist screen as the first visible persisted workflow. Phase 1, Stage 19 adds Thesis Notes persistence. Other visible MVP workflows remain React-state-only until their own stages.
 
 ## Package Boundary
 
@@ -13,7 +13,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The storage module depends on `packages/core` domain types and validators.
 - `packages/core` does not depend on storage, SQLite, Electron, React, or Node APIs.
 - UI code should depend on narrow preload/IPC clients instead of raw SQLite details when persistence is wired into screens.
-- The Watchlist screen reads and writes through the local persistence boundary. Other screens are not persisted yet.
+- The Watchlist and Thesis Monitor screens read and write through the local persistence boundary. Other screens are not persisted yet.
 
 ## SQLite Choice
 
@@ -62,7 +62,7 @@ Repository implementations validate core domain data before writing to SQLite an
 
 This persistence layer does not add:
 
-- Persistence for Thesis Monitor, Reminders, Portfolio Ranker, MBS Scorer, or Dashboard
+- Persistence for Reminders, Portfolio Ranker, MBS Scorer, or Dashboard
 - Live dashboard summaries from persisted data
 - Live stock APIs
 - Cloud sync, Supabase, or auth

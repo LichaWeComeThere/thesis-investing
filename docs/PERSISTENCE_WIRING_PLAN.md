@@ -37,7 +37,7 @@ The visible MVP screens are still mostly React-state-only:
 | Screen | Current state owner | Existing storage fit |
 | --- | --- | --- |
 | Watchlist | Persisted through `window.thesisInvesting.watchlist`, with transient form/selected state in React | Stage 18 implemented `watchlistItems`; `thesisReference` remains UI-only text |
-| Thesis Monitor | `useState` with thesis note form helpers | `thesisNotes` repository is a direct fit, except `checklist` is currently UI-only text |
+| Thesis Monitor | Persisted through `window.thesisInvesting.thesisNotes`, with transient form/selected state in React | Stage 19 implemented `thesisNotes`; `checklist` remains UI-only text |
 | Reminders | `useState` with reminder form helpers | `reminders` repository is a direct fit, but UI `completed` maps to persisted `completedAt` |
 | Portfolio Ranker | `useState` rows with manual scores | No direct repository yet; do not force ranker rows into `holdings` |
 | MBS Scorer | `useState` category values and notes | No repository yet; scoring output is deterministic and can be recomputed |
@@ -90,7 +90,9 @@ Notes:
 
 ### Stage 19: Persist Thesis Notes
 
-Data to persist:
+Status: implemented.
+
+Data persisted:
 
 - title
 - body
@@ -98,7 +100,6 @@ Data to persist:
 - optional ticker
 - optional conviction
 - optional review due date
-- created/updated timestamps when supplied by the app layer
 
 Repository:
 
@@ -106,7 +107,8 @@ Repository:
 
 Notes:
 
-- `checklist` is currently UI-only text and is not in the core `ThesisNote` type or schema. Either keep it transient or add a deliberate migration in a future stage.
+- `checklist` is currently UI-only text and is not in the core `ThesisNote` type or schema, so it remains current-session-only.
+- The renderer calls a narrow preload API; SQLite stays in the Electron main process.
 - Preserve user-authored content exactly after validation and trimming rules already used by the form helper.
 - Keep selected note ID and selected demo queue item as transient UI state.
 
@@ -269,7 +271,7 @@ Future wiring should follow these rules:
 
 This plan does not add:
 
-- SQLite wiring beyond the Watchlist screen.
+- SQLite wiring beyond the Watchlist and Thesis Monitor screens.
 - Full app-wide persistence.
 - Installer, updater, or code-signing changes.
 - Live stock APIs or price feeds.
