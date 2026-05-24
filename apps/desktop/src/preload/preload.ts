@@ -1,5 +1,16 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
+import {
+  watchlistStorageChannels,
+  type ThesisInvestingApi
+} from '../shared/watchlistStorage';
 
-contextBridge.exposeInMainWorld('thesisInvesting', {
-  platform: process.platform
-});
+const thesisInvestingApi: ThesisInvestingApi = {
+  platform: process.platform,
+  watchlist: {
+    list: () => ipcRenderer.invoke(watchlistStorageChannels.list),
+    remove: (id) => ipcRenderer.invoke(watchlistStorageChannels.remove, id),
+    save: (item) => ipcRenderer.invoke(watchlistStorageChannels.save, item)
+  }
+};
+
+contextBridge.exposeInMainWorld('thesisInvesting', thesisInvestingApi);

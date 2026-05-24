@@ -84,6 +84,31 @@
   padding-left: 20px;
 }
 
+.watchlist-storage-status {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border-strong);
+  border-radius: var(--ti-radius-md);
+  color: var(--ti-color-text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin-top: 18px;
+  padding: 14px 16px;
+}
+
+.watchlist-storage-status h3 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0 0 10px;
+}
+
+.watchlist-storage-status ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
 .watchlist-actions {
   display: flex;
   flex-wrap: wrap;
