@@ -27,13 +27,12 @@ describe('WatchlistScreen', () => {
       <WatchlistScreen initialItems={[sampleItem]} />
     );
 
-    expect(html).toContain('Manual entries only');
-    expect(html).toContain('No live prices');
+    expect(html).toContain('Local Watchlist');
+    expect(html).toContain('Track companies, tags, thesis references');
     expect(html).toContain('MSFT');
     expect(html).toContain('Microsoft');
     expect(html).toContain('quality, software');
     expect(html).toContain('Durable software thesis');
-    expect(html).toContain('stored locally on this device');
   });
 
   it('renders validation errors for invalid populated input', () => {

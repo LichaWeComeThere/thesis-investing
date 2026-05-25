@@ -28,13 +28,12 @@ describe('ThesisMonitorScreen', () => {
       <ThesisMonitorScreen initialNotes={[sampleNote]} />
     );
 
-    expect(html).toContain('User-authored notes');
+    expect(html).toContain('Thesis Notes');
     expect(html).toContain('Thesis Queue');
-    expect(html).toContain('No live data, automated news');
+    expect(html).toContain('plan the next review');
     expect(html).toContain('Durable software thesis');
     expect(html).toContain('MSFT');
     expect(html).toContain('Review customer retention');
-    expect(html).toContain('stored locally on this device');
   });
 
   it('renders demo thesis queue cards when no local notes exist', () => {

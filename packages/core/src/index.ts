@@ -2,6 +2,9 @@ export type {
   CurrencyCode,
   EntityId,
   Holding,
+  InvestmentIdea,
+  InvestmentIdeaDecisionLogEntry,
+  InvestmentIdeaWatchlistStatus,
   IsoDateString,
   ManualBusinessScoreCategory,
   ManualBusinessScoreCategoryWeights,
@@ -26,6 +29,19 @@ export type {
 } from './domain';
 export { createId } from './ids';
 export type { IdPrefix } from './ids';
+export {
+  createBlankInvestmentIdea,
+  mapMbsScoreToInvestmentIdea,
+  mapPortfolioRankerItemToInvestmentIdea,
+  mapThesisNoteToInvestmentIdea,
+  updateInvestmentIdeaDecisionLog,
+  validateInvestmentIdeaMissingFields
+} from './investmentIdea';
+export type {
+  InvestmentIdeaDecisionLogInput,
+  InvestmentIdeaMissingFieldResult,
+  InvestmentIdeaRequiredField
+} from './investmentIdea';
 export {
   PORTFOLIO_RANKER_MAX_SCORE,
   PORTFOLIO_RANKER_MIN_SCORE,

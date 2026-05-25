@@ -3,47 +3,48 @@ import { describe, expect, it } from 'vitest';
 import { DashboardScreen } from './DashboardScreen';
 
 describe('DashboardScreen', () => {
-  it('renders the local MVP overview cards', () => {
+  it('renders investor command center sections', () => {
     const html = renderToStaticMarkup(<DashboardScreen />);
 
-    expect(html).toContain('Dashboard');
-    expect(html).toContain('Manual MBS Scorer');
-    expect(html).toContain('Portfolio Ranker');
-    expect(html).toContain('Thesis Monitor');
-    expect(html).toContain('Watchlist');
-    expect(html).toContain('Theme Baskets');
-    expect(html).toContain('Reminders');
+    expect(html).toContain('Investor Command Center');
+    expect(html).toContain('Thesis Health Overview');
+    expect(html).toContain('Review Priority');
+    expect(html).toContain('Market Regime');
+    expect(html).toContain('Recent Thesis Activity');
+    expect(html).toContain('Continue Research');
   });
 
-  it('renders static, non-advisory limitation copy', () => {
+  it('renders thesis health and priority demo data', () => {
     const html = renderToStaticMarkup(<DashboardScreen />);
 
-    expect(html).toContain('static and local');
-    expect(html).toContain('No live prices');
-    expect(html).toContain('stock APIs');
-    expect(html).toContain('brokerage import');
-    expect(html).toContain('AI summaries');
-    expect(html).toContain('personalized financial advice');
+    expect(html).toContain('Theses tracked');
+    expect(html).toContain('Strong conviction');
+    expect(html).toContain('Needs review');
+    expect(html).toContain('Weakening');
+    expect(html).toContain('Weakest Idea');
+    expect(html).toContain('CRWD');
+    expect(html).toContain('Biggest Score Drop');
+    expect(html).toContain('TSLA');
+    expect(html).toContain('Review Due Soon');
+    expect(html).toContain('NVDA');
   });
 
-  it('renders read-only summary metrics', () => {
+  it('renders market regime and quick actions', () => {
     const html = renderToStaticMarkup(<DashboardScreen />);
 
-    expect(html).toContain('Manual workflows available');
-    expect(html).toContain('Live data integrations');
-    expect(html).toContain('Brokerage connections');
-    expect(html).toContain('Pending MVP areas');
-    expect(html).toContain('<strong>6</strong>');
-    expect(html).toContain('<strong>1</strong>');
-    expect(html).toContain('Manual reminders');
-    expect(html).toContain('Built');
+    expect(html).toContain('Under Pressure');
+    expect(html).toContain('Growth stocks need caution.');
+    expect(html).toContain('Open MBS Scorer');
+    expect(html).toContain('Review Thesis Rankings');
+    expect(html).toContain('Open Thesis Monitor');
+    expect(html).toContain('Check Watchlist');
   });
 
-  it('renders the static latest market pulse feed', () => {
+  it('renders the latest market pulse feed', () => {
     const html = renderToStaticMarkup(<DashboardScreen />);
 
     expect(html).toContain('Latest');
-    expect(html).toContain('Demo feed');
+    expect(html).toContain('Curated');
     expect(html).toContain(
       'Google, Blackstone to create new AI cloud company, WSJ reports'
     );
@@ -51,5 +52,17 @@ describe('DashboardScreen', () => {
     expect(html).toContain(
       'Semiconductor leaders continue showing relative strength'
     );
+  });
+
+  it('does not render development status dashboard copy', () => {
+    const html = renderToStaticMarkup(<DashboardScreen />);
+
+    expect(html).not.toContain('Offline MVP snapshot');
+    expect(html).not.toContain('Live data integrations');
+    expect(html).not.toContain('Brokerage connections');
+    expect(html).not.toContain('Pending MVP areas');
+    expect(html).not.toContain('MVP readiness checklist');
+    expect(html).not.toContain('Use this dashboard for');
+    expect(html).not.toContain('Manual workflows available');
   });
 });

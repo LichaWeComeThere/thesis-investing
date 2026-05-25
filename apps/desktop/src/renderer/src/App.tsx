@@ -44,7 +44,7 @@ const navigationViews: NavigationView[] = [
     navLabel: 'Dashboard',
     icon: 'dashboard',
     description:
-      'Local overview of the offline MVP areas, current readiness, and product boundaries.'
+      'Overview of the local research workspaces, saved state, and next actions.'
   },
   {
     id: 'mbs-scorer',
@@ -52,15 +52,15 @@ const navigationViews: NavigationView[] = [
     navLabel: 'MBS Scorer',
     icon: 'mbs-scorer',
     description:
-      'Future manual scoring workspace for user-provided inputs and deterministic scoring logic. This feature is not built yet.'
+      'Score business quality, moat, management, balance sheet, growth, valuation, and risk.'
   },
   {
     id: 'portfolio-ranker',
-    title: 'Portfolio Ranker',
-    navLabel: 'Portfolio Ranker',
+    title: 'Thesis Rankings',
+    navLabel: 'Thesis Rankings',
     icon: 'portfolio-ranker',
     description:
-      'Future local comparison view for manually entered holdings. It will organize user-provided information and will not recommend trades. This feature is not built yet.'
+      'Compare saved ideas with user-entered thesis scores and focused ranking output.'
   },
   {
     id: 'thesis-monitor',
@@ -76,7 +76,7 @@ const navigationViews: NavigationView[] = [
     navLabel: 'Watchlist',
     icon: 'watchlist',
     description:
-      'Future local list for manually tracked companies or symbols. No live prices or automated alerts are included yet. This feature is not built yet.'
+      'Track companies, tags, thesis references, and research notes in one local list.'
   },
   {
     id: 'theme-baskets',
@@ -84,7 +84,7 @@ const navigationViews: NavigationView[] = [
     navLabel: 'Theme Baskets',
     icon: 'theme-baskets',
     description:
-      'Future area for static educational groupings that help users organize research themes. This feature is not built yet.'
+      'Browse research themes and example companies for organizing new ideas.'
   },
   {
     id: 'reminders',
@@ -96,11 +96,11 @@ const navigationViews: NavigationView[] = [
   },
   {
     id: 'settings-about',
-    title: 'Settings/About',
-    navLabel: 'Settings/About',
+    title: 'App Settings',
+    navLabel: 'App Settings',
     icon: 'settings-about',
     description:
-      'Future home for local app preferences, version details, and educational disclaimers. This feature is not built yet.'
+      'Review app mode, local-first boundaries, and workspace preferences.'
   }
 ];
 
@@ -219,7 +219,7 @@ function OnboardingScreen({
       <div className="onboarding-layout">
         <PageHeader
           badge={<Badge variant="accent">Offline-first</Badge>}
-          description="A Windows-first desktop app for building investment discipline through user-directed scoring, thesis notes, and manual tracking."
+          description="A Windows-first workspace for building investment discipline through scoring, thesis notes, watchlists, and review dates."
           eyebrow="Welcome"
           title="Thesis Investing"
         />
@@ -234,16 +234,15 @@ function OnboardingScreen({
         >
           <div className="onboarding-copy">
             <p>
-              Thesis Investing is educational software for organizing your own
-              research process. It does not provide personalized financial
-              advice, investment recommendations, or instructions to buy, sell,
-              or hold any security.
+              Thesis Investing keeps your research process structured before
+              the app connects to live services. Start with local scoring,
+              thesis notes, watchlists, and review workflows.
             </p>
 
             <ul>
-              <li>No brokerage connections or trading execution.</li>
-              <li>No live stock APIs or automated market data yet.</li>
-              <li>Offline-first workflows built around manual user input.</li>
+              <li>Build a repeatable thesis workflow.</li>
+              <li>Compare ideas with consistent local scoring.</li>
+              <li>Keep review dates close to the research that matters.</li>
             </ul>
           </div>
         </Card>
@@ -269,8 +268,11 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
     <div className="app-shell" style={themeCssVariables}>
       <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand-area">
-          <p className="brand-eyebrow">Thesis Investing</p>
+          <p className="brand-eyebrow">conviction</p>
           <h1>Invest with a thesis.</h1>
+          <Badge className="local-mode-badge" variant="accent">
+            Local Data Mode
+          </Badge>
         </div>
 
         <nav className="navigation-list" aria-label="MVP areas">
@@ -318,10 +320,12 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           <ThemeBasketsScreen />
         ) : selectedView.id === 'reminders' ? (
           <RemindersScreen />
+        ) : selectedView.id === 'settings-about' ? (
+          <SettingsAboutScreen onResetOnboarding={onResetOnboarding} />
         ) : (
           <div className="planned-workspace-screen">
             <PageHeader
-              badge={<Badge variant="accent">Not built yet</Badge>}
+              badge={<Badge variant="accent">{selectedView.title}</Badge>}
               description={selectedView.description}
               eyebrow="Phase 1 Offline Windows MVP"
               title={selectedView.title}
@@ -355,6 +359,57 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function SettingsAboutScreen({
+  onResetOnboarding
+}: AppShellProps): JSX.Element {
+  return (
+    <div className="settings-about-screen">
+      <PageHeader
+        badge={<Badge variant="accent">App Settings</Badge>}
+        description="Review the local workspace mode, app boundaries, and first-run onboarding controls."
+        eyebrow="Settings/About"
+        title="App Settings"
+      />
+
+      <div className="settings-about-grid">
+        <Card title="Workspace mode">
+          <div className="settings-mode-panel">
+            <p>
+              Thesis Investing currently runs as a local-first workspace. Your
+              scoring, thesis notes, watchlist entries, theme browsing, and
+              review dates are designed around local inputs while live
+              integrations remain off.
+            </p>
+          </div>
+        </Card>
+
+        <Card title="Educational boundaries">
+          <div className="settings-disclaimer">
+            <p>
+              Thesis Investing is educational software only. It is not financial
+              advice, investment advice, a brokerage, a trading execution
+              platform, or a recommendation to buy, sell, hold, size, rank, or
+              allocate any security.
+            </p>
+            <p>
+              The app does not connect to brokerage accounts, execute trades,
+              sync to cloud services, or call live stock APIs in this version.
+            </p>
+          </div>
+        </Card>
+
+        <Card title="Onboarding">
+          <div className="settings-actions">
+            <Button onClick={onResetOnboarding} type="button" variant="secondary">
+              Reset onboarding
+            </Button>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

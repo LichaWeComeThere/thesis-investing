@@ -1,6 +1,8 @@
 import type { EntityId } from './domain';
 
 export type IdPrefix =
+  | 'idea'
+  | 'decision'
   | 'stock'
   | 'portfolio'
   | 'holding'

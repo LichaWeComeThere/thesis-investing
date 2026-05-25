@@ -28,13 +28,12 @@ describe('RemindersScreen', () => {
       <RemindersScreen initialReminders={[sampleReminder]} />
     );
 
-    expect(html).toContain('Manual dates only');
-    expect(html).toContain('No system notifications');
+    expect(html).toContain('Review Dates');
+    expect(html).toContain('Track thesis reviews, earnings follow-ups');
     expect(html).toContain('Review operating margin thesis');
     expect(html).toContain('Thesis review');
     expect(html).toContain('MSFT');
     expect(html).toContain('Compare the original margin assumptions');
-    expect(html).toContain('stored locally on this device');
   });
 
   it('renders validation errors for invalid populated input', () => {

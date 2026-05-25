@@ -33,12 +33,29 @@ describe('PortfolioRankerScreen', () => {
       />
     );
 
-    expect(html).toContain('Manual ranking only');
-    expect(html).toContain('not buy, sell, or hold recommendations');
-    expect(html).toContain('No live data, brokerage');
-    expect(html.indexOf('BBB')).toBeLessThan(html.indexOf('AAA'));
+    expect(html).toContain('Demo Rankings');
+    expect(html).toContain('Thesis Rankings');
+    expect(html).toContain('Rank investment ideas by thesis score');
+    expect(html).toContain('Investment ideas');
+    expect(html).toContain('MBS 72 / 100');
+    expect(html).toContain('Thesis: Not set');
+    expect(html).toContain('Conviction: Not set');
+    expect(html).toContain('Risk: Not set');
+    expect(html).toContain('Theme: Not set');
+    expect(html).toContain('Last reviewed');
+    expect(html).toContain('Next review');
+    const rankingPreview = html.slice(
+      html.indexOf('portfolio-ranker-preview-list')
+    );
+    expect(rankingPreview.indexOf('BBB')).toBeLessThan(
+      rankingPreview.indexOf('AAA')
+    );
     expect(html).toContain('Incomplete');
-    expect(html).toContain('Missing');
+    expect(html).toContain('Not set');
+    expect(html).toContain('Weakest idea');
+    expect(html).toContain('Lowest current thesis score.');
+    expect(html).toContain('Re-evaluate thesis');
+    expect(html).not.toContain('Untitled holding');
   });
 
   it('renders invalid score feedback clearly', () => {
@@ -58,6 +75,42 @@ describe('PortfolioRankerScreen', () => {
 
     expect(html).toContain('Invalid');
     expect(html).toContain('Manual score must be a finite number from 0 to 100.');
+  });
+
+  it('renders useful weakest idea empty and one-item states', () => {
+    const noScoresHtml = renderToStaticMarkup(
+      <PortfolioRankerScreen
+        initialRows={[
+          {
+            companyName: '',
+            id: 'idea-1',
+            manualScore: '',
+            notes: '',
+            ticker: ''
+          }
+        ]}
+      />
+    );
+
+    expect(noScoresHtml).toContain('Add scores to identify the weakest idea.');
+    expect(noScoresHtml).toContain('Add ticker');
+    expect(noScoresHtml).toContain('New idea');
+
+    const oneIdeaHtml = renderToStaticMarkup(
+      <PortfolioRankerScreen
+        initialRows={[
+          {
+            companyName: 'Solo Co',
+            id: 'idea-1',
+            manualScore: '80',
+            notes: '',
+            ticker: 'SOLO'
+          }
+        ]}
+      />
+    );
+
+    expect(oneIdeaHtml).toContain('Add more ideas to compare weakest thesis.');
   });
 
   it('converts populated rows into ranker inputs', () => {

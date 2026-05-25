@@ -346,9 +346,9 @@ export function ThesisMonitorScreen({
   return (
     <div className="thesis-monitor-screen">
       <PageHeader
-        badge={<Badge variant="accent">User-authored notes</Badge>}
-        description="Record the original thesis behind a holding or idea. Thesis status is controlled by the user; this screen is educational and non-advisory."
-        eyebrow="Phase 1 Thesis Monitor"
+        badge={<Badge variant="accent">Thesis Notes</Badge>}
+        description="Record the original thesis behind a holding or idea, track status, and plan the next review."
+        eyebrow="Thesis Workspace"
         title="Thesis Monitor"
       />
 
@@ -444,14 +444,6 @@ export function ThesisMonitorScreen({
         </aside>
 
         <Card className="thesis-form-card" title="Create or edit thesis note">
-          <div className="thesis-monitor-disclaimer">
-            Notes are manually authored by the user. No live data, automated news
-            monitoring, AI commentary, brokerage connection, sync, or trading
-            execution is used. Title, ticker, body, status, conviction, and
-            review due date are stored locally on this device; checklist text is
-            kept only in this current app session for now.
-          </div>
-
           <div className="thesis-form-grid">
             <label className="thesis-field">
               <span>Title</span>
