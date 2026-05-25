@@ -21,6 +21,7 @@ import {
   toPersistedReminder,
   type RemindersStorageClient
 } from './remindersStorageClient';
+import { getNextReviewThesis, mockTheses } from './data/mockTheses';
 import './reminders.css';
 
 type RemindersScreenProps = {
@@ -28,6 +29,7 @@ type RemindersScreenProps = {
   initialReminders?: LocalReminder[];
   initialStorageErrors?: string[];
   initialSelectedReminderId?: string;
+  onOpenWorkspace?: (workspaceId: string) => void;
   storageClient?: RemindersStorageClient | null;
 };
 
@@ -35,6 +37,7 @@ export function RemindersScreen({
   initialForm,
   initialReminders = [],
   initialStorageErrors = [],
+  onOpenWorkspace,
   storageClient,
   initialSelectedReminderId
 }: RemindersScreenProps): JSX.Element {
@@ -73,6 +76,14 @@ export function RemindersScreen({
   const visibleValidationErrors = shouldShowValidation
     ? formResult.validation.errors
     : [];
+  const upcomingReviewTheses = useMemo(
+    () =>
+      [...mockTheses].sort((first, second) =>
+        first.nextReviewDate.localeCompare(second.nextReviewDate)
+      ),
+    []
+  );
+  const nextReviewThesis = getNextReviewThesis(mockTheses);
 
   useEffect(() => {
     const client = resolvedStorageClient;
@@ -459,6 +470,52 @@ export function RemindersScreen({
       </Card>
 
       <div className="reminders-layout">
+        <Card title="Upcoming thesis reviews">
+          <div className="reminders-table-wrap">
+            <table className="reminders-table">
+              <thead>
+                <tr>
+                  <th scope="col">Due date</th>
+                  <th scope="col">Thesis</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcomingReviewTheses.map((thesis) => (
+                  <tr key={thesis.id}>
+                    <td>{thesis.nextReviewDate}</td>
+                    <td>
+                      {thesis.ticker} - {thesis.companyName}
+                    </td>
+                    <td>
+                      <Badge
+                        variant={
+                          thesis.id === nextReviewThesis.id
+                            ? 'warning'
+                            : 'neutral'
+                        }
+                      >
+                        {thesis.ideaStatus}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Button
+                        onClick={() => onOpenWorkspace?.('thesis-monitor')}
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        Open thesis
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
         <Card title="Local reminders">
           {isLoading ? (
             <p>Loading persisted reminders...</p>

@@ -17,6 +17,11 @@ import {
   createEmptyPortfolioRankerRow,
   type PortfolioRankerRowState
 } from './portfolioRankerInput';
+import {
+  formatScoreChange,
+  mockTheses,
+  type MockThesis
+} from './data/mockTheses';
 
 type PortfolioRankerScreenProps = {
   initialRows?: PortfolioRankerRowState[];
@@ -28,11 +33,11 @@ type ThesisStatusDisplay = {
   variant: BadgeVariant;
 };
 
-const defaultRows = [
-  createEmptyPortfolioRankerRow('idea-1'),
-  createEmptyPortfolioRankerRow('idea-2'),
-  createEmptyPortfolioRankerRow('idea-3')
-];
+const defaultRows = mockTheses.map(mockThesisToPortfolioRankerRow);
+
+const mockThesesById = new Map(
+  mockTheses.map((thesis) => [thesis.id, thesis])
+);
 
 export function PortfolioRankerScreen({
   initialRows = defaultRows,
@@ -169,7 +174,8 @@ export function PortfolioRankerScreen({
           <div className="portfolio-ranker-rows">
             {rows.map((row, index) => {
               const rankedItem = rankedItemsById.get(row.id);
-              const thesisStatus = getThesisStatus();
+              const thesis = mockThesesById.get(row.id);
+              const thesisStatus = getThesisStatus(thesis);
 
               return (
                 <article className="portfolio-ranker-row" key={row.id}>
@@ -197,23 +203,28 @@ export function PortfolioRankerScreen({
                       {thesisStatus.label}
                     </Badge>
                     <span className="portfolio-ranker-meta-chip">
-                      Conviction: Not set
-                    </span>
-                    <span className="portfolio-ranker-meta-chip portfolio-ranker-meta-chip--risk">
-                      Risk: Not set
+                      Change: {thesis ? formatScoreChange(thesis) : 'Not set'}
                     </span>
                     <span className="portfolio-ranker-meta-chip">
-                      Theme: Not set
+                      Conviction: {thesis?.conviction ?? 'Not set'}
+                    </span>
+                    <span className="portfolio-ranker-meta-chip portfolio-ranker-meta-chip--risk">
+                      Risk: {thesis?.riskLevel ?? 'Not set'}
+                    </span>
+                    <span className="portfolio-ranker-meta-chip">
+                      Theme: {thesis?.theme ?? 'Not set'}
                     </span>
                   </div>
 
                   <div className="portfolio-ranker-row-actions">
                     <div className="portfolio-ranker-review-dates">
                       <span>
-                        Last reviewed <strong>Not set</strong>
+                        Last reviewed{' '}
+                        <strong>{thesis?.lastReviewedDate ?? 'Not set'}</strong>
                       </span>
                       <span>
-                        Next review <strong>Not set</strong>
+                        Next review{' '}
+                        <strong>{thesis?.nextReviewDate ?? 'Not set'}</strong>
                       </span>
                     </div>
                     <details className="portfolio-ranker-editor">
@@ -514,9 +525,49 @@ function formatPreviewTicker(item: ManualPortfolioRankedItem): string {
   return item.normalizedTicker || 'Add ticker';
 }
 
-function getThesisStatus(): ThesisStatusDisplay {
+function mockThesisToPortfolioRankerRow(
+  thesis: MockThesis
+): PortfolioRankerRowState {
   return {
-    label: 'Thesis: Not set',
+    companyName: thesis.companyName,
+    id: thesis.id,
+    manualScore: String(thesis.mbsScore),
+    notes: thesis.thesisSummary,
+    ticker: thesis.ticker
+  };
+}
+
+function getThesisStatus(thesis: MockThesis | undefined): ThesisStatusDisplay {
+  if (!thesis) {
+    return {
+      label: 'Thesis: Not set',
+      variant: 'neutral'
+    };
+  }
+
+  if (thesis.thesisStatus === 'Strong' || thesis.thesisStatus === 'Improving') {
+    return {
+      label: `Thesis: ${thesis.thesisStatus}`,
+      variant: 'success'
+    };
+  }
+
+  if (thesis.thesisStatus === 'Weakening') {
+    return {
+      label: `Thesis: ${thesis.thesisStatus}`,
+      variant: 'warning'
+    };
+  }
+
+  if (thesis.thesisStatus === 'Broken') {
+    return {
+      label: `Thesis: ${thesis.thesisStatus}`,
+      variant: 'risk'
+    };
+  }
+
+  return {
+    label: `Thesis: ${thesis.thesisStatus}`,
     variant: 'neutral'
   };
 }

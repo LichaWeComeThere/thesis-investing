@@ -22,11 +22,13 @@ describe('DashboardScreen', () => {
     expect(html).toContain('Needs review');
     expect(html).toContain('Weakening');
     expect(html).toContain('Weakest Idea');
-    expect(html).toContain('CRWD');
+    expect(html).toContain('TSLA');
     expect(html).toContain('Biggest Score Drop');
     expect(html).toContain('TSLA');
-    expect(html).toContain('Review Due Soon');
+    expect(html).toContain('Top Improving Idea');
     expect(html).toContain('NVDA');
+    expect(html).toContain('Review Due Soon');
+    expect(html).toContain('SOFI');
   });
 
   it('renders market regime and quick actions', () => {

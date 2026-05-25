@@ -20,15 +20,15 @@ import {
   type ManualMbsCategoryValueState
 } from './manualMbsScorerInput';
 import {
-  cloneMockInvestmentIdeas,
-  createMockInvestmentIdeaFromMbsScore,
-  saveMockMbsScoreToInvestmentIdea,
-  type MockInvestmentIdea
-} from './mockInvestmentIdeas';
+  cloneMockTheses,
+  createMockThesisFromMbsScore,
+  saveMockMbsScoreToThesis,
+  type MockThesis
+} from './data/mockTheses';
 
 type ManualMbsScorerScreenProps = {
   initialCategoryValues?: ManualMbsCategoryValueState;
-  initialInvestmentIdeas?: MockInvestmentIdea[];
+  initialInvestmentIdeas?: MockThesis[];
   initialNotes?: string;
 };
 
@@ -201,17 +201,18 @@ export function ManualMbsScorerScreen({
   initialInvestmentIdeas,
   initialNotes = ''
 }: ManualMbsScorerScreenProps): JSX.Element {
-  const [investmentIdeas, setInvestmentIdeas] = useState<MockInvestmentIdea[]>(
+  const [investmentIdeas, setInvestmentIdeas] = useState<MockThesis[]>(
     () =>
       initialInvestmentIdeas
         ? initialInvestmentIdeas.map((idea) => ({
             ...idea,
-            decisionLog: idea.decisionLog.map((entry) => ({ ...entry }))
+            decisionLog: idea.decisionLog.map((entry) => ({ ...entry })),
+            reviewTriggers: [...idea.reviewTriggers]
           }))
-        : cloneMockInvestmentIdeas()
+        : cloneMockTheses()
   );
   const [selectedThesisId, setSelectedThesisId] = useState(() =>
-    initialInvestmentIdeas?.[0]?.id ?? cloneMockInvestmentIdeas()[0]?.id ?? CREATE_NEW_THESIS_ID
+    initialInvestmentIdeas?.[0]?.id ?? cloneMockTheses()[0]?.id ?? CREATE_NEW_THESIS_ID
   );
   const [newThesisFields, setNewThesisFields] = useState({
     companyName: '',
@@ -291,7 +292,7 @@ export function ManualMbsScorerScreen({
     const updatedAt = new Date().toISOString();
 
     setInvestmentIdeas((currentIdeas) =>
-      saveMockMbsScoreToInvestmentIdea(
+      saveMockMbsScoreToThesis(
         currentIdeas,
         selectedThesis.id,
         scoreOutput.score,
@@ -303,7 +304,7 @@ export function ManualMbsScorerScreen({
 
   function createNewThesisFromScore(): void {
     const createdAt = new Date().toISOString();
-    const nextIdea = createMockInvestmentIdeaFromMbsScore(investmentIdeas, {
+    const nextIdea = createMockThesisFromMbsScore(investmentIdeas, {
       companyName: newThesisFields.companyName,
       createdAt,
       mbsScore: scoreOutput.score,
@@ -379,7 +380,7 @@ export function ManualMbsScorerScreen({
                 <div>
                   <span>Theme</span>
                   <strong>{selectedThesis.theme}</strong>
-                  <small>{selectedThesis.status}</small>
+                  <small>{selectedThesis.ideaStatus}</small>
                 </div>
                 <div>
                   <span>Saved MBS</span>
@@ -392,7 +393,7 @@ export function ManualMbsScorerScreen({
                 <div>
                   <span>Conviction</span>
                   <strong>{selectedThesis.conviction}</strong>
-                  <small>Risk: {selectedThesis.risk}</small>
+                  <small>Risk: {selectedThesis.riskLevel}</small>
                 </div>
               </div>
             ) : (

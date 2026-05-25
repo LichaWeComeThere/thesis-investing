@@ -35,6 +35,17 @@ describe('WatchlistScreen', () => {
     expect(html).toContain('Durable software thesis');
   });
 
+  it('renders shared mock watchlist theses when no local items exist', () => {
+    const html = renderToStaticMarkup(<WatchlistScreen />);
+
+    expect(html).toContain('Watchlist thesis queue');
+    expect(html).toContain('CRWD');
+    expect(html).toContain('CrowdStrike');
+    expect(html).toContain('PLTR');
+    expect(html).toContain('Palantir');
+    expect(html).toContain('Researching');
+  });
+
   it('renders validation errors for invalid populated input', () => {
     const invalidForm = {
       ...createEmptyWatchlistForm('invalid'),

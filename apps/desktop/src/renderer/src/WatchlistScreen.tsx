@@ -17,6 +17,10 @@ import {
   toPersistedWatchlistItem,
   type WatchlistStorageClient
 } from './watchlistStorageClient';
+import {
+  getWatchlistTheses,
+  type MockThesis
+} from './data/mockTheses';
 import './watchlist.css';
 
 type WatchlistScreenProps = {
@@ -62,14 +66,26 @@ export function WatchlistScreen({
     () => items.find((item) => item.id === selectedItemId) ?? null,
     [items, selectedItemId]
   );
-  const taggedItemCount = items.filter(
-    (item) => item.tags && item.tags.length > 0
-  ).length;
   const shouldShowValidation =
-    saveAttempted || (hasWatchlistFormContent(form) && !formResult.validation.valid);
+    saveAttempted ||
+    (hasWatchlistFormContent(form) && !formResult.validation.valid);
   const visibleValidationErrors = shouldShowValidation
     ? formResult.validation.errors
     : [];
+  const watchlistTheses = useMemo(() => getWatchlistTheses(), []);
+  const [selectedMockThesisId, setSelectedMockThesisId] = useState(
+    () => watchlistTheses[0]?.id ?? ''
+  );
+  const selectedMockThesis = useMemo(
+    () =>
+      watchlistTheses.find((thesis) => thesis.id === selectedMockThesisId) ??
+      watchlistTheses[0] ??
+      null,
+    [selectedMockThesisId, watchlistTheses]
+  );
+  const researchingCount = watchlistTheses.filter(
+    (thesis) => thesis.ideaStatus === 'Researching'
+  ).length;
 
   useEffect(() => {
     const client = resolvedStorageClient;
@@ -372,20 +388,24 @@ export function WatchlistScreen({
         <Card className="watchlist-summary-card" emphasis title="Watchlist pulse">
           <div className="watchlist-summary-hero">
             <span>Tracked ideas</span>
-            <strong>{items.length}</strong>
-            <Badge variant={items.length > 0 ? 'accent' : 'neutral'}>
+            <strong>{watchlistTheses.length}</strong>
+            <Badge variant={watchlistTheses.length > 0 ? 'accent' : 'neutral'}>
               Local
             </Badge>
           </div>
 
           <div className="watchlist-summary-grid">
             <div>
-              <span>Tagged</span>
-              <strong>{taggedItemCount}</strong>
+              <span>Researching</span>
+              <strong>{researchingCount}</strong>
             </div>
             <div>
               <span>Selected</span>
-              <strong>{selectedItem ? selectedItem.ticker : 'None'}</strong>
+              <strong>
+                {selectedItem
+                  ? selectedItem.ticker
+                  : selectedMockThesis?.ticker ?? 'None'}
+              </strong>
             </div>
           </div>
 
@@ -401,10 +421,63 @@ export function WatchlistScreen({
       </div>
 
       <div className="watchlist-layout">
-        <Card title="Local watchlist items">
+        <Card title="Watchlist thesis queue">
           {isLoading ? (
             <p>Loading persisted watchlist items...</p>
-          ) : items.length > 0 ? (
+          ) : watchlistTheses.length > 0 ? (
+            <div className="watchlist-table-wrap">
+              <table className="watchlist-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Ticker</th>
+                    <th scope="col">Company</th>
+                    <th scope="col">Theme</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {watchlistTheses.map((thesis) => (
+                    <tr key={thesis.id}>
+                      <td>{thesis.ticker}</td>
+                      <td>{thesis.companyName}</td>
+                      <td>{thesis.theme}</td>
+                      <td>
+                        <Badge variant={watchlistBadgeVariant(thesis)}>
+                          {thesis.ideaStatus}
+                        </Badge>
+                      </td>
+                      <td>
+                        <div className="watchlist-row-actions">
+                          <Button
+                            onClick={() => {
+                              setSelectedMockThesisId(thesis.id);
+                              setSelectedItemId(null);
+                            }}
+                            disabled={isWriting}
+                            size="sm"
+                            type="button"
+                            variant="secondary"
+                          >
+                            View thesis
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="watchlist-details">
+              <h3>No watchlist theses yet</h3>
+              <p>
+                Add a thesis to Watchlist or Researching status to see it here.
+              </p>
+            </div>
+          )}
+
+          {items.length > 0 ? (
             <div className="watchlist-table-wrap">
               <table className="watchlist-table">
                 <thead>
@@ -448,9 +521,7 @@ export function WatchlistScreen({
                 </tbody>
               </table>
             </div>
-          ) : (
-            <p>No local watchlist items yet.</p>
-          )}
+          ) : null}
         </Card>
 
         <Card title="Selected item details">
@@ -482,6 +553,41 @@ export function WatchlistScreen({
                 <p>{selectedItem.note ?? 'No note provided.'}</p>
               </div>
             </article>
+          ) : selectedMockThesis ? (
+            <article className="watchlist-details">
+              <div className="watchlist-details-header">
+                <div>
+                  <p className="watchlist-details-eyebrow">
+                    {selectedMockThesis.ticker}
+                  </p>
+                  <h3>{selectedMockThesis.companyName}</h3>
+                </div>
+                <Badge variant={watchlistBadgeVariant(selectedMockThesis)}>
+                  {selectedMockThesis.ideaStatus}
+                </Badge>
+              </div>
+
+              <dl className="watchlist-meta-grid">
+                <div>
+                  <dt>Theme</dt>
+                  <dd>{selectedMockThesis.theme}</dd>
+                </div>
+                <div>
+                  <dt>Next review</dt>
+                  <dd>{selectedMockThesis.nextReviewDate}</dd>
+                </div>
+              </dl>
+
+              <div className="watchlist-detail-section">
+                <h4>Thesis</h4>
+                <p>{selectedMockThesis.thesisSummary}</p>
+              </div>
+
+              <div className="watchlist-detail-section">
+                <h4>Triggers</h4>
+                <p>{selectedMockThesis.reviewTriggers.join(', ')}</p>
+              </div>
+            </article>
           ) : (
             <p>Select or save a local watchlist item to review details.</p>
           )}
@@ -493,4 +599,18 @@ export function WatchlistScreen({
 
 function formatTags(tags: string[] | undefined): string {
   return tags && tags.length > 0 ? tags.join(', ') : 'No tags';
+}
+
+function watchlistBadgeVariant(
+  thesis: MockThesis
+): 'accent' | 'neutral' | 'success' | 'warning' | 'risk' {
+  if (thesis.ideaStatus === 'Researching') {
+    return 'accent';
+  }
+
+  if (thesis.thesisStatus === 'Weakening' || thesis.riskLevel === 'High') {
+    return 'warning';
+  }
+
+  return 'neutral';
 }

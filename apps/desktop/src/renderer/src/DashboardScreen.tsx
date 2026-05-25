@@ -1,4 +1,15 @@
 import { Badge, Card, PageHeader } from '@thesis-investing/ui';
+import {
+  formatScoreChange,
+  getLargestScoreDropThesis,
+  getNextReviewThesis,
+  getScoreChange,
+  getTopImprovingThesis,
+  getWeakestThesis,
+  isNeedsReviewThesis,
+  mockTheses,
+  type MockThesis
+} from './data/mockTheses';
 import { MarketPulseFeed } from './MarketPulseFeed';
 import './dashboard.css';
 
@@ -31,53 +42,67 @@ type QuickAction = {
 };
 
 const thesisHealthItems: ThesisHealthItem[] = [
-  { label: 'Theses tracked', value: 8, tone: 'tracked' },
-  { label: 'Needs review', value: 2, tone: 'review' },
-  { label: 'Weakening', value: 1, tone: 'weakening' },
-  { label: 'Strong conviction', value: 3, tone: 'strong' }
+  { label: 'Theses tracked', value: mockTheses.length, tone: 'tracked' },
+  {
+    label: 'Needs review',
+    value: mockTheses.filter(isNeedsReviewThesis).length,
+    tone: 'review'
+  },
+  {
+    label: 'Weakening',
+    value: mockTheses.filter((thesis) => thesis.thesisStatus === 'Weakening')
+      .length,
+    tone: 'weakening'
+  },
+  {
+    label: 'Strong conviction',
+    value: mockTheses.filter((thesis) => thesis.conviction === 'High').length,
+    tone: 'strong'
+  }
 ];
+
+const weakestThesis = getWeakestThesis(mockTheses);
+const largestDropThesis = getLargestScoreDropThesis(mockTheses);
+const topImprovingThesis = getTopImprovingThesis(mockTheses);
+const nextReviewThesis = getNextReviewThesis(mockTheses);
 
 const reviewPriorityItems: ReviewPriorityItem[] = [
   {
     label: 'Weakest Idea',
-    ticker: 'CRWD',
-    detail: 'Thesis score needs a fresh risk review.',
+    ticker: weakestThesis.ticker,
+    detail: `${weakestThesis.mbsScore} MBS. ${weakestThesis.thesisSummary}`,
     tone: 'weakening'
   },
   {
     label: 'Biggest Score Drop',
-    ticker: 'TSLA',
-    detail: 'Margin pressure moved the thesis into caution.',
+    ticker: largestDropThesis.ticker,
+    detail: `${formatScoreChange(largestDropThesis)} since last review.`,
     tone: 'review'
   },
   {
+    label: 'Top Improving Idea',
+    ticker: topImprovingThesis.ticker,
+    detail: `${formatScoreChange(topImprovingThesis)} since last review.`,
+    tone: 'strong'
+  },
+  {
     label: 'Review Due Soon',
-    ticker: 'NVDA',
-    detail: 'AI infrastructure thesis is ready for the next check-in.',
+    ticker: nextReviewThesis.ticker,
+    detail: `Next review ${nextReviewThesis.nextReviewDate}.`,
     tone: 'tracked'
   }
 ];
 
-const recentActivityItems: RecentActivityItem[] = [
-  {
-    ticker: 'NVDA',
-    action: 'score updated',
-    detail: 'Business quality and moat assumptions refreshed.',
-    tone: 'strong'
-  },
-  {
-    ticker: 'CRWD',
-    action: 'moved to Watch',
-    detail: 'Retention and growth durability need another pass.',
-    tone: 'review'
-  },
-  {
-    ticker: 'TSLA',
-    action: 'flagged as Caution',
-    detail: 'Bear case expanded after margin pressure.',
-    tone: 'weakening'
-  }
-];
+const recentActivityItems: RecentActivityItem[] = mockTheses
+  .flatMap((thesis) =>
+    thesis.decisionLog.map((entry) => ({
+      ticker: thesis.ticker,
+      action: entry.title,
+      detail: entry.note,
+      tone: getDashboardTone(thesis)
+    }))
+  )
+  .slice(0, 3);
 
 const quickActions: QuickAction[] = [
   {
@@ -105,6 +130,22 @@ const quickActions: QuickAction[] = [
 type DashboardScreenProps = {
   onOpenWorkspace?: (workspaceId: string) => void;
 };
+
+function getDashboardTone(thesis: MockThesis): ThesisHealthTone {
+  if (thesis.thesisStatus === 'Weakening' || thesis.thesisStatus === 'Broken') {
+    return 'weakening';
+  }
+
+  if (isNeedsReviewThesis(thesis)) {
+    return 'review';
+  }
+
+  if (thesis.conviction === 'High' || getScoreChange(thesis) > 0) {
+    return 'strong';
+  }
+
+  return 'tracked';
+}
 
 export function DashboardScreen({
   onOpenWorkspace

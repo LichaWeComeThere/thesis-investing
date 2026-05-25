@@ -18,6 +18,7 @@ import {
   toPersistedThesisNote,
   type ThesisNotesStorageClient
 } from './thesisNotesStorageClient';
+import { mockTheses, type MockThesis } from './data/mockTheses';
 
 type ThesisMonitorScreenProps = {
   initialForm?: ThesisNoteFormState;
@@ -45,52 +46,6 @@ const convictionLabels: Record<
   medium: 'Medium'
 };
 
-type DemoThesisQueueItem = {
-  id: string;
-  ticker: string;
-  title: string;
-  status: LocalThesisNote['status'];
-  statusLabel?: string;
-  score: number;
-  reviewLabel: string;
-};
-
-const demoThesisQueueItems: DemoThesisQueueItem[] = [
-  {
-    id: 'demo-nvda',
-    ticker: 'NVDA',
-    title: 'AI infrastructure leadership',
-    status: 'active',
-    score: 79,
-    reviewLabel: 'Due soon'
-  },
-  {
-    id: 'demo-crwd',
-    ticker: 'CRWD',
-    title: 'Cybersecurity resilience',
-    status: 'watch',
-    score: 68,
-    reviewLabel: 'Draft'
-  },
-  {
-    id: 'demo-msft',
-    ticker: 'MSFT',
-    title: 'Cloud and AI platform strength',
-    status: 'active',
-    score: 82,
-    reviewLabel: 'Reviewed'
-  },
-  {
-    id: 'demo-tsla',
-    ticker: 'TSLA',
-    title: 'Margin pressure thesis',
-    status: 'challenged',
-    statusLabel: 'Caution',
-    score: 52,
-    reviewLabel: 'Needs review'
-  }
-];
-
 function statusBadgeVariant(
   status: LocalThesisNote['status']
 ): 'accent' | 'neutral' | 'success' | 'warning' | 'risk' {
@@ -107,6 +62,32 @@ function statusBadgeVariant(
     case 'closed':
       return 'neutral';
   }
+}
+
+function mockThesisBadgeVariant(
+  thesis: MockThesis
+): 'accent' | 'neutral' | 'success' | 'warning' | 'risk' {
+  if (thesis.thesisStatus === 'Strong' || thesis.thesisStatus === 'Improving') {
+    return 'success';
+  }
+
+  if (
+    thesis.ideaStatus === 'Needs Review' ||
+    thesis.ideaStatus === 'Caution' ||
+    thesis.thesisStatus === 'Weakening'
+  ) {
+    return 'warning';
+  }
+
+  if (thesis.thesisStatus === 'Broken') {
+    return 'risk';
+  }
+
+  if (thesis.ideaStatus === 'Watchlist' || thesis.ideaStatus === 'Researching') {
+    return 'accent';
+  }
+
+  return 'neutral';
 }
 
 function scoreForNote(note: LocalThesisNote): number | null {
@@ -154,8 +135,8 @@ export function ThesisMonitorScreen({
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(
     initialSelectedNoteId ?? initialNotes[0]?.id ?? null
   );
-  const [selectedDemoQueueId, setSelectedDemoQueueId] = useState(
-    demoThesisQueueItems[0].id
+  const [selectedMockThesisId, setSelectedMockThesisId] = useState(
+    mockTheses[0].id
   );
   const [nextNoteNumber, setNextNoteNumber] = useState(() =>
     getNextThesisNoteNumber(initialNotes)
@@ -180,10 +161,20 @@ export function ThesisMonitorScreen({
     (note) => note.status === 'active' || note.status === 'watch'
   ).length;
   const hasLocalNotes = notes.length > 0;
-  const selectedDemoQueueItem =
-    demoThesisQueueItems.find((item) => item.id === selectedDemoQueueId) ??
-    demoThesisQueueItems[0];
+  const selectedMockThesis =
+    mockTheses.find((thesis) => thesis.id === selectedMockThesisId) ??
+    mockTheses[0];
   const selectedNoteScore = selectedNote ? scoreForNote(selectedNote) : null;
+  const thesisCount = hasLocalNotes ? notes.length : mockTheses.length;
+  const activeThesisCount = hasLocalNotes
+    ? activeNoteCount
+    : mockTheses.filter(
+        (thesis) =>
+          thesis.ideaStatus === 'Active' || thesis.ideaStatus === 'Watchlist'
+      ).length;
+  const reviewDateCount = hasLocalNotes
+    ? notesWithReviewDates
+    : mockTheses.filter((thesis) => thesis.nextReviewDate).length;
   const shouldShowValidation =
     saveAttempted || (hasThesisFormContent(form) && !formResult.validation.valid);
   const visibleValidationErrors = shouldShowValidation
@@ -372,8 +363,8 @@ export function ThesisMonitorScreen({
           <div className="thesis-queue-list" role="list">
             {isLoading ? (
               <p>Loading persisted thesis notes...</p>
-            ) : hasLocalNotes
-              ? notes.map((note) => {
+            ) : hasLocalNotes ? (
+              notes.map((note) => {
                   const score = scoreForNote(note);
                   const isSelected = note.id === selectedNoteId;
 
@@ -402,34 +393,41 @@ export function ThesisMonitorScreen({
                     </button>
                   );
                 })
-              : demoThesisQueueItems.map((item) => {
-                  const isSelected = item.id === selectedDemoQueueId;
+            ) : (
+              mockTheses.map((thesis) => {
+                  const isSelected = thesis.id === selectedMockThesisId;
 
                   return (
                     <button
                       aria-current={isSelected ? 'true' : undefined}
                       className="thesis-queue-card thesis-queue-card--demo"
                       disabled={isWriting}
-                      key={item.id}
-                      onClick={() => setSelectedDemoQueueId(item.id)}
+                      key={thesis.id}
+                      onClick={() => {
+                        setSelectedMockThesisId(thesis.id);
+                        setSelectedNoteId(null);
+                      }}
                       role="listitem"
                       type="button"
                     >
                       <span className="thesis-queue-card-topline">
-                        <strong>{item.ticker}</strong>
-                        <Badge variant={statusBadgeVariant(item.status)}>
-                          {item.statusLabel ?? statusLabels[item.status]}
+                        <strong>{thesis.ticker}</strong>
+                        <Badge variant={mockThesisBadgeVariant(thesis)}>
+                          {thesis.thesisStatus}
                         </Badge>
                       </span>
-                      <span className="thesis-queue-title">{item.title}</span>
+                      <span className="thesis-queue-title">
+                        {thesis.thesisSummary}
+                      </span>
                       <span className="thesis-queue-meta">
-                        <small>{item.reviewLabel}</small>
-                        <small>Score {item.score}</small>
+                        <small>{thesis.ideaStatus}</small>
+                        <small>Score {thesis.mbsScore}</small>
                       </span>
                       <span className="thesis-queue-open">Preview</span>
                     </button>
                   );
-                })}
+                })
+            )}
           </div>
 
           <div className="thesis-queue-workflow">
@@ -584,16 +582,16 @@ export function ThesisMonitorScreen({
         <Card className="thesis-health-card" emphasis title="Thesis health">
           <div className="thesis-health-hero">
             <span>Local notes</span>
-            <strong>{notes.length}</strong>
-            <Badge variant={activeNoteCount > 0 ? 'accent' : 'neutral'}>
-              {activeNoteCount} active/watch
+            <strong>{thesisCount}</strong>
+            <Badge variant={activeThesisCount > 0 ? 'accent' : 'neutral'}>
+              {activeThesisCount} active/watch
             </Badge>
           </div>
 
           <div className="thesis-health-grid">
             <div>
               <span>With review date</span>
-              <strong>{notesWithReviewDates}</strong>
+              <strong>{reviewDateCount}</strong>
             </div>
             <div>
               <span>Selected status</span>
@@ -608,7 +606,7 @@ export function ThesisMonitorScreen({
             <p>
               {selectedNote
                 ? 'Review the selected thesis detail card below or update the manual checklist.'
-                : 'Save or select a thesis note to populate the selected snapshot.'}
+                : 'Select a mock thesis to populate the selected snapshot or save a new note.'}
             </p>
           </div>
 
@@ -656,30 +654,44 @@ export function ThesisMonitorScreen({
                 <div className="thesis-details-header">
                   <div>
                     <p className="thesis-details-eyebrow">
-                      {selectedDemoQueueItem.ticker}
+                      {selectedMockThesis.ticker}
                     </p>
-                    <h3>{selectedDemoQueueItem.title}</h3>
+                    <h3>{selectedMockThesis.companyName}</h3>
                   </div>
-                  <Badge variant={statusBadgeVariant(selectedDemoQueueItem.status)}>
-                    {selectedDemoQueueItem.statusLabel ??
-                      statusLabels[selectedDemoQueueItem.status]}
+                  <Badge variant={mockThesisBadgeVariant(selectedMockThesis)}>
+                    {selectedMockThesis.thesisStatus}
                   </Badge>
                 </div>
 
                 <dl className="thesis-meta-grid">
                   <div>
                     <dt>Score</dt>
-                    <dd>{selectedDemoQueueItem.score}</dd>
+                    <dd>{selectedMockThesis.mbsScore}</dd>
                   </div>
                   <div>
                     <dt>Review</dt>
-                    <dd>{selectedDemoQueueItem.reviewLabel}</dd>
+                    <dd>{selectedMockThesis.nextReviewDate}</dd>
                   </div>
                 </dl>
 
                 <div className="thesis-detail-section">
-                  <h4>Preview</h4>
-                  <p>Select a saved thesis to load it into the editor.</p>
+                  <h4>Summary</h4>
+                  <p>{selectedMockThesis.thesisSummary}</p>
+                </div>
+
+                <div className="thesis-detail-section">
+                  <h4>Bull case</h4>
+                  <p>{selectedMockThesis.bullCase}</p>
+                </div>
+
+                <div className="thesis-detail-section">
+                  <h4>Bear case</h4>
+                  <p>{selectedMockThesis.bearCase}</p>
+                </div>
+
+                <div className="thesis-detail-section">
+                  <h4>Review triggers</h4>
+                  <p>{selectedMockThesis.reviewTriggers.join(', ')}</p>
                 </div>
               </article>
             )}

@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { buildManualMbsInput } from './manualMbsScorerInput';
 import {
-  cloneMockInvestmentIdeas,
-  createMockInvestmentIdeaFromMbsScore,
-  saveMockMbsScoreToInvestmentIdea
-} from './mockInvestmentIdeas';
+  cloneMockTheses,
+  createMockThesisFromMbsScore,
+  saveMockMbsScoreToThesis
+} from './data/mockTheses';
 
 describe('ManualMbsScorerScreen', () => {
   it('renders manual scorer copy and deterministic output for sample values', () => {
@@ -36,7 +36,7 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('7 / 7');
   });
 
-  it('renders selected thesis controls from shared mock investment ideas', () => {
+  it('renders selected thesis controls from shared mock theses', () => {
     const html = renderToStaticMarkup(<ManualMbsScorerScreen />);
 
     expect(html).toContain('Selected thesis');
@@ -109,26 +109,32 @@ describe('ManualMbsScorerScreen', () => {
   });
 
   it('updates mock thesis score in frontend state helpers', () => {
-    const ideas = cloneMockInvestmentIdeas();
-    const updatedIdeas = saveMockMbsScoreToInvestmentIdea(
-      ideas,
-      'idea-crwd',
+    const theses = cloneMockTheses();
+    const updatedTheses = saveMockMbsScoreToThesis(
+      theses,
+      'thesis-crwd',
       78,
       '2026-05-24T12:00:00.000Z'
     );
-    const updatedCrwd = updatedIdeas.find((idea) => idea.id === 'idea-crwd');
+    const updatedCrwd = updatedTheses.find(
+      (thesis) => thesis.id === 'thesis-crwd'
+    );
 
     expect(updatedCrwd?.mbsScore).toBe(78);
     expect(updatedCrwd?.previousMbsScore).toBe(65);
-    expect(updatedCrwd?.updatedAt).toBe('2026-05-24T12:00:00.000Z');
-    expect(updatedCrwd?.decisionLog.at(-1)?.message).toBe(
+    expect(updatedCrwd?.decisionLog.at(-1)?.createdAt).toBe(
+      '2026-05-24T12:00:00.000Z'
+    );
+    expect(updatedCrwd?.decisionLog.at(-1)?.note).toBe(
       'MBS score updated from 65 to 78.'
     );
-    expect(ideas.find((idea) => idea.id === 'idea-crwd')?.mbsScore).toBe(65);
+    expect(theses.find((thesis) => thesis.id === 'thesis-crwd')?.mbsScore).toBe(
+      65
+    );
   });
 
   it('creates a mock thesis from the current score with safe defaults', () => {
-    const idea = createMockInvestmentIdeaFromMbsScore(cloneMockInvestmentIdeas(), {
+    const thesis = createMockThesisFromMbsScore(cloneMockTheses(), {
       createdAt: '2026-05-24T12:00:00.000Z',
       mbsScore: 74,
       notes: 'Local thesis note.',
@@ -136,18 +142,17 @@ describe('ManualMbsScorerScreen', () => {
       ticker: 'xyz'
     });
 
-    expect(idea).toMatchObject({
+    expect(thesis).toMatchObject({
       companyName: 'New thesis',
       conviction: 'Unrated',
+      ideaStatus: 'Researching',
       mbsScore: 74,
-      previousMbsScore: null,
-      risk: 'Risk score 6 / 10',
-      status: 'Draft',
+      previousMbsScore: 74,
+      riskLevel: 'Medium',
       theme: 'Uncategorized',
+      thesisStatus: 'Stable',
       ticker: 'XYZ'
     });
-    expect(idea.decisionLog[0].message).toBe(
-      'Thesis created from MBS Scorer.'
-    );
+    expect(thesis.decisionLog[0].note).toBe('Thesis created from MBS Scorer.');
   });
 });

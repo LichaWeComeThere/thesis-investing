@@ -42,11 +42,14 @@ describe('ThesisMonitorScreen', () => {
     expect(html).toContain('Review, rank, and update stock theses');
     expect(html).toContain('+ New Thesis');
     expect(html).toContain('NVDA');
-    expect(html).toContain('AI infrastructure leadership');
+    expect(html).toContain('NVIDIA');
+    expect(html).toContain('AI accelerator demand');
     expect(html).toContain('CRWD');
-    expect(html).toContain('Cybersecurity resilience');
+    expect(html).toContain('Endpoint leadership remains strong');
     expect(html).toContain('Caution');
     expect(html).toContain('Selected thesis snapshot');
+    expect(html).toContain('Bull case');
+    expect(html).toContain('Review triggers');
     expect(html).toContain('Review workflow');
   });
 
