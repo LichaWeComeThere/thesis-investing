@@ -2,7 +2,8 @@
 
 The Reminders screen is a Phase 1 offline MVP screen for manually tracking
 thesis review, earnings, and custom reminder dates. It is local, user-entered,
-and educational only.
+persisted on this device through the Electron storage boundary, and educational
+only.
 
 ## Behavior
 
@@ -17,7 +18,28 @@ reminders with:
 - completed status
 
 The screen shows a local table of reminders and a selected reminder detail view.
-Reminders are held in React state only for this stage.
+Reminders are loaded from and saved to the local SQLite-backed `reminders`
+repository through the preload/IPC API. Transient UI state, such as the selected
+reminder and in-progress form fields, remains in React state.
+
+## Persistence
+
+Reminders are persisted locally through `window.thesisInvesting.reminders`.
+SQLite access stays in the Electron main process; the React renderer does not
+import raw SQLite or `node:sqlite`.
+
+Persisted fields include:
+
+- title
+- reminder type
+- optional ticker
+- due date
+- optional note
+- completion state
+
+The UI uses a boolean completed/open control. Storage represents completion with
+`completedAt`: marking a reminder complete sets a local ISO date, and reopening
+a reminder clears `completedAt`.
 
 ## Validation
 
@@ -27,9 +49,9 @@ invalid due date format, unsupported reminder type, and invalid ticker symbols.
 
 ## Boundaries
 
-The Reminders screen does not persist to SQLite yet and does not connect to
-external services. It does not infer earnings dates automatically, create system
-notifications, run background schedules, or integrate with calendars.
+The Reminders screen does not connect to external services. It does not infer
+earnings dates automatically, create system notifications, run background
+schedules, or integrate with calendars.
 
 ## Out Of Scope
 

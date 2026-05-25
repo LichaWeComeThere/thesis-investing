@@ -36,9 +36,9 @@ The visible MVP screens are still mostly React-state-only:
 
 | Screen | Current state owner | Existing storage fit |
 | --- | --- | --- |
-| Watchlist | `useState` with watchlist form helpers | `watchlistItems` repository is a direct fit, except `thesisReference` is currently UI-only text |
-| Thesis Monitor | `useState` with thesis note form helpers | `thesisNotes` repository is a direct fit, except `checklist` is currently UI-only text |
-| Reminders | `useState` with reminder form helpers | `reminders` repository is a direct fit, but UI `completed` maps to persisted `completedAt` |
+| Watchlist | Persisted through `window.thesisInvesting.watchlist`, with transient form/selected state in React | Stage 18 implemented `watchlistItems`; `thesisReference` remains UI-only text |
+| Thesis Monitor | Persisted through `window.thesisInvesting.thesisNotes`, with transient form/selected state in React | Stage 19 implemented `thesisNotes`; `checklist` remains UI-only text |
+| Reminders | Persisted through `window.thesisInvesting.reminders`, with transient form/selected state in React | Stage 20 implemented `reminders`; UI `completed` maps to persisted `completedAt` |
 | Portfolio Ranker | `useState` rows with manual scores | No direct repository yet; do not force ranker rows into `holdings` |
 | MBS Scorer | `useState` category values and notes | No repository yet; scoring output is deterministic and can be recomputed |
 | Dashboard | Static/local overview and route links | Should read summaries only after individual screens are persisted |
@@ -66,14 +66,14 @@ Before visible persistence wiring starts, `pnpm verify:storage` should pass in t
 
 ### Stage 18: Persist Watchlist
 
-Data to persist:
+Status: implemented.
+
+Data persisted:
 
 - ticker
 - optional company name
 - tags
 - note
-- optional thesis note link when it becomes a structured ID
-- created/updated timestamps when supplied by the app layer
 
 Repository:
 
@@ -81,7 +81,8 @@ Repository:
 
 Notes:
 
-- `thesisReference` is currently free text and is not in the core `WatchlistItem` type or schema. Keep it local-only or convert it to `thesisNoteId` only when a structured relationship exists.
+- `thesisReference` is free text and is not in the core `WatchlistItem` type or schema, so it remains current-session-only.
+- The renderer calls a narrow preload API; SQLite stays in the Electron main process.
 - Load persisted items on screen start.
 - Save creates/updates through the repository.
 - Delete through the repository.
@@ -89,7 +90,9 @@ Notes:
 
 ### Stage 19: Persist Thesis Notes
 
-Data to persist:
+Status: implemented.
+
+Data persisted:
 
 - title
 - body
@@ -97,7 +100,6 @@ Data to persist:
 - optional ticker
 - optional conviction
 - optional review due date
-- created/updated timestamps when supplied by the app layer
 
 Repository:
 
@@ -105,11 +107,14 @@ Repository:
 
 Notes:
 
-- `checklist` is currently UI-only text and is not in the core `ThesisNote` type or schema. Either keep it transient or add a deliberate migration in a future stage.
+- `checklist` is currently UI-only text and is not in the core `ThesisNote` type or schema, so it remains current-session-only.
+- The renderer calls a narrow preload API; SQLite stays in the Electron main process.
 - Preserve user-authored content exactly after validation and trimming rules already used by the form helper.
 - Keep selected note ID and selected demo queue item as transient UI state.
 
 ### Stage 20: Persist Reminders
+
+Status: implemented.
 
 Data to persist:
 
@@ -119,7 +124,6 @@ Data to persist:
 - due date
 - optional note
 - completion state
-- created/updated timestamps when supplied by the app layer
 
 Repository:
 
@@ -127,7 +131,8 @@ Repository:
 
 Notes:
 
-- The repository stores `completedAt`, while the current UI stores a boolean `completed`. Map `completed: true` to a deterministic app-supplied completion timestamp or defer exact timestamp capture until the app layer defines a date policy.
+- The repository stores `completedAt`, while the current UI stores a boolean `completed`. Marking a reminder complete stores a local ISO date in `completedAt`; reopening clears `completedAt`.
+- The renderer calls a narrow preload API; SQLite stays in the Electron main process.
 - Do not add OS notifications, background scheduling, earnings APIs, or calendar integration.
 - Keep selected reminder ID as transient UI state.
 
@@ -268,7 +273,7 @@ Future wiring should follow these rules:
 
 This plan does not add:
 
-- SQLite wiring into visible screens.
+- SQLite wiring beyond the Watchlist, Thesis Monitor, and Reminders screens.
 - Full app-wide persistence.
 - Installer, updater, or code-signing changes.
 - Live stock APIs or price feeds.

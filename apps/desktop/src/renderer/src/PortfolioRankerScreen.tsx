@@ -72,7 +72,7 @@ export function PortfolioRankerScreen({
         )
       : null;
   const weakestIdeaReason = weakestIdea
-    ? getWeakestIdeaReason(weakestIdea)
+    ? getWeakestIdeaReason()
     : null;
   const hasIncompleteRankerItems = rankedItems.some(
     (item) => item.status !== 'ranked'
@@ -169,7 +169,7 @@ export function PortfolioRankerScreen({
           <div className="portfolio-ranker-rows">
             {rows.map((row, index) => {
               const rankedItem = rankedItemsById.get(row.id);
-              const thesisStatus = getThesisStatus(rankedItem);
+              const thesisStatus = getThesisStatus();
 
               return (
                 <article className="portfolio-ranker-row" key={row.id}>
@@ -514,9 +514,7 @@ function formatPreviewTicker(item: ManualPortfolioRankedItem): string {
   return item.normalizedTicker || 'Add ticker';
 }
 
-function getThesisStatus(
-  _item: ManualPortfolioRankedItem | undefined
-): ThesisStatusDisplay {
+function getThesisStatus(): ThesisStatusDisplay {
   return {
     label: 'Thesis: Not set',
     variant: 'neutral'
@@ -565,7 +563,7 @@ function getScoreToneClass(item: ManualPortfolioRankedItem | undefined): string 
   return 'portfolio-ranker-score-badge--risk';
 }
 
-function getWeakestIdeaReason(_item: ManualPortfolioRankedItem): string {
+function getWeakestIdeaReason(): string {
   return 'Lowest current thesis score.';
 }
 

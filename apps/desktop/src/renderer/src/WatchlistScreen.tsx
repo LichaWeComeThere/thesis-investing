@@ -1,8 +1,10 @@
 import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   buildWatchlistItemFromForm,
   createEmptyWatchlistForm,
+  ensureWatchlistFormHasAvailableId,
+  getNextWatchlistItemNumber,
   hasWatchlistFormContent,
   removeLocalWatchlistItem,
   upsertLocalWatchlistItem,
@@ -10,27 +12,45 @@ import {
   type LocalWatchlistItem,
   type WatchlistFormState
 } from './watchlistInput';
+import {
+  getDefaultWatchlistStorageClient,
+  toPersistedWatchlistItem,
+  type WatchlistStorageClient
+} from './watchlistStorageClient';
 import './watchlist.css';
 
 type WatchlistScreenProps = {
   initialForm?: WatchlistFormState;
   initialItems?: LocalWatchlistItem[];
+  initialStorageErrors?: string[];
   initialSelectedItemId?: string;
+  storageClient?: WatchlistStorageClient | null;
 };
 
 export function WatchlistScreen({
   initialForm,
   initialItems = [],
+  initialStorageErrors = [],
+  storageClient,
   initialSelectedItemId
 }: WatchlistScreenProps): JSX.Element {
+  const resolvedStorageClient =
+    storageClient === undefined
+      ? getDefaultWatchlistStorageClient()
+      : storageClient;
   const [items, setItems] = useState<LocalWatchlistItem[]>(() =>
     initialItems.map((item) => ({ ...item }))
   );
   const [selectedItemId, setSelectedItemId] = useState<string | null>(
     initialSelectedItemId ?? initialItems[0]?.id ?? null
   );
-  const [nextItemNumber, setNextItemNumber] = useState(initialItems.length + 1);
+  const [nextItemNumber, setNextItemNumber] = useState(() =>
+    getNextWatchlistItemNumber(initialItems)
+  );
   const [saveAttempted, setSaveAttempted] = useState(false);
+  const [storageErrors, setStorageErrors] = useState(initialStorageErrors);
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedStorageClient));
+  const [isWriting, setIsWriting] = useState(false);
   const [form, setForm] = useState<WatchlistFormState>(() =>
     initialForm
       ? { ...initialForm }
@@ -51,6 +71,81 @@ export function WatchlistScreen({
     ? formResult.validation.errors
     : [];
 
+  useEffect(() => {
+    const client = resolvedStorageClient;
+
+    if (!client) {
+      setIsLoading(false);
+      return;
+    }
+
+    const activeClient = client;
+    let isMounted = true;
+
+    async function loadPersistedItems(): Promise<void> {
+      setIsLoading(true);
+      setStorageErrors([]);
+
+      try {
+        const result = await activeClient.list();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+
+        const persistedItems = result.value.map((item) => ({ ...item }));
+        const nextAvailableItemNumber =
+          getNextWatchlistItemNumber(persistedItems);
+
+        setItems(persistedItems);
+        setSelectedItemId((currentSelectedItemId) => {
+          if (
+            currentSelectedItemId &&
+            persistedItems.some((item) => item.id === currentSelectedItemId)
+          ) {
+            return currentSelectedItemId;
+          }
+
+          return persistedItems[0]?.id ?? null;
+        });
+        setNextItemNumber(nextAvailableItemNumber);
+
+        if (!initialForm) {
+          setForm((currentForm) =>
+            ensureWatchlistFormHasAvailableId(
+              currentForm,
+              persistedItems,
+              nextAvailableItemNumber
+            )
+          );
+        }
+      } catch (error) {
+        if (isMounted) {
+          setStorageErrors([
+            error instanceof Error
+              ? error.message
+              : 'Unable to load persisted watchlist items.'
+          ]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadPersistedItems();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialForm, resolvedStorageClient]);
+
   function updateForm(
     field: keyof Omit<WatchlistFormState, 'id'>,
     value: string
@@ -61,8 +156,9 @@ export function WatchlistScreen({
     }));
   }
 
-  function saveItem(): void {
+  async function saveItem(): Promise<void> {
     setSaveAttempted(true);
+    setStorageErrors([]);
 
     if (!formResult.validation.valid) {
       return;
@@ -71,15 +167,46 @@ export function WatchlistScreen({
     const nextItem = formResult.item;
     const isNewItem = !items.some((item) => item.id === nextItem.id);
 
-    setItems((currentItems) =>
-      upsertLocalWatchlistItem(currentItems, nextItem)
-    );
+    if (resolvedStorageClient) {
+      setIsWriting(true);
+
+      try {
+        const result = await resolvedStorageClient.save(
+          toPersistedWatchlistItem(nextItem)
+        );
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+
+        nextItem.ticker = result.value.ticker;
+        nextItem.companyName = result.value.companyName;
+        nextItem.tags = result.value.tags;
+        nextItem.note = result.value.note;
+      } catch (error) {
+        setStorageErrors([
+          error instanceof Error
+            ? error.message
+            : 'Unable to save watchlist item.'
+        ]);
+        return;
+      } finally {
+        setIsWriting(false);
+      }
+    }
+
+    const updatedItems = upsertLocalWatchlistItem(items, nextItem);
+
+    setItems(updatedItems);
     setSelectedItemId(nextItem.id);
     setForm(watchlistItemToForm(nextItem));
     setSaveAttempted(false);
 
     if (isNewItem) {
-      setNextItemNumber((currentNumber) => currentNumber + 1);
+      setNextItemNumber(
+        getNextWatchlistItemNumber(updatedItems, nextItemNumber + 1)
+      );
     }
   }
 
@@ -95,14 +222,42 @@ export function WatchlistScreen({
     setSaveAttempted(false);
   }
 
-  function removeItem(itemId: string): void {
-    setItems((currentItems) => removeLocalWatchlistItem(currentItems, itemId));
+  async function removeItem(itemId: string): Promise<void> {
+    setStorageErrors([]);
+
+    if (resolvedStorageClient) {
+      setIsWriting(true);
+
+      try {
+        const result = await resolvedStorageClient.remove(itemId);
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+      } catch (error) {
+        setStorageErrors([
+          error instanceof Error
+            ? error.message
+            : 'Unable to remove watchlist item.'
+        ]);
+        return;
+      } finally {
+        setIsWriting(false);
+      }
+    }
+
+    const updatedItems = removeLocalWatchlistItem(items, itemId);
+
+    setItems(updatedItems);
 
     if (selectedItemId === itemId) {
       setSelectedItemId(null);
-      setForm(createEmptyWatchlistForm(nextItemNumber));
+      setForm(createEmptyWatchlistForm(getNextWatchlistItemNumber(updatedItems)));
       setSaveAttempted(false);
     }
+
+    setNextItemNumber(getNextWatchlistItemNumber(updatedItems, nextItemNumber));
   }
 
   return (
@@ -188,11 +343,27 @@ export function WatchlistScreen({
             </div>
           ) : null}
 
+          {storageErrors.length > 0 ? (
+            <div className="watchlist-storage-status" role="alert">
+              <h3>Storage</h3>
+              <ul>
+                {storageErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <div className="watchlist-actions">
-            <Button onClick={saveItem} type="button">
-              Save item
+            <Button disabled={isWriting || isLoading} onClick={saveItem} type="button">
+              {isWriting ? 'Saving...' : 'Save item'}
             </Button>
-            <Button onClick={startNewItem} type="button" variant="secondary">
+            <Button
+              disabled={isWriting || isLoading}
+              onClick={startNewItem}
+              type="button"
+              variant="secondary"
+            >
               New item
             </Button>
           </div>
@@ -231,7 +402,9 @@ export function WatchlistScreen({
 
       <div className="watchlist-layout">
         <Card title="Local watchlist items">
-          {items.length > 0 ? (
+          {isLoading ? (
+            <p>Loading persisted watchlist items...</p>
+          ) : items.length > 0 ? (
             <div className="watchlist-table-wrap">
               <table className="watchlist-table">
                 <thead>
@@ -252,6 +425,7 @@ export function WatchlistScreen({
                         <div className="watchlist-row-actions">
                           <Button
                             onClick={() => selectItem(item)}
+                            disabled={isWriting}
                             size="sm"
                             type="button"
                             variant="secondary"
@@ -260,6 +434,7 @@ export function WatchlistScreen({
                           </Button>
                           <Button
                             onClick={() => removeItem(item.id)}
+                            disabled={isWriting}
                             size="sm"
                             type="button"
                             variant="secondary"

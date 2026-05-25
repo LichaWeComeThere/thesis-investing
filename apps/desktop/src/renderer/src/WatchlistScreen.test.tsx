@@ -4,6 +4,8 @@ import { WatchlistScreen } from './WatchlistScreen';
 import {
   buildWatchlistItemFromForm,
   createEmptyWatchlistForm,
+  ensureWatchlistFormHasAvailableId,
+  getNextWatchlistItemNumber,
   removeLocalWatchlistItem,
   upsertLocalWatchlistItem,
   watchlistItemToForm,
@@ -51,6 +53,15 @@ describe('WatchlistScreen', () => {
     );
   });
 
+  it('renders storage errors without crashing', () => {
+    const html = renderToStaticMarkup(
+      <WatchlistScreen initialStorageErrors={['Storage unavailable.']} />
+    );
+
+    expect(html).toContain('Storage');
+    expect(html).toContain('Storage unavailable.');
+  });
+
   it('converts populated form input into a validated watchlist item', () => {
     const form = watchlistItemToForm(sampleItem);
     const result = buildWatchlistItemFromForm({
@@ -87,5 +98,35 @@ describe('WatchlistScreen', () => {
     expect(removeLocalWatchlistItem(upsertedItems, sampleItem.id)).toEqual([
       addedItem
     ]);
+  });
+
+  it('finds the next available deterministic local item number', () => {
+    const firstItem = buildWatchlistItemFromForm({
+      ...createEmptyWatchlistForm(1),
+      ticker: 'MSFT'
+    }).item;
+    const thirdItem = buildWatchlistItemFromForm({
+      ...createEmptyWatchlistForm(3),
+      ticker: 'ADBE'
+    }).item;
+
+    expect(getNextWatchlistItemNumber([firstItem, thirdItem], 1)).toBe(2);
+    expect(getNextWatchlistItemNumber([firstItem, thirdItem], 3)).toBe(4);
+  });
+
+  it('moves a draft form to an available ID after persisted items load', () => {
+    const draftForm = createEmptyWatchlistForm(1);
+    const existingItem = buildWatchlistItemFromForm({
+      ...draftForm,
+      ticker: 'MSFT'
+    }).item;
+    const reassignedForm = ensureWatchlistFormHasAvailableId(draftForm, [
+      existingItem
+    ]);
+
+    expect(reassignedForm).toEqual({
+      ...draftForm,
+      id: createEmptyWatchlistForm(2).id
+    });
   });
 });

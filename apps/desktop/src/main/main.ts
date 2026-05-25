@@ -2,6 +2,10 @@ import { BrowserWindow, app } from 'electron';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { registerRemindersIpc } from './remindersIpc';
+import { registerThesisNotesIpc } from './thesisNotesIpc';
+import { registerWatchlistIpc } from './watchlistIpc';
+
 const mainDirname = dirname(fileURLToPath(import.meta.url));
 
 function createWindow(): void {
@@ -14,7 +18,7 @@ function createWindow(): void {
     title: 'Thesis Investing',
     webPreferences: {
       contextIsolation: true,
-      preload: join(mainDirname, '../preload/preload.mjs'),
+      preload: join(mainDirname, '../preload/preload.cjs'),
       sandbox: true
     }
   });
@@ -28,6 +32,9 @@ function createWindow(): void {
 }
 
 void app.whenReady().then(() => {
+  registerRemindersIpc();
+  registerThesisNotesIpc();
+  registerWatchlistIpc();
   createWindow();
 
   app.on('activate', () => {

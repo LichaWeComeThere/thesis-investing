@@ -1,20 +1,30 @@
 import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   buildThesisNoteFromForm,
   createEmptyThesisNoteForm,
+  ensureThesisNoteFormHasAvailableId,
+  getNextThesisNoteNumber,
   hasThesisFormContent,
   thesisNoteToForm,
   THESIS_CONVICTION_OPTIONS,
   THESIS_STATUS_OPTIONS,
+  upsertLocalThesisNote,
   type LocalThesisNote,
   type ThesisNoteFormState
 } from './thesisMonitorInput';
+import {
+  getDefaultThesisNotesStorageClient,
+  toPersistedThesisNote,
+  type ThesisNotesStorageClient
+} from './thesisNotesStorageClient';
 
 type ThesisMonitorScreenProps = {
   initialForm?: ThesisNoteFormState;
   initialNotes?: LocalThesisNote[];
+  initialStorageErrors?: string[];
   initialSelectedNoteId?: string;
+  storageClient?: ThesisNotesStorageClient | null;
 };
 
 const statusLabels: Record<LocalThesisNote['status'], string> = {
@@ -130,8 +140,14 @@ function reviewLabelForNote(note: LocalThesisNote): string {
 export function ThesisMonitorScreen({
   initialForm,
   initialNotes = [],
+  initialStorageErrors = [],
+  storageClient,
   initialSelectedNoteId
 }: ThesisMonitorScreenProps): JSX.Element {
+  const resolvedStorageClient =
+    storageClient === undefined
+      ? getDefaultThesisNotesStorageClient()
+      : storageClient;
   const [notes, setNotes] = useState<LocalThesisNote[]>(() =>
     initialNotes.map((note) => ({ ...note }))
   );
@@ -141,8 +157,13 @@ export function ThesisMonitorScreen({
   const [selectedDemoQueueId, setSelectedDemoQueueId] = useState(
     demoThesisQueueItems[0].id
   );
-  const [nextNoteNumber, setNextNoteNumber] = useState(initialNotes.length + 1);
+  const [nextNoteNumber, setNextNoteNumber] = useState(() =>
+    getNextThesisNoteNumber(initialNotes)
+  );
   const [saveAttempted, setSaveAttempted] = useState(false);
+  const [storageErrors, setStorageErrors] = useState(initialStorageErrors);
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedStorageClient));
+  const [isWriting, setIsWriting] = useState(false);
   const [form, setForm] = useState<ThesisNoteFormState>(() =>
     initialForm
       ? { ...initialForm }
@@ -169,6 +190,81 @@ export function ThesisMonitorScreen({
     ? formResult.validation.errors
     : [];
 
+  useEffect(() => {
+    const client = resolvedStorageClient;
+
+    if (!client) {
+      setIsLoading(false);
+      return;
+    }
+
+    const activeClient = client;
+    let isMounted = true;
+
+    async function loadPersistedNotes(): Promise<void> {
+      setIsLoading(true);
+      setStorageErrors([]);
+
+      try {
+        const result = await activeClient.list();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+
+        const persistedNotes = result.value.map((note) => ({ ...note }));
+        const nextAvailableNoteNumber =
+          getNextThesisNoteNumber(persistedNotes);
+
+        setNotes(persistedNotes);
+        setSelectedNoteId((currentSelectedNoteId) => {
+          if (
+            currentSelectedNoteId &&
+            persistedNotes.some((note) => note.id === currentSelectedNoteId)
+          ) {
+            return currentSelectedNoteId;
+          }
+
+          return persistedNotes[0]?.id ?? null;
+        });
+        setNextNoteNumber(nextAvailableNoteNumber);
+
+        if (!initialForm) {
+          setForm((currentForm) =>
+            ensureThesisNoteFormHasAvailableId(
+              currentForm,
+              persistedNotes,
+              nextAvailableNoteNumber
+            )
+          );
+        }
+      } catch (error) {
+        if (isMounted) {
+          setStorageErrors([
+            error instanceof Error
+              ? error.message
+              : 'Unable to load persisted thesis notes.'
+          ]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadPersistedNotes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialForm, resolvedStorageClient]);
+
   function updateForm<Field extends keyof Omit<ThesisNoteFormState, 'id'>>(
     field: Field,
     value: ThesisNoteFormState[Field]
@@ -179,33 +275,59 @@ export function ThesisMonitorScreen({
     }));
   }
 
-  function saveNote(): void {
+  async function saveNote(): Promise<void> {
     setSaveAttempted(true);
+    setStorageErrors([]);
 
     if (!formResult.validation.valid) {
       return;
     }
 
     const nextNote = formResult.note;
-    setNotes((currentNotes) => {
-      const existingNoteIndex = currentNotes.findIndex(
-        (note) => note.id === nextNote.id
-      );
+    const isNewNote = !notes.some((note) => note.id === nextNote.id);
 
-      if (existingNoteIndex === -1) {
-        return [...currentNotes, nextNote];
+    if (resolvedStorageClient) {
+      setIsWriting(true);
+
+      try {
+        const result = await resolvedStorageClient.save(
+          toPersistedThesisNote(nextNote)
+        );
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+
+        nextNote.body = result.value.body;
+        nextNote.conviction = result.value.conviction;
+        nextNote.createdAt = result.value.createdAt;
+        nextNote.reviewDueAt = result.value.reviewDueAt;
+        nextNote.status = result.value.status;
+        nextNote.ticker = result.value.ticker;
+        nextNote.title = result.value.title;
+        nextNote.updatedAt = result.value.updatedAt;
+      } catch (error) {
+        setStorageErrors([
+          error instanceof Error ? error.message : 'Unable to save thesis note.'
+        ]);
+        return;
+      } finally {
+        setIsWriting(false);
       }
+    }
 
-      return currentNotes.map((note) =>
-        note.id === nextNote.id ? nextNote : note
-      );
-    });
+    const updatedNotes = upsertLocalThesisNote(notes, nextNote);
+
+    setNotes(updatedNotes);
     setSelectedNoteId(nextNote.id);
     setForm(thesisNoteToForm(nextNote));
     setSaveAttempted(false);
 
-    if (!notes.some((note) => note.id === nextNote.id)) {
-      setNextNoteNumber((currentNumber) => currentNumber + 1);
+    if (isNewNote) {
+      setNextNoteNumber(
+        getNextThesisNoteNumber(updatedNotes, nextNoteNumber + 1)
+      );
     }
   }
 
@@ -237,13 +359,20 @@ export function ThesisMonitorScreen({
               <h2>Thesis Queue</h2>
               <p>Review, rank, and update stock theses</p>
             </div>
-            <Button onClick={startNewNote} type="button" variant="secondary">
+            <Button
+              disabled={isWriting || isLoading}
+              onClick={startNewNote}
+              type="button"
+              variant="secondary"
+            >
               + New Thesis
             </Button>
           </div>
 
           <div className="thesis-queue-list" role="list">
-            {hasLocalNotes
+            {isLoading ? (
+              <p>Loading persisted thesis notes...</p>
+            ) : hasLocalNotes
               ? notes.map((note) => {
                   const score = scoreForNote(note);
                   const isSelected = note.id === selectedNoteId;
@@ -252,6 +381,7 @@ export function ThesisMonitorScreen({
                     <button
                       aria-current={isSelected ? 'true' : undefined}
                       className="thesis-queue-card"
+                      disabled={isWriting}
                       key={note.id}
                       onClick={() => selectNote(note)}
                       role="listitem"
@@ -279,6 +409,7 @@ export function ThesisMonitorScreen({
                     <button
                       aria-current={isSelected ? 'true' : undefined}
                       className="thesis-queue-card thesis-queue-card--demo"
+                      disabled={isWriting}
                       key={item.id}
                       onClick={() => setSelectedDemoQueueId(item.id)}
                       role="listitem"
@@ -424,11 +555,27 @@ export function ThesisMonitorScreen({
             </div>
           ) : null}
 
+          {storageErrors.length > 0 ? (
+            <div className="thesis-validation" role="alert">
+              <h3>Storage</h3>
+              <ul>
+                {storageErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <div className="thesis-actions">
-            <Button onClick={saveNote} type="button">
-              Save note
+            <Button disabled={isWriting || isLoading} onClick={saveNote} type="button">
+              {isWriting ? 'Saving...' : 'Save note'}
             </Button>
-            <Button onClick={startNewNote} type="button" variant="secondary">
+            <Button
+              disabled={isWriting || isLoading}
+              onClick={startNewNote}
+              type="button"
+              variant="secondary"
+            >
               New note
             </Button>
           </div>

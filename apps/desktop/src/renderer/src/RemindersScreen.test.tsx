@@ -4,6 +4,8 @@ import { RemindersScreen } from './RemindersScreen';
 import {
   buildReminderFromForm,
   createEmptyReminderForm,
+  ensureReminderFormHasAvailableId,
+  getNextReminderNumber,
   removeLocalReminder,
   toggleLocalReminderCompletion,
   upsertLocalReminder,
@@ -52,6 +54,15 @@ describe('RemindersScreen', () => {
     expect(html).toContain('Reminder due date must use YYYY-MM-DD format.');
     expect(html).toContain('Reminder type is not supported.');
     expect(html).toContain('Reminder ticker must be a valid ticker symbol.');
+  });
+
+  it('renders storage errors without crashing', () => {
+    const html = renderToStaticMarkup(
+      <RemindersScreen initialStorageErrors={['Reminders storage unavailable.']} />
+    );
+
+    expect(html).toContain('Storage');
+    expect(html).toContain('Reminders storage unavailable.');
   });
 
   it('converts populated form input into a validated reminder', () => {
@@ -104,5 +115,38 @@ describe('RemindersScreen', () => {
     expect(removeLocalReminder(toggledReminders, sampleReminder.id)).toEqual([
       { ...addedReminder, completed: true }
     ]);
+  });
+
+  it('finds the next available deterministic local reminder number', () => {
+    const firstReminder = buildReminderFromForm({
+      ...createEmptyReminderForm(1),
+      dueDate: '2026-08-15',
+      title: 'First reminder'
+    }).reminder;
+    const thirdReminder = buildReminderFromForm({
+      ...createEmptyReminderForm(3),
+      dueDate: '2026-08-20',
+      title: 'Third reminder'
+    }).reminder;
+
+    expect(getNextReminderNumber([firstReminder, thirdReminder], 1)).toBe(2);
+    expect(getNextReminderNumber([firstReminder, thirdReminder], 3)).toBe(4);
+  });
+
+  it('moves a draft form to an available ID after persisted reminders load', () => {
+    const draftForm = createEmptyReminderForm(1);
+    const existingReminder = buildReminderFromForm({
+      ...draftForm,
+      dueDate: '2026-08-15',
+      title: 'Existing reminder'
+    }).reminder;
+    const reassignedForm = ensureReminderFormHasAvailableId(draftForm, [
+      existingReminder
+    ]);
+
+    expect(reassignedForm).toEqual({
+      ...draftForm,
+      id: createEmptyReminderForm(2).id
+    });
   });
 });

@@ -22,7 +22,11 @@ export default defineConfig({
   preload: {
     build: {
       rollupOptions: {
-        input: resolve(configDirname, 'src/preload/preload.ts')
+        input: resolve(configDirname, 'src/preload/preload.ts'),
+        output: {
+          entryFileNames: '[name].cjs',
+          format: 'cjs'
+        }
       }
     }
   },

@@ -52,6 +52,42 @@ export function createEmptyReminderForm(
   };
 }
 
+export function getNextReminderNumber(
+  reminders: readonly LocalReminder[],
+  startAt = reminders.length + 1
+): number {
+  const reminderIds = new Set(reminders.map((reminder) => reminder.id));
+  let nextNumber = startAt;
+
+  while (reminderIds.has(createId('reminder', ['local', nextNumber]))) {
+    nextNumber += 1;
+  }
+
+  return nextNumber;
+}
+
+export function ensureReminderFormHasAvailableId(
+  form: ReminderFormState,
+  reminders: readonly LocalReminder[],
+  startAt = reminders.length + 1
+): ReminderFormState {
+  const isCurrentIdAvailable = !reminders.some(
+    (reminder) => reminder.id === form.id
+  );
+
+  if (isCurrentIdAvailable) {
+    return form;
+  }
+
+  return {
+    ...form,
+    id: createId('reminder', [
+      'local',
+      String(getNextReminderNumber(reminders, startAt))
+    ])
+  };
+}
+
 export function reminderToForm(
   reminder: LocalReminder
 ): ReminderFormState {
