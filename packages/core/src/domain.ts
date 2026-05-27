@@ -138,6 +138,16 @@ export type ManualPortfolioRankedItem = ManualPortfolioRankerItemInput & {
   errors: string[];
 };
 
+export type PortfolioRankerItem = {
+  id: EntityId;
+  ticker: TickerSymbol;
+  companyName?: string;
+  manualScore?: number;
+  notes?: string;
+  createdAt?: IsoDateString;
+  updatedAt?: IsoDateString;
+};
+
 export type ThemeBasketExample = {
   ticker?: TickerSymbol;
   companyName: string;

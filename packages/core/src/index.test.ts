@@ -5,6 +5,7 @@ import {
   isValidTickerSymbol,
   normalizeTickerSymbol,
   validateHolding,
+  validatePortfolioRankerItem,
   validateReminder,
   validateThesisNote,
   validateWatchlistItem
@@ -12,6 +13,7 @@ import {
 import type {
   Holding,
   ManualBusinessScoreInput,
+  PortfolioRankerItem,
   Reminder,
   ThesisNote,
   WatchlistItem
@@ -184,6 +186,69 @@ describe('validateReminder', () => {
       'Reminder type is not supported.',
       'Reminder ticker must be a valid ticker symbol.'
     ]);
+  });
+});
+
+describe('validatePortfolioRankerItem', () => {
+  const validItem: PortfolioRankerItem = {
+    id: createId('portfolio-ranker', 'MSFT'),
+    ticker: 'MSFT',
+    companyName: 'Microsoft',
+    manualScore: 85,
+    notes: 'Durable enterprise franchise.'
+  };
+
+  it('accepts a fully populated valid item', () => {
+    expect(validatePortfolioRankerItem(validItem)).toEqual({
+      valid: true,
+      errors: []
+    });
+  });
+
+  it('accepts a minimal item with only id and ticker', () => {
+    expect(
+      validatePortfolioRankerItem({
+        id: 'idea-min',
+        ticker: 'AAPL'
+      })
+    ).toEqual({ valid: true, errors: [] });
+  });
+
+  it('rejects invalid values across every optional field', () => {
+    const result = validatePortfolioRankerItem({
+      id: 'idea-broken',
+      ticker: 'bad ticker',
+      companyName: '   ',
+      manualScore: 150,
+      notes: '   ',
+      createdAt: '2026-13-40',
+      updatedAt: 'not-a-date'
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toEqual([
+      'Portfolio ranker ticker must be a valid ticker symbol.',
+      'Portfolio ranker company name cannot be blank when provided.',
+      'Portfolio ranker manual score must be a finite number from 0 to 100.',
+      'Portfolio ranker notes cannot be blank when provided.',
+      'Portfolio ranker created date must use YYYY-MM-DD format.',
+      'Portfolio ranker updated date must use YYYY-MM-DD format.'
+    ]);
+  });
+
+  it('rejects scores outside the 0-100 range and non-finite values', () => {
+    expect(
+      validatePortfolioRankerItem({ ...validItem, manualScore: -1 }).valid
+    ).toBe(false);
+    expect(
+      validatePortfolioRankerItem({ ...validItem, manualScore: 101 }).valid
+    ).toBe(false);
+    expect(
+      validatePortfolioRankerItem({
+        ...validItem,
+        manualScore: Number.NaN
+      }).valid
+    ).toBe(false);
   });
 });
 

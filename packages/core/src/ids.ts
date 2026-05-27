@@ -5,6 +5,7 @@ export type IdPrefix =
   | 'decision'
   | 'stock'
   | 'portfolio'
+  | 'portfolio-ranker'
   | 'holding'
   | 'watchlist'
   | 'thesis'

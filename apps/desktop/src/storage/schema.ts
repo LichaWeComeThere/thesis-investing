@@ -61,6 +61,21 @@ export const migrations: readonly Migration[] = [
         updated_at TEXT
       );
     `
+  },
+  {
+    version: 2,
+    name: "add_portfolio_ranker_items",
+    sql: `
+      CREATE TABLE IF NOT EXISTS portfolio_ranker_items (
+        id TEXT PRIMARY KEY,
+        ticker TEXT NOT NULL,
+        company_name TEXT,
+        manual_score REAL,
+        notes TEXT,
+        created_at TEXT,
+        updated_at TEXT
+      );
+    `
   }
 ];
 

@@ -3,10 +3,12 @@ import type { DatabaseSync } from "node:sqlite";
 import {
   normalizeTickerSymbol,
   validateHolding,
+  validatePortfolioRankerItem,
   validateReminder,
   validateThesisNote,
   validateWatchlistItem,
   type Holding,
+  type PortfolioRankerItem,
   type Reminder,
   type ThesisNote,
   type WatchlistItem
@@ -15,6 +17,7 @@ import {
 import type {
   HoldingRepository,
   LocalStorageRepositories,
+  PortfolioRankerItemRepository,
   ReminderRepository,
   RepositoryResult,
   ThesisNoteRepository,
@@ -31,7 +34,8 @@ export function createSqliteRepositories(
     holdings: createHoldingRepository(database),
     watchlistItems: createWatchlistItemRepository(database),
     thesisNotes: createThesisNoteRepository(database),
-    reminders: createReminderRepository(database)
+    reminders: createReminderRepository(database),
+    portfolioRankerItems: createPortfolioRankerItemRepository(database)
   };
 }
 
@@ -422,10 +426,118 @@ function createReminderRepository(database: DatabaseSync): ReminderRepository {
   };
 }
 
+function createPortfolioRankerItemRepository(
+  database: DatabaseSync
+): PortfolioRankerItemRepository {
+  return {
+    create(item) {
+      const normalized = normalizePortfolioRankerItem(item);
+      const validation = validatePortfolioRankerItem(normalized);
+
+      if (!validation.valid) {
+        return failure(validation.errors);
+      }
+
+      database
+        .prepare(
+          `
+            INSERT INTO portfolio_ranker_items (
+              id,
+              ticker,
+              company_name,
+              manual_score,
+              notes,
+              created_at,
+              updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+          `
+        )
+        .run(
+          normalized.id,
+          normalized.ticker,
+          normalized.companyName ?? null,
+          normalized.manualScore ?? null,
+          normalized.notes ?? null,
+          normalized.createdAt ?? null,
+          normalized.updatedAt ?? null
+        );
+
+      return success(normalized);
+    },
+    getById(id) {
+      return mapPortfolioRankerItem(
+        getOne(
+          database,
+          "SELECT * FROM portfolio_ranker_items WHERE id = ?;",
+          [id]
+        )
+      );
+    },
+    list() {
+      return getAll(
+        database,
+        "SELECT * FROM portfolio_ranker_items ORDER BY id ASC;"
+      ).map(mapRequiredPortfolioRankerItem);
+    },
+    update(item) {
+      const normalized = normalizePortfolioRankerItem(item);
+      const validation = validatePortfolioRankerItem(normalized);
+
+      if (!validation.valid) {
+        return failure(validation.errors);
+      }
+
+      const result = database
+        .prepare(
+          `
+            UPDATE portfolio_ranker_items
+            SET
+              ticker = ?,
+              company_name = ?,
+              manual_score = ?,
+              notes = ?,
+              created_at = ?,
+              updated_at = ?
+            WHERE id = ?;
+          `
+        )
+        .run(
+          normalized.ticker,
+          normalized.companyName ?? null,
+          normalized.manualScore ?? null,
+          normalized.notes ?? null,
+          normalized.createdAt ?? null,
+          normalized.updatedAt ?? null,
+          normalized.id
+        );
+
+      return result.changes > 0
+        ? success(normalized)
+        : failure(["Portfolio ranker item not found."]);
+    },
+    delete(id) {
+      const result = database
+        .prepare("DELETE FROM portfolio_ranker_items WHERE id = ?;")
+        .run(id);
+      return result.changes > 0;
+    }
+  };
+}
+
 function normalizeHolding(holding: Holding): Holding {
   return {
     ...holding,
     ticker: normalizeTickerSymbol(holding.ticker)
+  };
+}
+
+function normalizePortfolioRankerItem(
+  item: PortfolioRankerItem
+): PortfolioRankerItem {
+  return {
+    ...item,
+    ticker: normalizeTickerSymbol(item.ticker)
   };
 }
 
@@ -542,6 +654,24 @@ function mapRequiredReminder(row: SqlRow): Reminder {
     ticker: optionalText(row, "ticker"),
     note: optionalText(row, "note"),
     completedAt: optionalText(row, "completed_at")
+  });
+}
+
+function mapPortfolioRankerItem(
+  row: SqlRow | undefined
+): PortfolioRankerItem | undefined {
+  return row ? mapRequiredPortfolioRankerItem(row) : undefined;
+}
+
+function mapRequiredPortfolioRankerItem(row: SqlRow): PortfolioRankerItem {
+  return withoutUndefined({
+    id: requiredText(row, "id"),
+    ticker: requiredText(row, "ticker"),
+    companyName: optionalText(row, "company_name"),
+    manualScore: optionalNumber(row, "manual_score"),
+    notes: optionalText(row, "notes"),
+    createdAt: optionalText(row, "created_at"),
+    updatedAt: optionalText(row, "updated_at")
   });
 }
 

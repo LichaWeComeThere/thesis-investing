@@ -11,12 +11,20 @@ import {
   Card,
   PageHeader
 } from '@thesis-investing/ui';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   buildPortfolioRankerInput,
   createEmptyPortfolioRankerRow,
+  getNextPortfolioRankerRowNumber,
+  isPortfolioRankerRowSaveable,
+  portfolioRankerItemToRow,
   type PortfolioRankerRowState
 } from './portfolioRankerInput';
+import {
+  getDefaultPortfolioRankerStorageClient,
+  toPersistedPortfolioRankerItem,
+  type PortfolioRankerStorageClient
+} from './portfolioRankerStorageClient';
 import {
   formatScoreChange,
   mockTheses,
@@ -25,7 +33,10 @@ import {
 
 type PortfolioRankerScreenProps = {
   initialRows?: PortfolioRankerRowState[];
+  initialPersistedRowIds?: string[];
+  initialStorageErrors?: string[];
   onOpenWorkspace?: (workspaceId: string) => void;
+  storageClient?: PortfolioRankerStorageClient | null;
 };
 
 type ThesisStatusDisplay = {
@@ -41,12 +52,189 @@ const mockThesesById = new Map(
 
 export function PortfolioRankerScreen({
   initialRows = defaultRows,
-  onOpenWorkspace
+  initialPersistedRowIds = [],
+  initialStorageErrors = [],
+  onOpenWorkspace,
+  storageClient
 }: PortfolioRankerScreenProps): JSX.Element {
+  const resolvedStorageClient =
+    storageClient === undefined
+      ? getDefaultPortfolioRankerStorageClient()
+      : storageClient;
   const [rows, setRows] = useState<PortfolioRankerRowState[]>(() =>
     initialRows.map((row) => ({ ...row }))
   );
-  const [nextRowNumber, setNextRowNumber] = useState(initialRows.length + 1);
+  const [nextRowNumber, setNextRowNumber] = useState(() =>
+    getNextPortfolioRankerRowNumber(initialRows, initialRows.length + 1)
+  );
+  const [persistedRowIds, setPersistedRowIds] = useState<Set<string>>(
+    () => new Set(initialPersistedRowIds)
+  );
+  const [storageErrors, setStorageErrors] =
+    useState<string[]>(initialStorageErrors);
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedStorageClient));
+  const [isWriting, setIsWriting] = useState(false);
+
+  useEffect(() => {
+    const client = resolvedStorageClient;
+
+    if (!client) {
+      setIsLoading(false);
+      return;
+    }
+
+    const activeClient = client;
+    let isMounted = true;
+
+    async function loadPersistedRows(): Promise<void> {
+      setIsLoading(true);
+      setStorageErrors([]);
+
+      try {
+        const result = await activeClient.list();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!result.ok) {
+          setStorageErrors(result.errors);
+          return;
+        }
+
+        if (result.value.length === 0) {
+          // No persisted rows yet — leave the demo default rows visible until
+          // the user edits/persists. Editing a default row will persist it.
+          setPersistedRowIds(new Set());
+          return;
+        }
+
+        const persistedRows = result.value.map(portfolioRankerItemToRow);
+        setRows(persistedRows);
+        setPersistedRowIds(
+          new Set(result.value.map((item) => item.id))
+        );
+        setNextRowNumber(
+          getNextPortfolioRankerRowNumber(
+            persistedRows,
+            persistedRows.length + 1
+          )
+        );
+      } catch (error) {
+        if (isMounted) {
+          setStorageErrors([
+            error instanceof Error
+              ? error.message
+              : 'Unable to load persisted portfolio ranker rows.'
+          ]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadPersistedRows();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [resolvedStorageClient]);
+
+  async function persistRow(row: PortfolioRankerRowState): Promise<void> {
+    if (!resolvedStorageClient) {
+      return;
+    }
+
+    if (!isPortfolioRankerRowSaveable(row)) {
+      return;
+    }
+
+    setIsWriting(true);
+    setStorageErrors([]);
+
+    try {
+      const result = await resolvedStorageClient.save(
+        toPersistedPortfolioRankerItem(row)
+      );
+
+      if (!result.ok) {
+        setStorageErrors(result.errors);
+        return;
+      }
+
+      setPersistedRowIds((current) => {
+        if (current.has(row.id)) {
+          return current;
+        }
+        const next = new Set(current);
+        next.add(row.id);
+        return next;
+      });
+
+      // Apply normalized field echoes from storage (e.g. uppercased ticker)
+      // without overwriting any in-progress field the user is still typing.
+      setRows((currentRows) =>
+        currentRows.map((existing) =>
+          existing.id === row.id
+            ? {
+                ...existing,
+                ticker: result.value.ticker
+              }
+            : existing
+        )
+      );
+    } catch (error) {
+      setStorageErrors([
+        error instanceof Error
+          ? error.message
+          : 'Unable to save portfolio ranker row.'
+      ]);
+    } finally {
+      setIsWriting(false);
+    }
+  }
+
+  async function removePersistedRow(rowId: string): Promise<boolean> {
+    if (!resolvedStorageClient) {
+      return true;
+    }
+    if (!persistedRowIds.has(rowId)) {
+      return true;
+    }
+
+    setIsWriting(true);
+    setStorageErrors([]);
+
+    try {
+      const result = await resolvedStorageClient.remove(rowId);
+      if (!result.ok) {
+        setStorageErrors(result.errors);
+        return false;
+      }
+
+      setPersistedRowIds((current) => {
+        if (!current.has(rowId)) {
+          return current;
+        }
+        const next = new Set(current);
+        next.delete(rowId);
+        return next;
+      });
+
+      return true;
+    } catch (error) {
+      setStorageErrors([
+        error instanceof Error
+          ? error.message
+          : 'Unable to remove portfolio ranker row.'
+      ]);
+      return false;
+    } finally {
+      setIsWriting(false);
+    }
+  }
 
   const rankerInput = useMemo(() => buildPortfolioRankerInput(rows), [rows]);
   const rankedItems = useMemo(
@@ -108,7 +296,11 @@ export function PortfolioRankerScreen({
     setNextRowNumber((currentNumber) => currentNumber + 1);
   }
 
-  function removeRow(rowId: string): void {
+  async function removeRow(rowId: string): Promise<void> {
+    const removed = await removePersistedRow(rowId);
+    if (!removed) {
+      return;
+    }
     setRows((currentRows) => {
       if (currentRows.length === 1) {
         return [createEmptyPortfolioRankerRow(currentRows[0].id)];
@@ -118,9 +310,41 @@ export function PortfolioRankerScreen({
     });
   }
 
-  function clearRows(): void {
+  async function clearRows(): Promise<void> {
+    if (resolvedStorageClient && persistedRowIds.size > 0) {
+      setIsWriting(true);
+      setStorageErrors([]);
+      try {
+        for (const id of Array.from(persistedRowIds)) {
+          const result = await resolvedStorageClient.remove(id);
+          if (!result.ok) {
+            setStorageErrors(result.errors);
+            return;
+          }
+        }
+        setPersistedRowIds(new Set());
+      } catch (error) {
+        setStorageErrors([
+          error instanceof Error
+            ? error.message
+            : 'Unable to clear portfolio ranker rows.'
+        ]);
+        return;
+      } finally {
+        setIsWriting(false);
+      }
+    }
+
     setRows(defaultRows.map((row) => ({ ...row })));
-    setNextRowNumber(defaultRows.length + 1);
+    setNextRowNumber(getNextPortfolioRankerRowNumber(defaultRows, defaultRows.length + 1));
+  }
+
+  function handleRowFieldBlur(rowId: string): void {
+    const current = rows.find((row) => row.id === rowId);
+    if (!current) {
+      return;
+    }
+    void persistRow(current);
   }
 
   return (
@@ -142,7 +366,11 @@ export function PortfolioRankerScreen({
                 status visible while you compare ideas.
               </p>
             </div>
-            <Button onClick={addRow} type="button">
+            <Button
+              disabled={isWriting || isLoading}
+              onClick={addRow}
+              type="button"
+            >
               + Add idea
             </Button>
           </div>
@@ -234,6 +462,7 @@ export function PortfolioRankerScreen({
                           <span>Ticker</span>
                           <input
                             aria-label={`Ticker ${index + 1}`}
+                            onBlur={() => handleRowFieldBlur(row.id)}
                             onChange={(event) =>
                               updateRow(row.id, 'ticker', event.currentTarget.value)
                             }
@@ -247,6 +476,7 @@ export function PortfolioRankerScreen({
                           <span>Company name</span>
                           <input
                             aria-label={`Company name ${index + 1}`}
+                            onBlur={() => handleRowFieldBlur(row.id)}
                             onChange={(event) =>
                               updateRow(
                                 row.id,
@@ -265,6 +495,7 @@ export function PortfolioRankerScreen({
                           <input
                             aria-label={`Manual score ${index + 1}`}
                             inputMode="decimal"
+                            onBlur={() => handleRowFieldBlur(row.id)}
                             onChange={(event) =>
                               updateRow(
                                 row.id,
@@ -283,6 +514,7 @@ export function PortfolioRankerScreen({
                         <span>Optional notes</span>
                         <textarea
                           aria-label={`Notes ${index + 1}`}
+                          onBlur={() => handleRowFieldBlur(row.id)}
                           onChange={(event) =>
                             updateRow(row.id, 'notes', event.currentTarget.value)
                           }
@@ -294,7 +526,10 @@ export function PortfolioRankerScreen({
                     </details>
                     <Button
                       className="portfolio-ranker-remove-button"
-                      onClick={() => removeRow(row.id)}
+                      disabled={isWriting || isLoading}
+                      onClick={() => {
+                        void removeRow(row.id);
+                      }}
                       size="sm"
                       type="button"
                       variant="secondary"
@@ -308,13 +543,36 @@ export function PortfolioRankerScreen({
           </div>
 
           <div className="portfolio-ranker-actions">
-            <Button onClick={addRow} type="button" variant="secondary">
+            <Button
+              disabled={isWriting || isLoading}
+              onClick={addRow}
+              type="button"
+              variant="secondary"
+            >
               + Add another idea
             </Button>
-            <Button onClick={clearRows} type="button" variant="secondary">
+            <Button
+              disabled={isWriting || isLoading}
+              onClick={() => {
+                void clearRows();
+              }}
+              type="button"
+              variant="secondary"
+            >
               Clear entries
             </Button>
           </div>
+
+          {storageErrors.length > 0 ? (
+            <div className="portfolio-ranker-storage-status" role="alert">
+              <h3>Storage</h3>
+              <ul>
+                {storageErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </Card>
 
         <Card

@@ -17,6 +17,7 @@ export type {
   ManualPortfolioRankerItemInput,
   ManualPortfolioRankerStatus,
   Portfolio,
+  PortfolioRankerItem,
   Reminder,
   ReminderType,
   StockIdentity,
@@ -60,8 +61,10 @@ export {
   isValidTickerSymbol,
   normalizeTickerSymbol,
   validateHolding,
+  validatePortfolioRankerItem,
   validateReminder,
   validateThesisNote,
   validateWatchlistItem
 } from './validation';
 export type { ValidationResult } from './validation';
+

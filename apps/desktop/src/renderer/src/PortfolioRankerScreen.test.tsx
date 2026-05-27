@@ -1,7 +1,13 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
-import { buildPortfolioRankerInput } from './portfolioRankerInput';
+import {
+  buildPersistedPortfolioRankerItem,
+  buildPortfolioRankerInput,
+  getNextPortfolioRankerRowNumber,
+  isPortfolioRankerRowSaveable,
+  portfolioRankerItemToRow
+} from './portfolioRankerInput';
 
 describe('PortfolioRankerScreen', () => {
   it('renders manual ranking copy and deterministic output for sample rows', () => {
@@ -140,5 +146,111 @@ describe('PortfolioRankerScreen', () => {
         ticker: ' aaa '
       }
     ]);
+  });
+
+  it('renders storage errors without crashing', () => {
+    const html = renderToStaticMarkup(
+      <PortfolioRankerScreen
+        initialStorageErrors={['Storage unavailable.']}
+        storageClient={null}
+      />
+    );
+
+    expect(html).toContain('Storage');
+    expect(html).toContain('Storage unavailable.');
+  });
+
+  it('renders without a storage client and without crashing', () => {
+    const html = renderToStaticMarkup(
+      <PortfolioRankerScreen storageClient={null} />
+    );
+
+    expect(html).toContain('Thesis Rankings');
+  });
+
+  it('maps a persisted portfolio ranker item into and out of a row state', () => {
+    const row = portfolioRankerItemToRow({
+      id: 'idea-1',
+      ticker: 'MSFT',
+      companyName: 'Microsoft',
+      manualScore: 82,
+      notes: 'Persisted note.'
+    });
+
+    expect(row).toEqual({
+      id: 'idea-1',
+      ticker: 'MSFT',
+      companyName: 'Microsoft',
+      manualScore: '82',
+      notes: 'Persisted note.'
+    });
+
+    expect(buildPersistedPortfolioRankerItem(row)).toEqual({
+      id: 'idea-1',
+      ticker: 'MSFT',
+      companyName: 'Microsoft',
+      manualScore: 82,
+      notes: 'Persisted note.'
+    });
+  });
+
+  it('skips persisting empty optional fields when building a persisted item', () => {
+    const minimalRow = {
+      id: 'idea-min',
+      ticker: ' aapl ',
+      companyName: '   ',
+      manualScore: '   ',
+      notes: '   '
+    };
+
+    expect(buildPersistedPortfolioRankerItem(minimalRow)).toEqual({
+      id: 'idea-min',
+      ticker: 'aapl'
+    });
+  });
+
+  it('treats rows with a non-empty ticker as saveable', () => {
+    expect(
+      isPortfolioRankerRowSaveable({
+        id: 'idea-1',
+        ticker: '   ',
+        companyName: 'X',
+        manualScore: '',
+        notes: ''
+      })
+    ).toBe(false);
+
+    expect(
+      isPortfolioRankerRowSaveable({
+        id: 'idea-1',
+        ticker: 'MSFT',
+        companyName: '',
+        manualScore: '',
+        notes: ''
+      })
+    ).toBe(true);
+  });
+
+  it('finds the next available portfolio ranker row number', () => {
+    const rows = [
+      {
+        id: 'idea-1',
+        ticker: 'AAA',
+        companyName: '',
+        manualScore: '',
+        notes: ''
+      },
+      {
+        id: 'idea-3',
+        ticker: 'BBB',
+        companyName: '',
+        manualScore: '',
+        notes: ''
+      }
+    ];
+
+    expect(getNextPortfolioRankerRowNumber(rows, 1)).toBe(2);
+    expect(getNextPortfolioRankerRowNumber(rows, 3)).toBe(4);
+    expect(getNextPortfolioRankerRowNumber([], 1)).toBe(1);
   });
 });

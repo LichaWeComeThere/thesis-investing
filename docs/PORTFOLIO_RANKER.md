@@ -25,11 +25,46 @@ The ranking helper lives in `packages/core` so it can stay pure and testable.
 The desktop screen converts local React text fields into the core input model.
 No scoring or ranking rules are duplicated in the UI.
 
+## Local Persistence
+
+As of Phase 1 Stage 21, Portfolio Ranker inputs are persisted locally through
+SQLite. Persistence follows the same Electron main / preload / renderer
+boundary used for Watchlist, Thesis Notes, and Reminders.
+
+Persisted fields per row:
+
+- stable row ID
+- ticker (normalized to upper case through the repository)
+- optional company name
+- optional manual score (0 to 100)
+- optional notes
+
+Rows persist when a row's ticker field blurs with a non-empty ticker. Demo
+rows are shown when no rows have been persisted yet; once any row has been
+saved, the screen shows only persisted rows on subsequent reloads. Removing a
+row also removes it from storage. "Clear entries" removes every persisted
+row and resets the screen to the demo defaults.
+
+Storage path:
+
+- renderer: `apps/desktop/src/renderer/src/portfolioRankerStorageClient.ts`
+- shared IPC channels and types: `apps/desktop/src/shared/portfolioRankerStorage.ts`
+- main process IPC: `apps/desktop/src/main/portfolioRankerIpc.ts`
+- main process service: `apps/desktop/src/main/portfolioRankerStorageService.ts`
+- repository: `storage.repositories.portfolioRankerItems`
+- preload bridge: `window.thesisInvesting.portfolioRanker`
+
+Ranking output continues to be derived from the current in-memory row state
+through the pure `rankManualPortfolioItems` helper. Ranking has no dependency
+on storage.
+
 ## Out Of Scope
 
 - live stock prices or market data
 - brokerage import or trading execution
-- portfolio persistence
+- holdings or owned-position workflows
+- named ranker snapshots or history
+- relationship linking between ranker rows and thesis notes
 - watchlist or thesis note workflows
 - AI analysis or recommendations
 - personalized financial advice

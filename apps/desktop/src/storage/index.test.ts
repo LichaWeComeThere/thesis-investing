@@ -10,6 +10,7 @@ describe("SQLite local storage", () => {
 
     expect(Object.keys(storage.repositories).sort()).toEqual([
       "holdings",
+      "portfolioRankerItems",
       "reminders",
       "thesisNotes",
       "watchlistItems"
@@ -18,19 +19,20 @@ describe("SQLite local storage", () => {
     storage.close();
   });
 
-  it("runs the initial migration and creates local tables", async () => {
+  it("runs migrations and creates local tables", async () => {
     const database = await createSqliteDatabase();
 
     runMigrations(database);
 
     expect(readTableNames(database)).toEqual([
       "holdings",
+      "portfolio_ranker_items",
       "reminders",
       "schema_migrations",
       "thesis_notes",
       "watchlist_items"
     ]);
-    expect(readAppliedMigrationVersions(database)).toEqual([1]);
+    expect(readAppliedMigrationVersions(database)).toEqual([1, 2]);
 
     database.close();
   });
@@ -165,6 +167,111 @@ describe("SQLite local storage", () => {
     expect(storage.repositories.reminders.getById("reminder_msft")?.ticker).toBe(
       "MSFT"
     );
+
+    storage.close();
+  });
+
+  it("creates, reads, updates, lists, and deletes portfolio ranker items", async () => {
+    const storage = await createSqliteStorage();
+
+    const create = storage.repositories.portfolioRankerItems.create({
+      id: "portfolio-ranker_msft",
+      ticker: "msft",
+      companyName: "Microsoft",
+      manualScore: 82,
+      notes: "Durable software franchise."
+    });
+
+    expect(create).toEqual({
+      ok: true,
+      value: {
+        id: "portfolio-ranker_msft",
+        ticker: "MSFT",
+        companyName: "Microsoft",
+        manualScore: 82,
+        notes: "Durable software franchise."
+      }
+    });
+
+    expect(
+      storage.repositories.portfolioRankerItems.getById("portfolio-ranker_msft")
+    ).toEqual({
+      id: "portfolio-ranker_msft",
+      ticker: "MSFT",
+      companyName: "Microsoft",
+      manualScore: 82,
+      notes: "Durable software franchise."
+    });
+
+    expect(
+      storage.repositories.portfolioRankerItems.update({
+        id: "portfolio-ranker_msft",
+        ticker: "msft",
+        companyName: "Microsoft",
+        manualScore: 91,
+        notes: "Raised conviction after research review."
+      })
+    ).toEqual({
+      ok: true,
+      value: {
+        id: "portfolio-ranker_msft",
+        ticker: "MSFT",
+        companyName: "Microsoft",
+        manualScore: 91,
+        notes: "Raised conviction after research review."
+      }
+    });
+
+    expect(storage.repositories.portfolioRankerItems.list()).toHaveLength(1);
+
+    expect(
+      storage.repositories.portfolioRankerItems.delete("portfolio-ranker_msft")
+    ).toBe(true);
+    expect(
+      storage.repositories.portfolioRankerItems.getById("portfolio-ranker_msft")
+    ).toBeUndefined();
+    expect(storage.repositories.portfolioRankerItems.list()).toEqual([]);
+
+    storage.close();
+  });
+
+  it("rejects invalid portfolio ranker items before writing to SQLite", async () => {
+    const storage = await createSqliteStorage();
+
+    const result = storage.repositories.portfolioRankerItems.create({
+      id: "portfolio-ranker_invalid",
+      ticker: "bad ticker",
+      manualScore: 150
+    });
+
+    expect(result.ok).toBe(false);
+    expect(storage.repositories.portfolioRankerItems.list()).toEqual([]);
+
+    storage.close();
+  });
+
+  it("persists portfolio ranker items without an optional score", async () => {
+    const storage = await createSqliteStorage();
+
+    expect(
+      storage.repositories.portfolioRankerItems.create({
+        id: "portfolio-ranker_aapl",
+        ticker: "AAPL"
+      })
+    ).toEqual({
+      ok: true,
+      value: {
+        id: "portfolio-ranker_aapl",
+        ticker: "AAPL"
+      }
+    });
+
+    expect(
+      storage.repositories.portfolioRankerItems.getById("portfolio-ranker_aapl")
+    ).toEqual({
+      id: "portfolio-ranker_aapl",
+      ticker: "AAPL"
+    });
 
     storage.close();
   });
