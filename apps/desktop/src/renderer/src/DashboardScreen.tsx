@@ -111,7 +111,7 @@ const quickActions: QuickAction[] = [
     description: 'Refresh score assumptions.'
   },
   {
-    label: 'Review Thesis Rankings',
+    label: 'Review Portfolio Ranker',
     workspaceId: 'portfolio-ranker',
     description: 'Compare scored ideas.'
   },

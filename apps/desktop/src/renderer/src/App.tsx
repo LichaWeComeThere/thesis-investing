@@ -56,8 +56,8 @@ const navigationViews: NavigationView[] = [
   },
   {
     id: 'portfolio-ranker',
-    title: 'Thesis Rankings',
-    navLabel: 'Thesis Rankings',
+    title: 'Portfolio Ranker',
+    navLabel: 'Portfolio Ranker',
     icon: 'portfolio-ranker',
     description:
       'Compare saved ideas with user-entered thesis scores and focused ranking output.'
@@ -96,8 +96,8 @@ const navigationViews: NavigationView[] = [
   },
   {
     id: 'settings-about',
-    title: 'App Settings',
-    navLabel: 'App Settings',
+    title: 'Settings/About',
+    navLabel: 'Settings/About',
     icon: 'settings-about',
     description:
       'Review app mode, local-first boundaries, and workspace preferences.'
@@ -369,10 +369,10 @@ function SettingsAboutScreen({
   return (
     <div className="settings-about-screen">
       <PageHeader
-        badge={<Badge variant="accent">App Settings</Badge>}
+        badge={<Badge variant="accent">Settings/About</Badge>}
         description="Review the local workspace mode, app boundaries, and first-run onboarding controls."
         eyebrow="Settings/About"
-        title="App Settings"
+        title="Settings/About"
       />
 
       <div className="settings-about-grid">
