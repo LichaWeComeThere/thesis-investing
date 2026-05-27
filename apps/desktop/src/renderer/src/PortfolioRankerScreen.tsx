@@ -353,11 +353,11 @@ export function PortfolioRankerScreen({
         badge={<Badge variant="accent">Demo Rankings</Badge>}
         description="Rank investment ideas by thesis score, status, conviction, risk, and review priority."
         eyebrow="Idea Ranking Board"
-        title="Thesis Rankings"
+        title="Portfolio Ranker"
       />
 
       <div className="portfolio-ranker-layout">
-        <Card className="portfolio-ranker-workspace-card" title="Thesis ranking board">
+        <Card className="portfolio-ranker-workspace-card" title="Portfolio ranking board">
           <div className="portfolio-ranker-toolbar">
             <div>
               <h2>Investment ideas</h2>

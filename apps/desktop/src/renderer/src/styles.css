@@ -2307,7 +2307,7 @@ select:focus-visible {
   background: var(--ti-color-row-hover);
 }
 
-/* Thesis Rankings premium workspace refresh: layout and presentation only. */
+/* Portfolio Ranker premium workspace refresh: layout and presentation only. */
 .portfolio-ranker-screen {
   margin-inline: 0;
   max-width: none;
@@ -2863,7 +2863,7 @@ select:focus-visible {
   line-height: 1.45;
 }
 
-/* Thesis Rankings compact board: display-only refinement. */
+/* Portfolio Ranker compact board: display-only refinement. */
 .portfolio-ranker-workspace-card {
   min-height: auto;
 }

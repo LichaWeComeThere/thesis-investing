@@ -37,7 +37,7 @@ describe('DashboardScreen', () => {
     expect(html).toContain('Under Pressure');
     expect(html).toContain('Growth stocks need caution.');
     expect(html).toContain('Open MBS Scorer');
-    expect(html).toContain('Review Thesis Rankings');
+    expect(html).toContain('Review Portfolio Ranker');
     expect(html).toContain('Open Thesis Monitor');
     expect(html).toContain('Check Watchlist');
   });

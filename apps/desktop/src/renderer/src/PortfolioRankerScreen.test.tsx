@@ -40,7 +40,7 @@ describe('PortfolioRankerScreen', () => {
     );
 
     expect(html).toContain('Demo Rankings');
-    expect(html).toContain('Thesis Rankings');
+    expect(html).toContain('Portfolio Ranker');
     expect(html).toContain('Rank investment ideas by thesis score');
     expect(html).toContain('Investment ideas');
     expect(html).toContain('MBS 72 / 100');
@@ -165,7 +165,7 @@ describe('PortfolioRankerScreen', () => {
       <PortfolioRankerScreen storageClient={null} />
     );
 
-    expect(html).toContain('Thesis Rankings');
+    expect(html).toContain('Portfolio Ranker');
   });
 
   it('maps a persisted portfolio ranker item into and out of a row state', () => {
