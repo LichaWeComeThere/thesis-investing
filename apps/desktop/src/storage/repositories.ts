@@ -1,6 +1,7 @@
 import type {
   EntityId,
   Holding,
+  PortfolioRankerItem,
   Reminder,
   ThesisNote,
   WatchlistItem
@@ -48,9 +49,18 @@ export interface ReminderRepository {
   delete(id: EntityId): boolean;
 }
 
+export interface PortfolioRankerItemRepository {
+  create(item: PortfolioRankerItem): RepositoryResult<PortfolioRankerItem>;
+  getById(id: EntityId): PortfolioRankerItem | undefined;
+  list(): PortfolioRankerItem[];
+  update(item: PortfolioRankerItem): RepositoryResult<PortfolioRankerItem>;
+  delete(id: EntityId): boolean;
+}
+
 export interface LocalStorageRepositories {
   holdings: HoldingRepository;
   watchlistItems: WatchlistItemRepository;
   thesisNotes: ThesisNoteRepository;
   reminders: ReminderRepository;
+  portfolioRankerItems: PortfolioRankerItemRepository;
 }

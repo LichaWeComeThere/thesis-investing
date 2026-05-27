@@ -1,4 +1,5 @@
 import type { WatchlistItem } from '@thesis-investing/core';
+import type { PortfolioRankerStorageApi } from './portfolioRankerStorage';
 import type { RemindersStorageApi } from './remindersStorage';
 import type { ThesisNotesStorageApi } from './thesisNotesStorage';
 
@@ -26,6 +27,7 @@ export type WatchlistStorageApi = {
 
 export type ThesisInvestingApi = {
   platform: string;
+  portfolioRanker: PortfolioRankerStorageApi;
   reminders: RemindersStorageApi;
   thesisNotes: ThesisNotesStorageApi;
   watchlist: WatchlistStorageApi;

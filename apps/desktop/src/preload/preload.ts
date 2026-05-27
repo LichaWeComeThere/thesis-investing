@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { portfolioRankerStorageChannels } from '../shared/portfolioRankerStorage';
 import { remindersStorageChannels } from '../shared/remindersStorage';
 import { thesisNotesStorageChannels } from '../shared/thesisNotesStorage';
 import {
@@ -8,6 +9,13 @@ import {
 
 const thesisInvestingApi: ThesisInvestingApi = {
   platform: process.platform,
+  portfolioRanker: {
+    list: () => ipcRenderer.invoke(portfolioRankerStorageChannels.list),
+    remove: (id) =>
+      ipcRenderer.invoke(portfolioRankerStorageChannels.remove, id),
+    save: (item) =>
+      ipcRenderer.invoke(portfolioRankerStorageChannels.save, item)
+  },
   reminders: {
     list: () => ipcRenderer.invoke(remindersStorageChannels.list),
     remove: (id) => ipcRenderer.invoke(remindersStorageChannels.remove, id),

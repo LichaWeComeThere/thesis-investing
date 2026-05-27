@@ -1,5 +1,6 @@
 import type {
   Holding,
+  PortfolioRankerItem,
   Reminder,
   ReminderType,
   ThesisNote,
@@ -157,6 +158,44 @@ export function validateReminder(reminder: Reminder): ValidationResult {
   }
 
   return toValidationResult(errors);
+}
+
+export function validatePortfolioRankerItem(
+  item: PortfolioRankerItem
+): ValidationResult {
+  const errors: string[] = [];
+
+  if (!isValidTickerSymbol(item.ticker)) {
+    errors.push('Portfolio ranker ticker must be a valid ticker symbol.');
+  }
+
+  if (item.companyName !== undefined && !isNonEmptyString(item.companyName)) {
+    errors.push('Portfolio ranker company name cannot be blank when provided.');
+  }
+
+  if (item.manualScore !== undefined && !isValidPortfolioRankerScore(item.manualScore)) {
+    errors.push(
+      'Portfolio ranker manual score must be a finite number from 0 to 100.'
+    );
+  }
+
+  if (item.notes !== undefined && !isNonEmptyString(item.notes)) {
+    errors.push('Portfolio ranker notes cannot be blank when provided.');
+  }
+
+  if (item.createdAt !== undefined && !isValidIsoDate(item.createdAt)) {
+    errors.push('Portfolio ranker created date must use YYYY-MM-DD format.');
+  }
+
+  if (item.updatedAt !== undefined && !isValidIsoDate(item.updatedAt)) {
+    errors.push('Portfolio ranker updated date must use YYYY-MM-DD format.');
+  }
+
+  return toValidationResult(errors);
+}
+
+function isValidPortfolioRankerScore(value: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= 100;
 }
 
 export function isValidIsoDate(value: string): boolean {

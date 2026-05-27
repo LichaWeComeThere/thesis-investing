@@ -4,7 +4,7 @@ Phase 1, Stage 4 added the first local-only persistence boundary for the Offline
 
 The goal is to give desktop workflows a repository layer for offline data while keeping database access isolated from React renderer code.
 
-Phase 1, Stage 18 wires the Watchlist screen as the first visible persisted workflow. Phase 1, Stage 19 adds Thesis Notes persistence. Phase 1, Stage 20 adds Reminders persistence. Other visible MVP workflows remain React-state-only until their own stages.
+Phase 1, Stage 18 wires the Watchlist screen as the first visible persisted workflow. Phase 1, Stage 19 adds Thesis Notes persistence. Phase 1, Stage 20 adds Reminders persistence. Phase 1, Stage 21 adds Portfolio Ranker input persistence. Other visible MVP workflows remain React-state-only until their own stages.
 
 ## Package Boundary
 
@@ -13,7 +13,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The storage module depends on `packages/core` domain types and validators.
 - `packages/core` does not depend on storage, SQLite, Electron, React, or Node APIs.
 - UI code should depend on narrow preload/IPC clients instead of raw SQLite details when persistence is wired into screens.
-- The Watchlist, Thesis Monitor, and Reminders screens read and write through the local persistence boundary. Other screens are not persisted yet.
+- The Watchlist, Thesis Monitor, Reminders, and Portfolio Ranker screens read and write through the local persistence boundary. Other screens are not persisted yet.
 
 ## SQLite Choice
 
@@ -45,6 +45,10 @@ The initial schema creates:
 - `reminders`
 - `schema_migrations`
 
+Migration v2 (Phase 1 Stage 21) adds:
+
+- `portfolio_ranker_items`
+
 The domain tables include local created/updated date columns where appropriate, but repositories do not generate timestamps as side effects. Dates are accepted as inputs from future application workflows.
 
 ## Repositories
@@ -55,6 +59,7 @@ The storage module defines repository interfaces for:
 - watchlist items
 - thesis notes
 - reminders
+- portfolio ranker items
 
 Repository implementations validate core domain data before writing to SQLite and normalize ticker symbols consistently with `packages/core`.
 
@@ -62,8 +67,9 @@ Repository implementations validate core domain data before writing to SQLite an
 
 This persistence layer does not add:
 
-- Persistence for Portfolio Ranker, MBS Scorer, or Dashboard
+- Persistence for MBS Scorer or Dashboard
 - Live dashboard summaries from persisted data
+- Named portfolio ranker snapshots or history
 - Live stock APIs
 - Cloud sync, Supabase, or auth
 - AI analyst features

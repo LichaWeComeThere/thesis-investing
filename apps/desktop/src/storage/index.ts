@@ -1,6 +1,7 @@
 export type {
   HoldingRepository,
   LocalStorageRepositories,
+  PortfolioRankerItemRepository,
   ReminderRepository,
   RepositoryResult,
   ThesisNoteRepository,

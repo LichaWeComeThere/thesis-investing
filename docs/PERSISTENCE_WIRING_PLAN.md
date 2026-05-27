@@ -10,7 +10,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 
 The storage boundary includes:
 
-- `repositories.ts`: stable repository interfaces for holdings, watchlist items, thesis notes, and reminders.
+- `repositories.ts`: stable repository interfaces for holdings, watchlist items, thesis notes, reminders, and portfolio ranker items.
 - `sqlite.ts`: the first SQLite adapter and `createSqliteStorage()` entrypoint.
 - `schema.ts`: migration runner and the initial schema.
 - `sqliteRepositories.ts`: SQLite repository implementations that normalize tickers and validate domain data before writes.
@@ -26,6 +26,10 @@ The initial schema creates:
 - `reminders`
 - `schema_migrations`
 
+Migration v2 (Phase 1 Stage 21) adds:
+
+- `portfolio_ranker_items`
+
 The adapter currently uses `node:sqlite`. This is an experimental first adapter only. Electron runtime support must be verified before this adapter is wired into user-visible workflows. The repository interfaces are intentionally designed so the adapter can be swapped later if needed.
 
 Phase 1, Stage 17 adds that verification gate through `pnpm verify:storage`. The verification uses an in-memory database, runs in the Electron main process, and performs create/read/update/delete through the repository boundary without touching real user data.
@@ -39,7 +43,7 @@ The visible MVP screens are still mostly React-state-only:
 | Watchlist | Persisted through `window.thesisInvesting.watchlist`, with transient form/selected state in React | Stage 18 implemented `watchlistItems`; `thesisReference` remains UI-only text |
 | Thesis Monitor | Persisted through `window.thesisInvesting.thesisNotes`, with transient form/selected state in React | Stage 19 implemented `thesisNotes`; `checklist` remains UI-only text |
 | Reminders | Persisted through `window.thesisInvesting.reminders`, with transient form/selected state in React | Stage 20 implemented `reminders`; UI `completed` maps to persisted `completedAt` |
-| Portfolio Ranker | `useState` rows with manual scores | No direct repository yet; do not force ranker rows into `holdings` |
+| Portfolio Ranker | Persisted through `window.thesisInvesting.portfolioRanker`, with transient row order, filters, search, and sort UI state in React | Stage 21 implemented `portfolioRankerItems`; demo rows are display-only until persisted |
 | MBS Scorer | `useState` category values and notes | No repository yet; scoring output is deterministic and can be recomputed |
 | Dashboard | Static/local overview and route links | Should read summaries only after individual screens are persisted |
 | Theme Baskets | Static local data | Should remain static repo data for now |
@@ -138,23 +142,27 @@ Notes:
 
 ### Stage 21: Persist Portfolio Ranker Inputs
 
-Data to persist:
+Status: implemented.
 
-- ticker
+Data persisted:
+
+- stable row ID
+- ticker (normalized to upper case through the repository)
 - optional company name
-- manual score
+- optional manual score (0 to 100)
 - optional notes
-- row order or stable display order
 
 Repository:
 
-- Add a dedicated `portfolioRankerItems` repository and migration, or a named ranker snapshot repository.
+- Uses a dedicated `portfolioRankerItems` repository and migration v2 `portfolio_ranker_items` table. The existing `HoldingRepository` was intentionally not reused because `Holding` requires `shares` and represents owned positions, while ranker rows are manually scored research ideas.
 
 Notes:
 
-- Do not force ranker rows into `holdings`. The existing `HoldingRepository` requires shares and represents owned positions, while the current ranker supports ideas and manually scored rows.
-- Keep ranking output derived from persisted inputs using `rankManualPortfolioItems()`.
-- Keep sort/filter/search UI state transient.
+- Rows persist when a row's ticker field blurs with a non-empty ticker.
+- Demo rows from `mockTheses` are shown only when storage is empty; once any row is persisted, subsequent loads show only persisted rows.
+- Ranking output continues to be derived from current in-memory rows through `rankManualPortfolioItems()`. Ranking has no storage dependency.
+- Row order, filters, search text, and sort toggles remain transient UI state.
+- Named ranker snapshots, history, and ranker-to-thesis-note linking are intentionally out of scope for this stage.
 
 ### Stage 22: Persist MBS Scorer Drafts Or Snapshots
 
@@ -207,7 +215,7 @@ Do not persist these yet:
 - free-text `thesisReference` unless it becomes a structured `thesisNoteId`
 - thesis checklist text unless a migration explicitly adds it
 - MBS scorer drafts before a dedicated MBS persistence stage
-- ranker rows before a dedicated ranker persistence stage
+- named ranker snapshots, history, or ranker-to-thesis-note linking
 
 ## Migration Risks
 
@@ -273,7 +281,7 @@ Future wiring should follow these rules:
 
 This plan does not add:
 
-- SQLite wiring beyond the Watchlist, Thesis Monitor, and Reminders screens.
+- SQLite wiring beyond the Watchlist, Thesis Monitor, Reminders, and Portfolio Ranker screens.
 - Full app-wide persistence.
 - Installer, updater, or code-signing changes.
 - Live stock APIs or price feeds.
