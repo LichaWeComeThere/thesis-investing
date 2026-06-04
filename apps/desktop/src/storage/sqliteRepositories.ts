@@ -3,11 +3,14 @@ import type { DatabaseSync } from "node:sqlite";
 import {
   normalizeTickerSymbol,
   validateHolding,
+  validateMbsScoreSnapshot,
   validatePortfolioRankerItem,
   validateReminder,
   validateThesisNote,
   validateWatchlistItem,
   type Holding,
+  type ManualBusinessScoreInput,
+  type MbsScoreSnapshot,
   type PortfolioRankerItem,
   type Reminder,
   type ThesisNote,
@@ -17,6 +20,7 @@ import {
 import type {
   HoldingRepository,
   LocalStorageRepositories,
+  MbsScoreSnapshotRepository,
   PortfolioRankerItemRepository,
   ReminderRepository,
   RepositoryResult,
@@ -35,7 +39,8 @@ export function createSqliteRepositories(
     watchlistItems: createWatchlistItemRepository(database),
     thesisNotes: createThesisNoteRepository(database),
     reminders: createReminderRepository(database),
-    portfolioRankerItems: createPortfolioRankerItemRepository(database)
+    portfolioRankerItems: createPortfolioRankerItemRepository(database),
+    mbsScoreSnapshots: createMbsScoreSnapshotRepository(database)
   };
 }
 
@@ -525,6 +530,71 @@ function createPortfolioRankerItemRepository(
   };
 }
 
+function createMbsScoreSnapshotRepository(
+  database: DatabaseSync
+): MbsScoreSnapshotRepository {
+  return {
+    create(snapshot) {
+      const normalized = normalizeMbsScoreSnapshot(snapshot);
+      const validation = validateMbsScoreSnapshot(normalized);
+
+      if (!validation.valid) {
+        return failure(validation.errors);
+      }
+
+      database
+        .prepare(
+          `
+            INSERT INTO mbs_score_snapshots (
+              id,
+              thesis_id,
+              ticker,
+              company_name,
+              score,
+              max_score,
+              percentage,
+              rating,
+              completed_criteria,
+              input_json,
+              notes,
+              created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+          `
+        )
+        .run(
+          normalized.id,
+          normalized.thesisId ?? null,
+          normalized.ticker ?? null,
+          normalized.companyName ?? null,
+          normalized.score,
+          normalized.maxScore,
+          normalized.percentage,
+          normalized.rating,
+          normalized.completedCriteria,
+          JSON.stringify(normalized.input),
+          normalized.notes ?? null,
+          normalized.createdAt ?? null
+        );
+
+      return success(normalized);
+    },
+    getById(id) {
+      return mapMbsScoreSnapshot(
+        getOne(database, "SELECT * FROM mbs_score_snapshots WHERE id = ?;", [
+          id
+        ])
+      );
+    },
+    list() {
+      return getAll(
+        database,
+        "SELECT * FROM mbs_score_snapshots ORDER BY created_at DESC, id ASC;"
+      ).map(mapRequiredMbsScoreSnapshot);
+    }
+  };
+}
+
 function normalizeHolding(holding: Holding): Holding {
   return {
     ...holding,
@@ -561,6 +631,17 @@ function normalizeReminder(reminder: Reminder): Reminder {
     ...reminder,
     ticker: reminder.ticker
       ? normalizeTickerSymbol(reminder.ticker)
+      : undefined
+  };
+}
+
+function normalizeMbsScoreSnapshot(
+  snapshot: MbsScoreSnapshot
+): MbsScoreSnapshot {
+  return {
+    ...snapshot,
+    ticker: snapshot.ticker
+      ? normalizeTickerSymbol(snapshot.ticker)
       : undefined
   };
 }
@@ -675,6 +756,29 @@ function mapRequiredPortfolioRankerItem(row: SqlRow): PortfolioRankerItem {
   });
 }
 
+function mapMbsScoreSnapshot(
+  row: SqlRow | undefined
+): MbsScoreSnapshot | undefined {
+  return row ? mapRequiredMbsScoreSnapshot(row) : undefined;
+}
+
+function mapRequiredMbsScoreSnapshot(row: SqlRow): MbsScoreSnapshot {
+  return withoutUndefined({
+    id: requiredText(row, "id"),
+    thesisId: optionalText(row, "thesis_id"),
+    ticker: optionalText(row, "ticker"),
+    companyName: optionalText(row, "company_name"),
+    score: requiredNumber(row, "score"),
+    maxScore: requiredNumber(row, "max_score"),
+    percentage: requiredNumber(row, "percentage"),
+    rating: requiredText(row, "rating") as MbsScoreSnapshot["rating"],
+    completedCriteria: requiredNumber(row, "completed_criteria"),
+    input: parseMbsScoreInput(requiredText(row, "input_json")),
+    notes: optionalText(row, "notes"),
+    createdAt: optionalText(row, "created_at")
+  });
+}
+
 function withoutUndefined<T extends object>(value: T): T {
   return Object.fromEntries(
     Object.entries(value).filter(
@@ -722,4 +826,14 @@ function parseStringArray(value: string | undefined): string[] {
   return Array.isArray(parsed)
     ? parsed.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+function parseMbsScoreInput(value: string): ManualBusinessScoreInput {
+  const parsed: unknown = JSON.parse(value);
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return {};
+  }
+
+  return parsed as ManualBusinessScoreInput;
 }

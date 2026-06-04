@@ -10,6 +10,7 @@ describe("SQLite local storage", () => {
 
     expect(Object.keys(storage.repositories).sort()).toEqual([
       "holdings",
+      "mbsScoreSnapshots",
       "portfolioRankerItems",
       "reminders",
       "thesisNotes",
@@ -26,13 +27,14 @@ describe("SQLite local storage", () => {
 
     expect(readTableNames(database)).toEqual([
       "holdings",
+      "mbs_score_snapshots",
       "portfolio_ranker_items",
       "reminders",
       "schema_migrations",
       "thesis_notes",
       "watchlist_items"
     ]);
-    expect(readAppliedMigrationVersions(database)).toEqual([1, 2]);
+    expect(readAppliedMigrationVersions(database)).toEqual([1, 2, 3]);
 
     database.close();
   });
@@ -272,6 +274,75 @@ describe("SQLite local storage", () => {
       id: "portfolio-ranker_aapl",
       ticker: "AAPL"
     });
+
+    storage.close();
+  });
+
+  it("creates, reads, and lists MBS score snapshots", async () => {
+    const storage = await createSqliteStorage();
+    const snapshot = {
+      id: "score_msft",
+      ticker: "msft",
+      companyName: "Microsoft",
+      score: 80,
+      maxScore: 100,
+      percentage: 80,
+      rating: "strong" as const,
+      completedCriteria: 7,
+      input: {
+        businessQuality: 8,
+        moat: 8,
+        management: 8,
+        balanceSheet: 8,
+        growth: 8,
+        valuation: 8,
+        risk: 8,
+        notes: "Durable software franchise."
+      },
+      notes: "Durable software franchise.",
+      createdAt: "2026-05-24"
+    };
+
+    expect(storage.repositories.mbsScoreSnapshots.create(snapshot)).toEqual({
+      ok: true,
+      value: {
+        ...snapshot,
+        ticker: "MSFT"
+      }
+    });
+
+    expect(storage.repositories.mbsScoreSnapshots.getById("score_msft")).toEqual({
+      ...snapshot,
+      ticker: "MSFT"
+    });
+    expect(storage.repositories.mbsScoreSnapshots.list()).toEqual([
+      {
+        ...snapshot,
+        ticker: "MSFT"
+      }
+    ]);
+
+    storage.close();
+  });
+
+  it("rejects incomplete MBS score snapshots before writing to SQLite", async () => {
+    const storage = await createSqliteStorage();
+
+    const result = storage.repositories.mbsScoreSnapshots.create({
+      id: "score_invalid",
+      ticker: "MSFT",
+      score: 80,
+      maxScore: 100,
+      percentage: 80,
+      rating: "incomplete" as never,
+      completedCriteria: 6,
+      input: {
+        businessQuality: 8
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(storage.repositories.mbsScoreSnapshots.list()).toEqual([]);
 
     storage.close();
   });

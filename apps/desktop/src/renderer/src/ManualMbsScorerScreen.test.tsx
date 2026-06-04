@@ -34,6 +34,7 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('Interpretation');
     expect(html).toContain('All criteria complete');
     expect(html).toContain('7 / 7');
+    expect(html).toContain('Save snapshot');
   });
 
   it('renders selected thesis controls from shared mock theses', () => {
@@ -51,6 +52,41 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('Create new thesis from this score');
     expect(html).toContain('Save score to selected thesis');
     expect(html).toContain('Create new thesis from score');
+  });
+
+  it('renders saved MBS snapshots and storage errors', () => {
+    const html = renderToStaticMarkup(
+      <ManualMbsScorerScreen
+        initialSavedSnapshots={[
+          {
+            id: 'score-msft',
+            ticker: 'MSFT',
+            companyName: 'Microsoft',
+            score: 80,
+            maxScore: 100,
+            percentage: 80,
+            rating: 'strong',
+            completedCriteria: 7,
+            input: {
+              businessQuality: 8,
+              moat: 8,
+              management: 8,
+              balanceSheet: 8,
+              growth: 8,
+              valuation: 8,
+              risk: 8
+            },
+            createdAt: '2026-05-24'
+          }
+        ]}
+        initialSnapshotStorageErrors={['Snapshot storage unavailable.']}
+        storageClient={null}
+      />
+    );
+
+    expect(html).toContain('Saved snapshots');
+    expect(html).toContain('MSFT - 2026-05-24');
+    expect(html).toContain('Snapshot storage unavailable.');
   });
 
   it('renders session theses passed from the app shell', () => {

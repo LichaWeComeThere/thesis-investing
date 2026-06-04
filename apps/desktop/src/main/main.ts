@@ -2,6 +2,7 @@ import { BrowserWindow, app } from 'electron';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { registerMbsScoreSnapshotsIpc } from './mbsScoreSnapshotsIpc';
 import { registerPortfolioRankerIpc } from './portfolioRankerIpc';
 import { registerRemindersIpc } from './remindersIpc';
 import { registerThesisNotesIpc } from './thesisNotesIpc';
@@ -33,6 +34,7 @@ function createWindow(): void {
 }
 
 void app.whenReady().then(() => {
+  registerMbsScoreSnapshotsIpc();
   registerPortfolioRankerIpc();
   registerRemindersIpc();
   registerThesisNotesIpc();

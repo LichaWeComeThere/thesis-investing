@@ -76,6 +76,26 @@ export const migrations: readonly Migration[] = [
         updated_at TEXT
       );
     `
+  },
+  {
+    version: 3,
+    name: "add_mbs_score_snapshots",
+    sql: `
+      CREATE TABLE IF NOT EXISTS mbs_score_snapshots (
+        id TEXT PRIMARY KEY,
+        thesis_id TEXT,
+        ticker TEXT,
+        company_name TEXT,
+        score REAL NOT NULL,
+        max_score REAL NOT NULL,
+        percentage REAL NOT NULL,
+        rating TEXT NOT NULL,
+        completed_criteria INTEGER NOT NULL,
+        input_json TEXT NOT NULL,
+        notes TEXT,
+        created_at TEXT
+      );
+    `
   }
 ];
 

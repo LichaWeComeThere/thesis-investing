@@ -1,5 +1,7 @@
 import type {
   Holding,
+  ManualBusinessScoreCategory,
+  MbsScoreSnapshot,
   PortfolioRankerItem,
   Reminder,
   ReminderType,
@@ -28,6 +30,23 @@ const REMINDER_TYPES = new Set<ReminderType>([
   'earnings',
   'thesis-review',
   'custom'
+]);
+
+const MBS_SCORE_CATEGORIES: readonly ManualBusinessScoreCategory[] = [
+  'businessQuality',
+  'moat',
+  'management',
+  'balanceSheet',
+  'growth',
+  'valuation',
+  'risk'
+];
+
+const MBS_SNAPSHOT_RATINGS = new Set<MbsScoreSnapshot['rating']>([
+  'weak',
+  'mixed',
+  'strong',
+  'exceptional'
 ]);
 
 export function normalizeTickerSymbol(ticker: string): string {
@@ -194,7 +213,83 @@ export function validatePortfolioRankerItem(
   return toValidationResult(errors);
 }
 
+export function validateMbsScoreSnapshot(
+  snapshot: MbsScoreSnapshot
+): ValidationResult {
+  const errors: string[] = [];
+
+  if (snapshot.ticker !== undefined && !isValidTickerSymbol(snapshot.ticker)) {
+    errors.push('MBS snapshot ticker must be a valid ticker symbol.');
+  }
+
+  if (
+    snapshot.companyName !== undefined &&
+    !isNonEmptyString(snapshot.companyName)
+  ) {
+    errors.push('MBS snapshot company name cannot be blank when provided.');
+  }
+
+  if (!isNonNegativeNumber(snapshot.score)) {
+    errors.push('MBS snapshot score must be a finite non-negative number.');
+  }
+
+  if (!isPositiveNumber(snapshot.maxScore)) {
+    errors.push('MBS snapshot max score must be greater than zero.');
+  }
+
+  if (
+    Number.isFinite(snapshot.score) &&
+    Number.isFinite(snapshot.maxScore) &&
+    snapshot.score > snapshot.maxScore
+  ) {
+    errors.push('MBS snapshot score cannot exceed max score.');
+  }
+
+  if (!isPercentage(snapshot.percentage)) {
+    errors.push('MBS snapshot percentage must be a finite number from 0 to 100.');
+  }
+
+  if (!MBS_SNAPSHOT_RATINGS.has(snapshot.rating)) {
+    errors.push('MBS snapshot rating must be complete.');
+  }
+
+  if (snapshot.completedCriteria !== MBS_SCORE_CATEGORIES.length) {
+    errors.push('MBS snapshot must include every scoring criterion.');
+  }
+
+  for (const category of MBS_SCORE_CATEGORIES) {
+    const value = snapshot.input[category];
+
+    if (!isMbsCategoryScore(value)) {
+      errors.push(`MBS snapshot ${category} must be a finite number from 0 to 10.`);
+    }
+  }
+
+  if (snapshot.notes !== undefined && !isNonEmptyString(snapshot.notes)) {
+    errors.push('MBS snapshot notes cannot be blank when provided.');
+  }
+
+  if (snapshot.createdAt !== undefined && !isValidIsoDate(snapshot.createdAt)) {
+    errors.push('MBS snapshot created date must use YYYY-MM-DD format.');
+  }
+
+  return toValidationResult(errors);
+}
+
 function isValidPortfolioRankerScore(value: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
+function isMbsCategoryScore(value: unknown): value is number {
+  return (
+    typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 10
+  );
+}
+
+function isPercentage(value: number): boolean {
   return Number.isFinite(value) && value >= 0 && value <= 100;
 }
 
