@@ -26,6 +26,7 @@ type ThesisMonitorScreenProps = {
   initialStorageErrors?: string[];
   initialSelectedNoteId?: string;
   storageClient?: ThesisNotesStorageClient | null;
+  theses?: MockThesis[];
 };
 
 const statusLabels: Record<LocalThesisNote['status'], string> = {
@@ -123,8 +124,10 @@ export function ThesisMonitorScreen({
   initialNotes = [],
   initialStorageErrors = [],
   storageClient,
-  initialSelectedNoteId
+  initialSelectedNoteId,
+  theses = mockTheses
 }: ThesisMonitorScreenProps): JSX.Element {
+  const demoTheses = theses.length > 0 ? theses : mockTheses;
   const resolvedStorageClient =
     storageClient === undefined
       ? getDefaultThesisNotesStorageClient()
@@ -136,7 +139,7 @@ export function ThesisMonitorScreen({
     initialSelectedNoteId ?? initialNotes[0]?.id ?? null
   );
   const [selectedMockThesisId, setSelectedMockThesisId] = useState(
-    mockTheses[0].id
+    demoTheses[0].id
   );
   const [nextNoteNumber, setNextNoteNumber] = useState(() =>
     getNextThesisNoteNumber(initialNotes)
@@ -162,19 +165,19 @@ export function ThesisMonitorScreen({
   ).length;
   const hasLocalNotes = notes.length > 0;
   const selectedMockThesis =
-    mockTheses.find((thesis) => thesis.id === selectedMockThesisId) ??
-    mockTheses[0];
+    demoTheses.find((thesis) => thesis.id === selectedMockThesisId) ??
+    demoTheses[0];
   const selectedNoteScore = selectedNote ? scoreForNote(selectedNote) : null;
-  const thesisCount = hasLocalNotes ? notes.length : mockTheses.length;
+  const thesisCount = hasLocalNotes ? notes.length : demoTheses.length;
   const activeThesisCount = hasLocalNotes
     ? activeNoteCount
-    : mockTheses.filter(
+    : demoTheses.filter(
         (thesis) =>
           thesis.ideaStatus === 'Active' || thesis.ideaStatus === 'Watchlist'
       ).length;
   const reviewDateCount = hasLocalNotes
     ? notesWithReviewDates
-    : mockTheses.filter((thesis) => thesis.nextReviewDate).length;
+    : demoTheses.filter((thesis) => thesis.nextReviewDate).length;
   const shouldShowValidation =
     saveAttempted || (hasThesisFormContent(form) && !formResult.validation.valid);
   const visibleValidationErrors = shouldShowValidation
@@ -394,7 +397,7 @@ export function ThesisMonitorScreen({
                   );
                 })
             ) : (
-              mockTheses.map((thesis) => {
+              demoTheses.map((thesis) => {
                   const isSelected = thesis.id === selectedMockThesisId;
 
                   return (

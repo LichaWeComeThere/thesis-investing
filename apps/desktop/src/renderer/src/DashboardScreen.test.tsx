@@ -1,6 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { DashboardScreen } from './DashboardScreen';
+import {
+  cloneMockTheses,
+  createMockThesisFromMbsScore
+} from './data/mockTheses';
 
 describe('DashboardScreen', () => {
   it('renders investor command center sections', () => {
@@ -29,6 +33,23 @@ describe('DashboardScreen', () => {
     expect(html).toContain('NVDA');
     expect(html).toContain('Review Due Soon');
     expect(html).toContain('SOFI');
+  });
+
+  it('renders session thesis updates from props', () => {
+    const baseTheses = cloneMockTheses();
+    const sessionThesis = createMockThesisFromMbsScore(baseTheses, {
+      companyName: 'MVP Session Co',
+      createdAt: '2026-05-24T12:00:00.000Z',
+      mbsScore: 12,
+      ticker: 'MVP'
+    });
+    const html = renderToStaticMarkup(
+      <DashboardScreen theses={[...baseTheses, sessionThesis]} />
+    );
+
+    expect(html).toContain('MVP');
+    expect(html).toContain('12 MBS. Created from MBS Scorer.');
+    expect(html).toContain('<strong>9</strong>');
   });
 
   it('renders market regime and quick actions', () => {

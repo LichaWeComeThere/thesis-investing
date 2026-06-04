@@ -8,6 +8,10 @@ import {
   isPortfolioRankerRowSaveable,
   portfolioRankerItemToRow
 } from './portfolioRankerInput';
+import {
+  cloneMockTheses,
+  createMockThesisFromMbsScore
+} from './data/mockTheses';
 
 describe('PortfolioRankerScreen', () => {
   it('renders manual ranking copy and deterministic output for sample rows', () => {
@@ -166,6 +170,22 @@ describe('PortfolioRankerScreen', () => {
     );
 
     expect(html).toContain('Portfolio Ranker');
+  });
+
+  it('uses session theses for default demo ranker rows', () => {
+    const sessionThesis = createMockThesisFromMbsScore(cloneMockTheses(), {
+      companyName: 'MVP Session Co',
+      createdAt: '2026-05-24T12:00:00.000Z',
+      mbsScore: 74,
+      ticker: 'mvp'
+    });
+    const html = renderToStaticMarkup(
+      <PortfolioRankerScreen storageClient={null} theses={[sessionThesis]} />
+    );
+
+    expect(html).toContain('MVP');
+    expect(html).toContain('MVP Session Co');
+    expect(html).toContain('MBS 74 / 100');
   });
 
   it('maps a persisted portfolio ranker item into and out of a row state', () => {

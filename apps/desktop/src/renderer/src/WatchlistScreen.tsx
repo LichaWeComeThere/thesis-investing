@@ -19,6 +19,7 @@ import {
 } from './watchlistStorageClient';
 import {
   getWatchlistTheses,
+  mockTheses,
   type MockThesis
 } from './data/mockTheses';
 import './watchlist.css';
@@ -29,6 +30,7 @@ type WatchlistScreenProps = {
   initialStorageErrors?: string[];
   initialSelectedItemId?: string;
   storageClient?: WatchlistStorageClient | null;
+  theses?: MockThesis[];
 };
 
 export function WatchlistScreen({
@@ -36,7 +38,8 @@ export function WatchlistScreen({
   initialItems = [],
   initialStorageErrors = [],
   storageClient,
-  initialSelectedItemId
+  initialSelectedItemId,
+  theses = mockTheses
 }: WatchlistScreenProps): JSX.Element {
   const resolvedStorageClient =
     storageClient === undefined
@@ -72,7 +75,7 @@ export function WatchlistScreen({
   const visibleValidationErrors = shouldShowValidation
     ? formResult.validation.errors
     : [];
-  const watchlistTheses = useMemo(() => getWatchlistTheses(), []);
+  const watchlistTheses = useMemo(() => getWatchlistTheses(theses), [theses]);
   const [selectedMockThesisId, setSelectedMockThesisId] = useState(
     () => watchlistTheses[0]?.id ?? ''
   );

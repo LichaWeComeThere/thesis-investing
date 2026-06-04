@@ -23,6 +23,7 @@ import {
   cloneMockTheses,
   createMockThesisFromMbsScore,
   saveMockMbsScoreToThesis,
+  type CreateMockThesisInput,
   type MockThesis
 } from './data/mockTheses';
 
@@ -30,6 +31,13 @@ type ManualMbsScorerScreenProps = {
   initialCategoryValues?: ManualMbsCategoryValueState;
   initialInvestmentIdeas?: MockThesis[];
   initialNotes?: string;
+  onCreateThesis?: (input: CreateMockThesisInput) => MockThesis;
+  onUpdateThesisScore?: (
+    thesisId: string,
+    nextScore: number,
+    updatedAt: string
+  ) => void;
+  theses?: MockThesis[];
 };
 
 const CREATE_NEW_THESIS_ID = '__create-new-thesis__';
@@ -199,9 +207,12 @@ function getScoreInterpretation(
 export function ManualMbsScorerScreen({
   initialCategoryValues,
   initialInvestmentIdeas,
-  initialNotes = ''
+  initialNotes = '',
+  onCreateThesis,
+  onUpdateThesisScore,
+  theses
 }: ManualMbsScorerScreenProps): JSX.Element {
-  const [investmentIdeas, setInvestmentIdeas] = useState<MockThesis[]>(
+  const [fallbackInvestmentIdeas, setFallbackInvestmentIdeas] = useState<MockThesis[]>(
     () =>
       initialInvestmentIdeas
         ? initialInvestmentIdeas.map((idea) => ({
@@ -211,8 +222,9 @@ export function ManualMbsScorerScreen({
           }))
         : cloneMockTheses()
   );
+  const investmentIdeas = theses ?? fallbackInvestmentIdeas;
   const [selectedThesisId, setSelectedThesisId] = useState(() =>
-    initialInvestmentIdeas?.[0]?.id ?? cloneMockTheses()[0]?.id ?? CREATE_NEW_THESIS_ID
+    investmentIdeas[0]?.id ?? CREATE_NEW_THESIS_ID
   );
   const [newThesisFields, setNewThesisFields] = useState({
     companyName: '',
@@ -291,20 +303,25 @@ export function ManualMbsScorerScreen({
 
     const updatedAt = new Date().toISOString();
 
-    setInvestmentIdeas((currentIdeas) =>
-      saveMockMbsScoreToThesis(
-        currentIdeas,
-        selectedThesis.id,
-        scoreOutput.score,
-        updatedAt
-      )
-    );
+    if (onUpdateThesisScore) {
+      onUpdateThesisScore(selectedThesis.id, scoreOutput.score, updatedAt);
+    } else {
+      setFallbackInvestmentIdeas((currentIdeas) =>
+        saveMockMbsScoreToThesis(
+          currentIdeas,
+          selectedThesis.id,
+          scoreOutput.score,
+          updatedAt
+        )
+      );
+    }
+
     setThesisActionMessage('Score saved to thesis.');
   }
 
   function createNewThesisFromScore(): void {
     const createdAt = new Date().toISOString();
-    const nextIdea = createMockThesisFromMbsScore(investmentIdeas, {
+    const input: CreateMockThesisInput = {
       companyName: newThesisFields.companyName,
       createdAt,
       mbsScore: scoreOutput.score,
@@ -315,9 +332,15 @@ export function ManualMbsScorerScreen({
           : undefined,
       theme: newThesisFields.theme,
       ticker: newThesisFields.ticker
-    });
+    };
+    const nextIdea = onCreateThesis
+      ? onCreateThesis(input)
+      : createMockThesisFromMbsScore(investmentIdeas, input);
 
-    setInvestmentIdeas((currentIdeas) => [...currentIdeas, nextIdea]);
+    if (!onCreateThesis) {
+      setFallbackInvestmentIdeas((currentIdeas) => [...currentIdeas, nextIdea]);
+    }
+
     setSelectedThesisId(nextIdea.id);
     setNewThesisFields({
       companyName: '',

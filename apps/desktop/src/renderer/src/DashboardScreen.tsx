@@ -41,69 +41,6 @@ type QuickAction = {
   description: string;
 };
 
-const thesisHealthItems: ThesisHealthItem[] = [
-  { label: 'Theses tracked', value: mockTheses.length, tone: 'tracked' },
-  {
-    label: 'Needs review',
-    value: mockTheses.filter(isNeedsReviewThesis).length,
-    tone: 'review'
-  },
-  {
-    label: 'Weakening',
-    value: mockTheses.filter((thesis) => thesis.thesisStatus === 'Weakening')
-      .length,
-    tone: 'weakening'
-  },
-  {
-    label: 'Strong conviction',
-    value: mockTheses.filter((thesis) => thesis.conviction === 'High').length,
-    tone: 'strong'
-  }
-];
-
-const weakestThesis = getWeakestThesis(mockTheses);
-const largestDropThesis = getLargestScoreDropThesis(mockTheses);
-const topImprovingThesis = getTopImprovingThesis(mockTheses);
-const nextReviewThesis = getNextReviewThesis(mockTheses);
-
-const reviewPriorityItems: ReviewPriorityItem[] = [
-  {
-    label: 'Weakest Idea',
-    ticker: weakestThesis.ticker,
-    detail: `${weakestThesis.mbsScore} MBS. ${weakestThesis.thesisSummary}`,
-    tone: 'weakening'
-  },
-  {
-    label: 'Biggest Score Drop',
-    ticker: largestDropThesis.ticker,
-    detail: `${formatScoreChange(largestDropThesis)} since last review.`,
-    tone: 'review'
-  },
-  {
-    label: 'Top Improving Idea',
-    ticker: topImprovingThesis.ticker,
-    detail: `${formatScoreChange(topImprovingThesis)} since last review.`,
-    tone: 'strong'
-  },
-  {
-    label: 'Review Due Soon',
-    ticker: nextReviewThesis.ticker,
-    detail: `Next review ${nextReviewThesis.nextReviewDate}.`,
-    tone: 'tracked'
-  }
-];
-
-const recentActivityItems: RecentActivityItem[] = mockTheses
-  .flatMap((thesis) =>
-    thesis.decisionLog.map((entry) => ({
-      ticker: thesis.ticker,
-      action: entry.title,
-      detail: entry.note,
-      tone: getDashboardTone(thesis)
-    }))
-  )
-  .slice(0, 3);
-
 const quickActions: QuickAction[] = [
   {
     label: 'Open MBS Scorer',
@@ -129,6 +66,7 @@ const quickActions: QuickAction[] = [
 
 type DashboardScreenProps = {
   onOpenWorkspace?: (workspaceId: string) => void;
+  theses?: MockThesis[];
 };
 
 function getDashboardTone(thesis: MockThesis): ThesisHealthTone {
@@ -147,9 +85,79 @@ function getDashboardTone(thesis: MockThesis): ThesisHealthTone {
   return 'tracked';
 }
 
+function getReviewPriorityItems(theses: readonly MockThesis[]): ReviewPriorityItem[] {
+  if (theses.length === 0) {
+    return [];
+  }
+
+  const weakestThesis = getWeakestThesis(theses);
+  const largestDropThesis = getLargestScoreDropThesis(theses);
+  const topImprovingThesis = getTopImprovingThesis(theses);
+  const nextReviewThesis = getNextReviewThesis(theses);
+
+  return [
+    {
+      label: 'Weakest Idea',
+      ticker: weakestThesis.ticker,
+      detail: `${weakestThesis.mbsScore} MBS. ${weakestThesis.thesisSummary}`,
+      tone: 'weakening'
+    },
+    {
+      label: 'Biggest Score Drop',
+      ticker: largestDropThesis.ticker,
+      detail: `${formatScoreChange(largestDropThesis)} since last review.`,
+      tone: 'review'
+    },
+    {
+      label: 'Top Improving Idea',
+      ticker: topImprovingThesis.ticker,
+      detail: `${formatScoreChange(topImprovingThesis)} since last review.`,
+      tone: 'strong'
+    },
+    {
+      label: 'Review Due Soon',
+      ticker: nextReviewThesis.ticker,
+      detail: `Next review ${nextReviewThesis.nextReviewDate}.`,
+      tone: 'tracked'
+    }
+  ];
+}
+
 export function DashboardScreen({
-  onOpenWorkspace
+  onOpenWorkspace,
+  theses = mockTheses
 }: DashboardScreenProps): JSX.Element {
+  const thesisHealthItems: ThesisHealthItem[] = [
+    { label: 'Theses tracked', value: theses.length, tone: 'tracked' },
+    {
+      label: 'Needs review',
+      value: theses.filter(isNeedsReviewThesis).length,
+      tone: 'review'
+    },
+    {
+      label: 'Weakening',
+      value: theses.filter((thesis) => thesis.thesisStatus === 'Weakening')
+        .length,
+      tone: 'weakening'
+    },
+    {
+      label: 'Strong conviction',
+      value: theses.filter((thesis) => thesis.conviction === 'High').length,
+      tone: 'strong'
+    }
+  ];
+  const reviewPriorityItems = getReviewPriorityItems(theses);
+  const recentActivityItems: RecentActivityItem[] = theses
+    .flatMap((thesis) =>
+      thesis.decisionLog.map((entry) => ({
+        ticker: thesis.ticker,
+        action: entry.title,
+        detail: entry.note,
+        tone: getDashboardTone(thesis)
+      }))
+    )
+    .slice(0, 3);
+
   return (
     <div className="dashboard-screen">
       <PageHeader

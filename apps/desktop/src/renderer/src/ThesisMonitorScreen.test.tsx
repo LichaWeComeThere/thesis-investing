@@ -10,6 +10,10 @@ import {
   upsertLocalThesisNote,
   type LocalThesisNote
 } from './thesisMonitorInput';
+import {
+  cloneMockTheses,
+  createMockThesisFromMbsScore
+} from './data/mockTheses';
 
 const sampleNote: LocalThesisNote = {
   body: 'The business thesis is user-authored and manually reviewed.',
@@ -51,6 +55,23 @@ describe('ThesisMonitorScreen', () => {
     expect(html).toContain('Bull case');
     expect(html).toContain('Review triggers');
     expect(html).toContain('Review workflow');
+  });
+
+  it('renders session theses in the demo queue from props', () => {
+    const sessionThesis = createMockThesisFromMbsScore(cloneMockTheses(), {
+      companyName: 'MVP Session Co',
+      createdAt: '2026-05-24T12:00:00.000Z',
+      mbsScore: 74,
+      ticker: 'mvp'
+    });
+    const html = renderToStaticMarkup(
+      <ThesisMonitorScreen theses={[sessionThesis]} />
+    );
+
+    expect(html).toContain('MVP');
+    expect(html).toContain('MVP Session Co');
+    expect(html).toContain('Created from MBS Scorer.');
+    expect(html).toContain('Score 74');
   });
 
   it('renders validation errors for invalid populated input', () => {

@@ -53,6 +53,21 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('Create new thesis from score');
   });
 
+  it('renders session theses passed from the app shell', () => {
+    const sessionThesis = createMockThesisFromMbsScore(cloneMockTheses(), {
+      companyName: 'MVP Session Co',
+      createdAt: '2026-05-24T12:00:00.000Z',
+      mbsScore: 74,
+      ticker: 'mvp'
+    });
+    const html = renderToStaticMarkup(
+      <ManualMbsScorerScreen theses={[sessionThesis]} />
+    );
+
+    expect(html).toContain('MVP - MVP Session Co');
+    expect(html).toContain('74 / 100');
+  });
+
   it('renders deterministic thesis interpretation and score drivers', () => {
     const html = renderToStaticMarkup(
       <ManualMbsScorerScreen

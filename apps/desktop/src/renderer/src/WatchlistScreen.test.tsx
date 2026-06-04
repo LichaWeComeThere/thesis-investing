@@ -11,6 +11,10 @@ import {
   watchlistItemToForm,
   type LocalWatchlistItem
 } from './watchlistInput';
+import {
+  cloneMockTheses,
+  createMockThesisFromMbsScore
+} from './data/mockTheses';
 
 const sampleItem: LocalWatchlistItem = {
   companyName: 'Microsoft',
@@ -43,6 +47,22 @@ describe('WatchlistScreen', () => {
     expect(html).toContain('CrowdStrike');
     expect(html).toContain('PLTR');
     expect(html).toContain('Palantir');
+    expect(html).toContain('Researching');
+  });
+
+  it('renders session researching theses from props', () => {
+    const sessionThesis = createMockThesisFromMbsScore(cloneMockTheses(), {
+      companyName: 'MVP Session Co',
+      createdAt: '2026-05-24T12:00:00.000Z',
+      mbsScore: 74,
+      ticker: 'mvp'
+    });
+    const html = renderToStaticMarkup(
+      <WatchlistScreen theses={[sessionThesis]} />
+    );
+
+    expect(html).toContain('MVP');
+    expect(html).toContain('MVP Session Co');
     expect(html).toContain('Researching');
   });
 

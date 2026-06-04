@@ -37,6 +37,7 @@ type PortfolioRankerScreenProps = {
   initialStorageErrors?: string[];
   onOpenWorkspace?: (workspaceId: string) => void;
   storageClient?: PortfolioRankerStorageClient | null;
+  theses?: MockThesis[];
 };
 
 type ThesisStatusDisplay = {
@@ -44,28 +45,32 @@ type ThesisStatusDisplay = {
   variant: BadgeVariant;
 };
 
-const defaultRows = mockTheses.map(mockThesisToPortfolioRankerRow);
-
-const mockThesesById = new Map(
-  mockTheses.map((thesis) => [thesis.id, thesis])
-);
-
 export function PortfolioRankerScreen({
-  initialRows = defaultRows,
+  initialRows,
   initialPersistedRowIds = [],
   initialStorageErrors = [],
   onOpenWorkspace,
-  storageClient
+  storageClient,
+  theses = mockTheses
 }: PortfolioRankerScreenProps): JSX.Element {
+  const defaultRows = useMemo(
+    () => theses.map(mockThesisToPortfolioRankerRow),
+    [theses]
+  );
+  const startingRows = initialRows ?? defaultRows;
+  const mockThesesById = useMemo(
+    () => new Map(theses.map((thesis) => [thesis.id, thesis])),
+    [theses]
+  );
   const resolvedStorageClient =
     storageClient === undefined
       ? getDefaultPortfolioRankerStorageClient()
       : storageClient;
   const [rows, setRows] = useState<PortfolioRankerRowState[]>(() =>
-    initialRows.map((row) => ({ ...row }))
+    startingRows.map((row) => ({ ...row }))
   );
   const [nextRowNumber, setNextRowNumber] = useState(() =>
-    getNextPortfolioRankerRowNumber(initialRows, initialRows.length + 1)
+    getNextPortfolioRankerRowNumber(startingRows, startingRows.length + 1)
   );
   const [persistedRowIds, setPersistedRowIds] = useState<Set<string>>(
     () => new Set(initialPersistedRowIds)

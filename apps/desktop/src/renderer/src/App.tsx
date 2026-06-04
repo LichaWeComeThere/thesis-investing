@@ -18,6 +18,13 @@ import { RemindersScreen } from './RemindersScreen';
 import { ThemeBasketsScreen } from './ThemeBasketsScreen';
 import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 import { WatchlistScreen } from './WatchlistScreen';
+import {
+  cloneMockTheses,
+  createMockThesisFromMbsScore,
+  saveMockMbsScoreToThesis,
+  type CreateMockThesisInput,
+  type MockThesis
+} from './data/mockTheses';
 
 type NavigationView = {
   id: string;
@@ -257,12 +264,33 @@ type AppShellProps = {
 
 function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   const [selectedViewId, setSelectedViewId] = useState(navigationViews[0].id);
+  const [theses, setTheses] = useState<MockThesis[]>(() => cloneMockTheses());
   const selectedView = useMemo(
     () =>
       navigationViews.find((view) => view.id === selectedViewId) ??
       navigationViews[0],
     [selectedViewId]
   );
+
+  function updateThesisScore(
+    thesisId: string,
+    nextScore: number,
+    updatedAt: string
+  ): void {
+    setTheses((currentTheses) =>
+      saveMockMbsScoreToThesis(currentTheses, thesisId, nextScore, updatedAt)
+    );
+  }
+
+  function createThesisFromMbsScore(
+    input: CreateMockThesisInput
+  ): MockThesis {
+    const nextThesis = createMockThesisFromMbsScore(theses, input);
+
+    setTheses((currentTheses) => [...currentTheses, nextThesis]);
+
+    return nextThesis;
+  }
 
   return (
     <div className="app-shell" style={themeCssVariables}>
@@ -307,15 +335,22 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
 
       <main className="content-area">
         {selectedView.id === 'dashboard' ? (
-          <DashboardScreen onOpenWorkspace={setSelectedViewId} />
+          <DashboardScreen onOpenWorkspace={setSelectedViewId} theses={theses} />
         ) : selectedView.id === 'mbs-scorer' ? (
-          <ManualMbsScorerScreen />
+          <ManualMbsScorerScreen
+            onCreateThesis={createThesisFromMbsScore}
+            onUpdateThesisScore={updateThesisScore}
+            theses={theses}
+          />
         ) : selectedView.id === 'portfolio-ranker' ? (
-          <PortfolioRankerScreen onOpenWorkspace={setSelectedViewId} />
+          <PortfolioRankerScreen
+            onOpenWorkspace={setSelectedViewId}
+            theses={theses}
+          />
         ) : selectedView.id === 'thesis-monitor' ? (
-          <ThesisMonitorScreen />
+          <ThesisMonitorScreen theses={theses} />
         ) : selectedView.id === 'watchlist' ? (
-          <WatchlistScreen />
+          <WatchlistScreen theses={theses} />
         ) : selectedView.id === 'theme-baskets' ? (
           <ThemeBasketsScreen />
         ) : selectedView.id === 'reminders' ? (
