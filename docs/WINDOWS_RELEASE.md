@@ -38,10 +38,16 @@ Create an unsigned unpacked Windows build:
 pnpm package:windows
 ```
 
-The package command uses `electron-builder` with a conservative `dir` target. It creates an unpacked x64 Windows app folder under:
+The package command uses `electron-builder` with a conservative `dir` target. On the GitHub Windows x64 runner it creates an unpacked Windows app folder under:
 
 ```text
 apps/desktop/release/windows/win-unpacked
+```
+
+On ARM64 Windows development machines, the local output folder may be:
+
+```text
+apps/desktop/release/windows/win-arm64-unpacked
 ```
 
 This is intended as an MVP validation artifact, not a signed installer.
@@ -61,6 +67,7 @@ For manual download and verification steps, see the [release smoke test checklis
 - [ ] `pnpm typecheck` passes.
 - [ ] `pnpm test` passes.
 - [ ] `pnpm build` passes.
+- [ ] `pnpm verify:storage` passes.
 - [ ] `pnpm dev` opens Electron as Thesis Investing.
 - [ ] Dashboard opens from the sidebar.
 - [ ] MBS Scorer opens from the sidebar.
@@ -70,6 +77,12 @@ For manual download and verification steps, see the [release smoke test checklis
 - [ ] Theme Baskets opens from the sidebar.
 - [ ] Reminders opens from the sidebar.
 - [ ] Settings/About opens from the sidebar.
+- [ ] Watchlist persistence works.
+- [ ] Thesis Notes persistence works.
+- [ ] Reminders persistence works.
+- [ ] Portfolio Ranker input persistence works.
+- [ ] MBS Score Snapshot persistence works.
+- [ ] Dashboard reads persisted local summaries.
 - [ ] No live APIs, trading execution, brokerage integration, AI analyst behavior, sync, or personalized financial advice behavior is present.
 - [ ] Windows package artifact is produced or the package limitation is documented.
 - [ ] Release smoke test checklist is completed before sharing an artifact.
@@ -80,6 +93,6 @@ For manual download and verification steps, see the [release smoke test checklis
 - No installer target is configured yet; Stage 14 produces an unpacked app folder.
 - Windows executable metadata and icons are not finalized yet.
 - No auto-update flow exists yet.
-- Several MVP workflows still use local React state and are not fully persisted through SQLite.
-- Storage uses the existing local boundary, but broad app-wide persistence wiring is intentionally out of scope.
+- Phase 1 core workflows are persisted locally, but selected route, selected rows, search/filter/sort controls, and in-progress forms remain transient UI state.
+- Import/export, database backups, restore flows, and SQLite-backed local preferences are intentionally out of scope for Phase 1.
 - No live APIs, AI analyst features, brokerage connections, trading execution, Supabase/auth, or cloud sync are included.

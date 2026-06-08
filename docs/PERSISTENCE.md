@@ -4,7 +4,7 @@ Phase 1, Stage 4 added the first local-only persistence boundary for the Offline
 
 The goal is to give desktop workflows a repository layer for offline data while keeping database access isolated from React renderer code.
 
-Phase 1, Stage 18 wires the Watchlist screen as the first visible persisted workflow. Phase 1, Stage 19 adds Thesis Notes persistence. Phase 1, Stage 20 adds Reminders persistence. Phase 1, Stage 21 adds Portfolio Ranker input persistence. Phase 1, Stage 22 adds MBS Score Snapshot persistence. Phase 1, Stage 23 adds read-only Dashboard summary reads across those persisted workflows. Other visible MVP workflows remain React-state-only until their own stages.
+Phase 1, Stages 18 through 23 complete the visible persistence rollout for Watchlist items, Thesis Notes, Reminders, Portfolio Ranker inputs, MBS Score Snapshots, and read-only Dashboard summary reads. Theme Baskets remain static local data, onboarding completion remains in renderer `localStorage`, and a small set of UI-only fields remain transient by design.
 
 ## Package Boundary
 
@@ -18,15 +18,15 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 
 ## SQLite Choice
 
-This stage uses Node's built-in `node:sqlite` module for the first SQLite adapter.
+The current adapter uses Node's built-in `node:sqlite` module.
 
-This keeps the adapter dependency-free for the early Windows-first repo foundation and avoids adding native third-party SQLite bindings before packaging decisions are clearer. The module is still experimental in Node, so Electron runtime compatibility should be confirmed before wiring persistence into visible app workflows.
+This keeps the adapter dependency-free for the early Windows-first repo foundation and avoids adding native third-party SQLite bindings before packaging decisions are clearer. The module is still experimental in Node, so Electron runtime compatibility should be verified with `pnpm verify:storage` before release-facing changes.
 
 The current adapter can create an in-memory database for tests or open a filename-backed SQLite database. Future Electron desktop work can decide the final user-data path, backup approach, and runtime packaging details.
 
 ## Adapter Boundary
 
-`node:sqlite` is currently used only as the first local SQLite adapter. It is experimental, and support inside the target Electron runtime must be verified before storage is wired into user-visible workflows.
+`node:sqlite` is currently used only as the first local SQLite adapter. It is experimental, and support inside the target Electron runtime is verified through `pnpm verify:storage`.
 
 The repository interfaces are intentionally the stable boundary. Future work can swap this SQLite adapter for another implementation if packaging, runtime support, or performance requirements make that the better choice.
 
@@ -77,6 +77,8 @@ This persistence layer does not add:
 - Live market data or external dashboard summaries
 - Dashboard write/delete behavior
 - Named portfolio ranker snapshots or history
+- Import/export, database backups, or restore flows
+- SQLite-backed local preferences
 - Live stock APIs
 - Cloud sync, Supabase, or auth
 - AI analyst features

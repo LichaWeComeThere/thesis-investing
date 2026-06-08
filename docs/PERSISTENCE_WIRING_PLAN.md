@@ -1,6 +1,6 @@
 # Persistence Wiring Plan
 
-Phase 1, Stage 16 is a planning stage for safely wiring the existing local storage boundary into the visible Windows MVP screens. It intentionally does not wire SQLite into product screens yet.
+Phase 1, Stage 16 created the plan for safely wiring the existing local storage boundary into the visible Windows MVP screens. As of Phase 1 Stage 24, the Phase 1 visible persistence rollout is complete.
 
 Thesis Investing remains offline educational software. This plan does not add live stock APIs, AI analyst features, brokerage integrations, trading execution, Supabase/auth, cloud sync, or personalized financial advice.
 
@@ -40,7 +40,7 @@ Phase 1, Stage 17 adds that verification gate through `pnpm verify:storage`. The
 
 ## Current Screen State
 
-The visible MVP screens are wired incrementally:
+The visible MVP screens are wired as follows:
 
 | Screen | Current state owner | Existing storage fit |
 | --- | --- | --- |
@@ -66,11 +66,11 @@ Recommended runtime boundary:
 
 This avoids importing Node SQLite details into React renderer code, preserves sandbox/context isolation, and keeps adapter replacement possible.
 
-## Recommended Wiring Order
+## Implemented Wiring Order
 
-Do not wire all persistence in one pull request. Each future stage should ship one screen or data family, with tests and a small migration footprint.
+Phase 1 wired persistence one screen or data family at a time, with tests and a small migration footprint for each stage.
 
-Before visible persistence wiring starts, `pnpm verify:storage` should pass in the target Electron runtime.
+Before future persistence changes, `pnpm verify:storage` should continue to pass in the target Electron runtime.
 
 ### Stage 18: Persist Watchlist
 
@@ -217,20 +217,22 @@ Notes:
 - Dashboard reads summaries only and does not add write/delete behavior.
 - Do not show live prices, performance, account balances, allocation advice, or recommendations.
 
-## What Should Remain Local-Only For Now
+## Phase 2 Persistence Candidates
 
-Do not persist these yet:
+Move these remaining persistence improvements into Phase 2 or later:
 
 - selected sidebar route
 - selected item IDs
 - search text, filters, and sort toggles
 - static theme basket data
 - Market Pulse demo feed state
-- onboarding completion storage, which can remain in `localStorage` until a preferences stage
+- onboarding completion storage, which can remain in `localStorage` until a local preferences stage
 - free-text `thesisReference` unless it becomes a structured `thesisNoteId`
 - thesis checklist text unless a migration explicitly adds it
 - incomplete MBS scorer draft autosave
 - named ranker snapshots, history, or ranker-to-thesis-note linking
+- import/export for persisted records
+- local database backup, restore, and recovery UX
 
 ## Migration Risks
 
@@ -254,7 +256,7 @@ Mitigations:
 
 ## Testing Strategy
 
-Each wiring stage should include:
+Each future persistence change should include:
 
 - Storage repository tests for create/read/update/delete behavior.
 - Migration idempotency tests.
@@ -264,11 +266,11 @@ Each wiring stage should include:
 - A manual dev route check after `pnpm dev`.
 - A Windows package smoke test with `pnpm package:windows` before release-facing changes.
 
-The Stage 17 storage runtime verification proves the selected SQLite adapter can initialize inside Electron before visible screen wiring starts. If `node:sqlite` fails in Electron, swap the adapter behind the repository interfaces before wiring screens.
+The Stage 17 storage runtime verification proved the selected SQLite adapter can initialize inside Electron before visible screen wiring started. If `node:sqlite` fails in a future Electron or packaging target, swap the adapter behind the repository interfaces before adding more persistence.
 
 ## Rollback Strategy
 
-Each future persistence wiring stage should be reversible without data loss:
+Each future persistence change should be reversible without data loss:
 
 - Keep one screen per PR.
 - Prefer additive schema changes.
@@ -292,12 +294,13 @@ Future wiring should follow these rules:
 - Treat database open or migration failure as a recoverable app state.
 - Do not sync local data to any cloud service in Phase 1.
 
-## Out Of Scope For This Plan
+## Out Of Scope For Phase 1 Persistence
 
-This plan does not add:
+Phase 1 persistence does not add:
 
-- SQLite wiring beyond the Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, completed MBS Score Snapshot, and read-only Dashboard summary workflows.
 - Full app-wide persistence.
+- Import/export, backup, or restore workflows.
+- SQLite-backed local preferences.
 - Installer, updater, or code-signing changes.
 - Live stock APIs or price feeds.
 - Brokerage import or trading execution.

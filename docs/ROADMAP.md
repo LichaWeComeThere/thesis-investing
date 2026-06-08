@@ -8,7 +8,7 @@ Establish the repository, workspace structure, CI, documentation, and collaborat
 
 ## Phase 1: Offline Windows MVP
 
-Build a Windows-first desktop MVP that works offline with manual user input and local-only data.
+Build a Windows-first desktop MVP that works offline with manual user input and local-only data. Phase 1 is complete through Stage 24 closeout QA.
 
 - Stage 1: App navigation shell
 - Stage 2: Design system
@@ -24,6 +24,16 @@ Build a Windows-first desktop MVP that works offline with manual user input and 
 - Stage 12: Dashboard
 - Stage 13: Manual earnings reminders
 - Stage 14: Windows MVP release build
+- Stage 15: Release smoke-test documentation
+- Stage 16: Persistence wiring plan
+- Stage 17: Electron storage runtime verification
+- Stage 18: Watchlist persistence
+- Stage 19: Thesis Notes persistence
+- Stage 20: Reminders persistence
+- Stage 21: Portfolio Ranker input persistence
+- Stage 22: MBS Score Snapshot persistence
+- Stage 23: Dashboard persisted local summary reads
+- Stage 24: Final QA, polish, and Phase 1 closeout
 
 ## Phase 2: Live Data And Optional Sync
 
