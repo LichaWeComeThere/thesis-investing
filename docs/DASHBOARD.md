@@ -14,14 +14,30 @@ The dashboard summarizes the local MVP areas that are available today:
 - Theme Baskets
 - Reminders
 
-It also shows static readiness information, including manual workflows
-available, live data integrations, brokerage connections, and pending MVP areas.
+Phase 1, Stage 23 wires the Dashboard to read local persisted summaries from
+the existing SQLite-backed workflows.
+
+The Dashboard currently shows read-only local summary counts for:
+
+- saved Watchlist items
+- Thesis Notes by status
+- Reminders by open, completed, and overdue status
+- saved Portfolio Ranker inputs
+- saved MBS Score Snapshots, including the latest saved score when available
+
+The Dashboard keeps navigation shortcuts and static educational context where
+useful, but local summary cards now reflect persisted data rather than only demo
+copy.
 
 ## Data Source
 
-The dashboard uses static local copy only. It does not aggregate data across
-screens yet because most Phase 1 screens currently keep their entries in local
-React state rather than shared persisted storage.
+The Dashboard reads summaries through the narrow
+`window.thesisInvesting.dashboardSummaries` preload API. SQLite access stays in
+the Electron main process, and the React renderer does not import raw SQLite,
+`node:sqlite`, or storage repositories.
+
+Summary reads are local-only and deterministic. The Dashboard does not mutate
+records and does not add write/delete behavior for persisted workflows.
 
 ## Boundaries
 
@@ -35,8 +51,5 @@ or a trading surface.
 - AI summaries or analyst commentary
 - brokerage import or trading execution
 - Supabase/auth/cloud sync
-- full SQLite persistence wiring across all screens
+- Dashboard writes or record mutation
 - portfolio allocation advice or buy/sell/hold recommendations
-
-Future stages may connect the dashboard to local persisted data after the MVP
-workflows are ready for that shared storage layer.

@@ -49,7 +49,7 @@ The visible MVP screens are wired incrementally:
 | Reminders | Persisted through `window.thesisInvesting.reminders`, with transient form/selected state in React | Stage 20 implemented `reminders`; UI `completed` maps to persisted `completedAt` |
 | Portfolio Ranker | Persisted through `window.thesisInvesting.portfolioRanker`, with transient row order, filters, search, and sort UI state in React | Stage 21 implemented `portfolioRankerItems`; demo rows are display-only until persisted |
 | MBS Scorer | Completed score snapshots persisted through `window.thesisInvesting.mbsScoreSnapshots`; in-progress category values and notes remain in React state | Stage 22 implemented `mbsScoreSnapshots`; incomplete draft autosave remains out of scope |
-| Dashboard | Static/local overview and route links | Should read summaries only after individual screens are persisted |
+| Dashboard | Read-only local summaries through `window.thesisInvesting.dashboardSummaries`, plus route links and static educational context | Stage 23 implemented summary reads across persisted workflows; no Dashboard writes |
 | Theme Baskets | Static local data | Should remain static repo data for now |
 | Onboarding | `localStorage` preference | Keep as-is for now |
 
@@ -194,7 +194,7 @@ Notes:
 
 ### Stage 23: Dashboard Reads Persisted Local Summaries
 
-Next planned stage after Stage 22.
+Status: implemented.
 
 Data to read:
 
@@ -203,14 +203,18 @@ Data to read:
 - reminder count by due/completed status
 - portfolio ranker item count after Stage 21
 - MBS score snapshot count after Stage 22
+- latest MBS score snapshot metadata after Stage 22
+- generated summary timestamp
 
 Repository:
 
-- Read from the repositories wired in earlier stages. Add summary query helpers only if repeated renderer aggregation becomes awkward.
+- Reads from the repositories wired in earlier stages through a read-only Dashboard summary service. No new schema migration is required.
 
 Notes:
 
 - Dashboard should remain local and non-advisory.
+- The renderer calls a narrow preload API; SQLite stays in the Electron main process.
+- Dashboard reads summaries only and does not add write/delete behavior.
 - Do not show live prices, performance, account balances, allocation advice, or recommendations.
 
 ## What Should Remain Local-Only For Now
@@ -226,7 +230,6 @@ Do not persist these yet:
 - free-text `thesisReference` unless it becomes a structured `thesisNoteId`
 - thesis checklist text unless a migration explicitly adds it
 - incomplete MBS scorer draft autosave
-- Dashboard persisted summaries before Stage 23
 - named ranker snapshots, history, or ranker-to-thesis-note linking
 
 ## Migration Risks
@@ -293,7 +296,7 @@ Future wiring should follow these rules:
 
 This plan does not add:
 
-- SQLite wiring beyond the Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and completed MBS Score Snapshot workflows.
+- SQLite wiring beyond the Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, completed MBS Score Snapshot, and read-only Dashboard summary workflows.
 - Full app-wide persistence.
 - Installer, updater, or code-signing changes.
 - Live stock APIs or price feeds.
