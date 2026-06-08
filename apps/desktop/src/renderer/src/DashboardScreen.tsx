@@ -1,4 +1,6 @@
 import { Badge, Card, PageHeader } from '@thesis-investing/ui';
+import { useEffect, useMemo, useState } from 'react';
+import type { DashboardSummary } from '../../shared/dashboardSummariesStorage';
 import {
   formatScoreChange,
   getLargestScoreDropThesis,
@@ -10,15 +12,20 @@ import {
   mockTheses,
   type MockThesis
 } from './data/mockTheses';
+import {
+  getDefaultDashboardSummariesStorageClient,
+  type DashboardSummariesStorageClient
+} from './dashboardSummariesStorageClient';
 import { MarketPulseFeed } from './MarketPulseFeed';
 import './dashboard.css';
 
 type ThesisHealthTone = 'tracked' | 'strong' | 'review' | 'weakening';
 
 type ThesisHealthItem = {
+  detail: string;
   label: string;
-  value: number;
   tone: ThesisHealthTone;
+  value: number;
 };
 
 type ReviewPriorityItem = {
@@ -65,9 +72,108 @@ const quickActions: QuickAction[] = [
 ];
 
 type DashboardScreenProps = {
+  initialSummary?: DashboardSummary;
+  initialSummaryErrors?: string[];
   onOpenWorkspace?: (workspaceId: string) => void;
+  summaryStorageClient?: DashboardSummariesStorageClient | null;
   theses?: MockThesis[];
 };
+
+function createEmptyDashboardSummary(): DashboardSummary {
+  return {
+    activeThesisNotes: 0,
+    completedReminders: 0,
+    draftThesisNotes: 0,
+    generatedAt: '',
+    openReminders: 0,
+    overdueReminders: 0,
+    totalMbsScoreSnapshots: 0,
+    totalPortfolioRankerItems: 0,
+    totalReminders: 0,
+    totalThesisNotes: 0,
+    totalWatchlistItems: 0,
+    watchThesisNotes: 0
+  };
+}
+
+function isEmptyDashboardSummary(summary: DashboardSummary): boolean {
+  return (
+    summary.totalWatchlistItems === 0 &&
+    summary.totalThesisNotes === 0 &&
+    summary.totalReminders === 0 &&
+    summary.totalPortfolioRankerItems === 0 &&
+    summary.totalMbsScoreSnapshots === 0
+  );
+}
+
+function getDashboardSummaryItems(
+  summary: DashboardSummary
+): ThesisHealthItem[] {
+  return [
+    {
+      detail: 'Local watchlist records.',
+      label: 'Saved watchlist items',
+      tone: 'tracked',
+      value: summary.totalWatchlistItems
+    },
+    {
+      detail: `${summary.activeThesisNotes} active / ${summary.draftThesisNotes} draft / ${summary.watchThesisNotes} watch`,
+      label: 'Thesis notes',
+      tone: 'strong',
+      value: summary.totalThesisNotes
+    },
+    {
+      detail: `${summary.overdueReminders} overdue / ${summary.completedReminders} completed / ${summary.totalReminders} total`,
+      label: 'Open reminders',
+      tone: summary.overdueReminders > 0 ? 'review' : 'tracked',
+      value: summary.openReminders
+    },
+    {
+      detail: 'Saved manual ranker rows.',
+      label: 'Ranker inputs',
+      tone: 'tracked',
+      value: summary.totalPortfolioRankerItems
+    },
+    {
+      detail: getMbsScoreSnapshotDetail(summary),
+      label: 'Saved scores',
+      tone: summary.latestMbsScoreSnapshot ? 'strong' : 'tracked',
+      value: summary.totalMbsScoreSnapshots
+    }
+  ];
+}
+
+function getMbsScoreSnapshotDetail(summary: DashboardSummary): string {
+  const latestSnapshot = summary.latestMbsScoreSnapshot;
+
+  if (!latestSnapshot) {
+    return 'No completed snapshots yet.';
+  }
+
+  const label =
+    latestSnapshot.ticker ??
+    latestSnapshot.companyName ??
+    'Latest completed score';
+
+  return `Latest ${label}: ${latestSnapshot.score} / ${latestSnapshot.maxScore}`;
+}
+
+function formatGeneratedAt(generatedAt: string): string {
+  if (!generatedAt) {
+    return 'Waiting for local data.';
+  }
+
+  const date = new Date(generatedAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return generatedAt;
+  }
+
+  return date.toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+}
 
 function getDashboardTone(thesis: MockThesis): ThesisHealthTone {
   if (thesis.thesisStatus === 'Weakening' || thesis.thesisStatus === 'Broken') {
@@ -124,28 +230,31 @@ function getReviewPriorityItems(theses: readonly MockThesis[]): ReviewPriorityIt
 }
 
 export function DashboardScreen({
+  initialSummary,
+  initialSummaryErrors = [],
   onOpenWorkspace,
+  summaryStorageClient,
   theses = mockTheses
 }: DashboardScreenProps): JSX.Element {
-  const thesisHealthItems: ThesisHealthItem[] = [
-    { label: 'Theses tracked', value: theses.length, tone: 'tracked' },
-    {
-      label: 'Needs review',
-      value: theses.filter(isNeedsReviewThesis).length,
-      tone: 'review'
-    },
-    {
-      label: 'Weakening',
-      value: theses.filter((thesis) => thesis.thesisStatus === 'Weakening')
-        .length,
-      tone: 'weakening'
-    },
-    {
-      label: 'Strong conviction',
-      value: theses.filter((thesis) => thesis.conviction === 'High').length,
-      tone: 'strong'
-    }
-  ];
+  const resolvedSummaryStorageClient =
+    summaryStorageClient === undefined
+      ? getDefaultDashboardSummariesStorageClient()
+      : summaryStorageClient;
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary>(
+    () => initialSummary ?? createEmptyDashboardSummary()
+  );
+  const [summaryErrors, setSummaryErrors] = useState(initialSummaryErrors);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(
+    () =>
+      Boolean(resolvedSummaryStorageClient) &&
+      initialSummary === undefined &&
+      initialSummaryErrors.length === 0
+  );
+  const summaryItems = useMemo(
+    () => getDashboardSummaryItems(dashboardSummary),
+    [dashboardSummary]
+  );
+  const isSummaryEmpty = isEmptyDashboardSummary(dashboardSummary);
   const reviewPriorityItems = getReviewPriorityItems(theses);
   const recentActivityItems: RecentActivityItem[] = theses
     .flatMap((thesis) =>
@@ -158,11 +267,59 @@ export function DashboardScreen({
     )
     .slice(0, 3);
 
+  useEffect(() => {
+    if (!resolvedSummaryStorageClient) {
+      setIsSummaryLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    setIsSummaryLoading(true);
+    setSummaryErrors([]);
+
+    resolvedSummaryStorageClient
+      .get()
+      .then((result) => {
+        if (!isMounted) {
+          return;
+        }
+
+        if (result.ok) {
+          setDashboardSummary(result.value);
+          setSummaryErrors([]);
+          return;
+        }
+
+        setSummaryErrors(result.errors);
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setSummaryErrors([
+          error instanceof Error
+            ? error.message
+            : 'Unable to load Dashboard summary.'
+        ]);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsSummaryLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [resolvedSummaryStorageClient]);
+
   return (
     <div className="dashboard-screen">
       <PageHeader
         badge={<Badge variant="accent">Command Center</Badge>}
-        description="Review thesis health, priority ideas, market context, and the next research actions."
+        description="Review saved local workflow totals, thesis context, and the next research actions."
         eyebrow="Investor Command Center"
         title="Dashboard"
       />
@@ -171,13 +328,39 @@ export function DashboardScreen({
         <MarketPulseFeed />
 
         <div className="dashboard-main-stack">
-          <section className="dashboard-health-section" aria-label="Thesis health">
+          <section
+            className="dashboard-health-section"
+            aria-label="Local persisted summary"
+          >
             <div className="dashboard-section-heading">
-              <h2>Thesis Health Overview</h2>
-              <p>Today&apos;s local research queue.</p>
+              <h2>Local Saved Summary</h2>
+              <p>
+                {isSummaryLoading
+                  ? 'Loading saved local records.'
+                  : `Generated ${formatGeneratedAt(dashboardSummary.generatedAt)}`}
+              </p>
             </div>
+
+            {summaryErrors.length > 0 ? (
+              <div className="dashboard-summary-message" role="alert">
+                <strong>Unable to load local summary.</strong>
+                <ul>
+                  {summaryErrors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {!isSummaryLoading && summaryErrors.length === 0 && isSummaryEmpty ? (
+              <p className="dashboard-summary-empty">
+                No saved local records yet. Add records in the workspaces to
+                populate this summary.
+              </p>
+            ) : null}
+
             <div className="dashboard-health-grid">
-              {thesisHealthItems.map((item) => (
+              {summaryItems.map((item) => (
                 <Card
                   className={`dashboard-health-card dashboard-health-card--${item.tone}`}
                   key={item.label}
@@ -185,6 +368,7 @@ export function DashboardScreen({
                   <div className="dashboard-health-card-content">
                     <span>{item.label}</span>
                     <strong>{item.value}</strong>
+                    <small>{item.detail}</small>
                   </div>
                 </Card>
               ))}

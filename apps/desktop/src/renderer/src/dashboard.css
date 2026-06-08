@@ -278,6 +278,13 @@
   line-height: 0.95;
 }
 
+.dashboard-health-card-content small {
+  color: #7F8B99;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .dashboard-health-card--strong .dashboard-health-card-content strong {
   color: #35D07F;
 }
@@ -292,6 +299,35 @@
 
 .dashboard-health-card--weakening .dashboard-health-card-content strong {
   color: #EF5F57;
+}
+
+.dashboard-summary-empty,
+.dashboard-summary-message {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    #16202B;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: #9AA7B5;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+  padding: 14px 16px;
+}
+
+.dashboard-summary-message {
+  border-color: rgba(239, 95, 87, 0.28);
+}
+
+.dashboard-summary-message strong {
+  color: #F4F7FA;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.dashboard-summary-message ul {
+  margin: 0;
+  padding-left: 18px;
 }
 
 .dashboard-command-grid {

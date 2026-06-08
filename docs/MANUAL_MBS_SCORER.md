@@ -38,7 +38,7 @@ The score is educational and non-advisory. It is not financial advice, investmen
 ## Limitations
 
 - No incomplete draft autosave.
-- No Dashboard persisted summaries from MBS snapshots yet.
+- No detailed Dashboard MBS snapshot history beyond local summary counts and latest score metadata.
 - No snapshot delete/remove workflow yet.
 - No portfolio ranking or comparison workflow.
 - No live market data or external APIs.
