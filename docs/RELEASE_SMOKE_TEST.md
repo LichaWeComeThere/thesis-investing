@@ -42,10 +42,22 @@ Expected output folder:
 apps/desktop/release/windows/win-unpacked
 ```
 
+On ARM64 Windows development machines, the local output may be:
+
+```text
+apps/desktop/release/windows/win-arm64-unpacked
+```
+
 Run the unpacked executable:
 
 ```text
 apps/desktop/release/windows/win-unpacked/Thesis Investing.exe
+```
+
+or, on ARM64 local output:
+
+```text
+apps/desktop/release/windows/win-arm64-unpacked/Thesis Investing.exe
 ```
 
 The packaged app should open as Thesis Investing. This is an unsigned unpacked app folder, not an installer.
@@ -77,6 +89,12 @@ After opening either the development app or the unpacked artifact, complete onbo
 - [ ] Reminders opens from the sidebar.
 - [ ] Settings/About opens from the sidebar.
 - [ ] Non-advisory safety note is visible.
+- [ ] Watchlist item persistence works after reload or restart.
+- [ ] Thesis Notes persistence works after reload or restart.
+- [ ] Reminders persistence works after reload or restart.
+- [ ] Portfolio Ranker input persistence works after reload or restart.
+- [ ] MBS Score Snapshot persistence works after reload or restart.
+- [ ] Dashboard persisted summary reads reflect local saved records.
 - [ ] No screen presents buy, sell, or hold recommendations.
 - [ ] No screen offers brokerage connection or trading execution.
 
@@ -91,6 +109,7 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm package:windows
+pnpm verify:storage
 pnpm dev
 ```
 
@@ -101,7 +120,8 @@ pnpm dev
 - Windows may warn about an unknown publisher.
 - Code signing is not configured yet.
 - Auto-update is not configured yet.
-- Several workflows still use local React state and are not fully persisted yet.
+- Phase 1 core workflows are persisted locally, but selected route, selected rows, search/filter/sort controls, and in-progress forms remain transient UI state.
+- Import/export, database backups, restore flows, and SQLite-backed local preferences are not included yet.
 - No live stock APIs or price feeds are included.
 - No brokerage import or trading execution is included.
 - No AI analyst features are included.

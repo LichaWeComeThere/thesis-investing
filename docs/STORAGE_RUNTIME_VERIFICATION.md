@@ -1,6 +1,6 @@
 # Storage Runtime Verification
 
-Phase 1, Stage 17 verifies that the current local SQLite adapter can initialize inside the Electron runtime before any visible MVP screen is wired to persistence.
+Phase 1, Stage 17 verified that the current local SQLite adapter can initialize inside the Electron runtime before visible MVP screens were wired to persistence.
 
 Thesis Investing remains offline educational software. This verification does not add live stock APIs, AI analyst features, brokerage integrations, trading execution, Supabase/auth, cloud sync, or personalized financial advice.
 
@@ -44,18 +44,18 @@ It does not:
 - Read real user data.
 - Write real user data.
 - Persist anything after the process exits.
-- Wire storage into visible screens.
+- Open visible product screens.
 
 ## Current Limitations
 
 - The adapter still uses experimental `node:sqlite`.
-- The verifier confirms Electron runtime initialization for the unpackaged development build path.
-- `pnpm package:windows` should still be run before release-facing changes, but packaging alone does not mean visible screens are ready to use SQLite.
-- Full renderer-to-main storage IPC is still future work.
+- The verifier confirms Electron runtime initialization for the built Electron main process.
+- `pnpm package:windows` should still be run before release-facing changes.
+- Visible Phase 1 workflows use separate renderer-to-main IPC tests and manual smoke checks in addition to this runtime verifier.
 
-## Gate Before Stage 18+
+## Ongoing Release Gate
 
-Before wiring persistence into Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, MBS Scorer, or Dashboard, the following should pass:
+Before release-facing persistence changes, the following should pass:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -68,4 +68,4 @@ pnpm verify:storage
 pnpm dev
 ```
 
-If `pnpm verify:storage` fails because `node:sqlite` is not supported in the target Electron runtime, swap the SQLite adapter behind the existing repository interfaces before wiring any user-visible persistence.
+If `pnpm verify:storage` fails because `node:sqlite` is not supported in the target Electron runtime, swap the SQLite adapter behind the existing repository interfaces before adding more user-visible persistence.
