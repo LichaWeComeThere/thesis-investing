@@ -11,9 +11,23 @@ Phase 1, Stage 7 adds the first user-facing Manual Business Score workflow to th
 - The score output includes score, max score, percentage, rating, completed criteria, missing criteria, warnings, and validation errors.
 - Missing and invalid values are handled by `calculateMbsScore()` from `packages/core`.
 
-## Local State
+## Local Persistence
 
-The screen uses local React state only. Scores and notes are not persisted yet, and the screen does not read from or write to SQLite.
+Phase 1, Stage 22 adds local persistence for completed MBS score snapshots.
+
+The screen still keeps in-progress category values and notes in React state. Incomplete draft autosave is not included in this stage.
+
+When all scoring criteria are complete, the user can save a score snapshot. Saved snapshots are persisted locally through SQLite using the narrow `window.thesisInvesting.mbsScoreSnapshots` preload API. The React renderer does not import SQLite or `node:sqlite` directly.
+
+Persisted snapshots include:
+
+- manual category inputs
+- optional notes
+- optional selected thesis, ticker, and company context
+- score, max score, percentage, rating, and completed criteria
+- created date
+
+Scoring logic remains in `calculateMbsScore()` from `packages/core`. Storage records the completed output and does not add live fundamentals, AI scoring, or recommendation logic.
 
 ## Safety
 
@@ -23,8 +37,9 @@ The score is educational and non-advisory. It is not financial advice, investmen
 
 ## Limitations
 
-- No saved score history.
-- No persistence wiring.
+- No incomplete draft autosave.
+- No Dashboard persisted summaries from MBS snapshots yet.
+- No snapshot delete/remove workflow yet.
 - No portfolio ranking or comparison workflow.
 - No live market data or external APIs.
 - No AI analyst features.

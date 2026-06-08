@@ -10,7 +10,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 
 The storage boundary includes:
 
-- `repositories.ts`: stable repository interfaces for holdings, watchlist items, thesis notes, reminders, and portfolio ranker items.
+- `repositories.ts`: stable repository interfaces for holdings, watchlist items, thesis notes, reminders, portfolio ranker items, and MBS score snapshots.
 - `sqlite.ts`: the first SQLite adapter and `createSqliteStorage()` entrypoint.
 - `schema.ts`: migration runner and the initial schema.
 - `sqliteRepositories.ts`: SQLite repository implementations that normalize tickers and validate domain data before writes.
@@ -30,13 +30,17 @@ Migration v2 (Phase 1 Stage 21) adds:
 
 - `portfolio_ranker_items`
 
+Migration v3 (Phase 1 Stage 22) adds:
+
+- `mbs_score_snapshots`
+
 The adapter currently uses `node:sqlite`. This is an experimental first adapter only. Electron runtime support must be verified before this adapter is wired into user-visible workflows. The repository interfaces are intentionally designed so the adapter can be swapped later if needed.
 
 Phase 1, Stage 17 adds that verification gate through `pnpm verify:storage`. The verification uses an in-memory database, runs in the Electron main process, and performs create/read/update/delete through the repository boundary without touching real user data.
 
 ## Current Screen State
 
-The visible MVP screens are still mostly React-state-only:
+The visible MVP screens are wired incrementally:
 
 | Screen | Current state owner | Existing storage fit |
 | --- | --- | --- |
@@ -44,7 +48,7 @@ The visible MVP screens are still mostly React-state-only:
 | Thesis Monitor | Persisted through `window.thesisInvesting.thesisNotes`, with transient form/selected state in React | Stage 19 implemented `thesisNotes`; `checklist` remains UI-only text |
 | Reminders | Persisted through `window.thesisInvesting.reminders`, with transient form/selected state in React | Stage 20 implemented `reminders`; UI `completed` maps to persisted `completedAt` |
 | Portfolio Ranker | Persisted through `window.thesisInvesting.portfolioRanker`, with transient row order, filters, search, and sort UI state in React | Stage 21 implemented `portfolioRankerItems`; demo rows are display-only until persisted |
-| MBS Scorer | `useState` category values and notes | No repository yet; scoring output is deterministic and can be recomputed |
+| MBS Scorer | Completed score snapshots persisted through `window.thesisInvesting.mbsScoreSnapshots`; in-progress category values and notes remain in React state | Stage 22 implemented `mbsScoreSnapshots`; incomplete draft autosave remains out of scope |
 | Dashboard | Static/local overview and route links | Should read summaries only after individual screens are persisted |
 | Theme Baskets | Static local data | Should remain static repo data for now |
 | Onboarding | `localStorage` preference | Keep as-is for now |
@@ -164,26 +168,33 @@ Notes:
 - Row order, filters, search text, and sort toggles remain transient UI state.
 - Named ranker snapshots, history, and ranker-to-thesis-note linking are intentionally out of scope for this stage.
 
-### Stage 22: Persist MBS Scorer Drafts Or Snapshots
+### Stage 22: Persist MBS Scorer Score Snapshots
+
+Status: implemented.
 
 Data to persist:
 
 - manual category inputs
 - optional notes
-- optional ticker/company link if a future screen adds it
-- calculated output snapshot only if needed for audit/history
+- optional selected thesis, ticker, and company context
+- calculated score, max score, percentage, rating, completed criteria, and created date
 
 Repository:
 
-- Add a dedicated MBS draft or score snapshot repository and migration.
+- Uses a dedicated `mbsScoreSnapshots` repository and migration v3 `mbs_score_snapshots` table.
 
 Notes:
 
-- Do not duplicate scoring logic in storage. Persist inputs and recompute with `calculateMbsScore()` unless a future audit/history requirement needs immutable output snapshots.
-- Keep incomplete drafts separate from completed score snapshots.
+- Completed snapshots can be saved and listed through `window.thesisInvesting.mbsScoreSnapshots`.
+- Incomplete draft autosave is intentionally not included in this stage.
+- Snapshot delete/remove is not included in this stage.
+- The renderer calls a narrow preload API; SQLite stays in the Electron main process.
+- Scoring logic remains in `calculateMbsScore()` from `packages/core`; storage validates and stores completed snapshots.
 - Do not add live fundamentals or AI scoring.
 
 ### Stage 23: Dashboard Reads Persisted Local Summaries
+
+Next planned stage after Stage 22.
 
 Data to read:
 
@@ -191,7 +202,7 @@ Data to read:
 - thesis note count by status
 - reminder count by due/completed status
 - portfolio ranker item count after Stage 21
-- MBS draft/snapshot count after Stage 22
+- MBS score snapshot count after Stage 22
 
 Repository:
 
@@ -214,7 +225,8 @@ Do not persist these yet:
 - onboarding completion storage, which can remain in `localStorage` until a preferences stage
 - free-text `thesisReference` unless it becomes a structured `thesisNoteId`
 - thesis checklist text unless a migration explicitly adds it
-- MBS scorer drafts before a dedicated MBS persistence stage
+- incomplete MBS scorer draft autosave
+- Dashboard persisted summaries before Stage 23
 - named ranker snapshots, history, or ranker-to-thesis-note linking
 
 ## Migration Risks
@@ -281,7 +293,7 @@ Future wiring should follow these rules:
 
 This plan does not add:
 
-- SQLite wiring beyond the Watchlist, Thesis Monitor, Reminders, and Portfolio Ranker screens.
+- SQLite wiring beyond the Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and completed MBS Score Snapshot workflows.
 - Full app-wide persistence.
 - Installer, updater, or code-signing changes.
 - Live stock APIs or price feeds.

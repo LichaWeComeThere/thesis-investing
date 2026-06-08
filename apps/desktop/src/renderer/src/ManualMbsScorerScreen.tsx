@@ -651,7 +651,7 @@ export function ManualMbsScorerScreen({
             <label className="mbs-notes-field">
               <span className="mbs-field-label">Optional thesis notes</span>
               <span className="mbs-field-description">
-                Notes are saved only in this screen state for now and do not
+                Notes can be included in a saved score snapshot and do not
                 affect the score.
               </span>
               <textarea
