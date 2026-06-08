@@ -1,6 +1,7 @@
 import type {
   EntityId,
   Holding,
+  MbsScoreSnapshot,
   PortfolioRankerItem,
   Reminder,
   ThesisNote,
@@ -57,10 +58,17 @@ export interface PortfolioRankerItemRepository {
   delete(id: EntityId): boolean;
 }
 
+export interface MbsScoreSnapshotRepository {
+  create(snapshot: MbsScoreSnapshot): RepositoryResult<MbsScoreSnapshot>;
+  getById(id: EntityId): MbsScoreSnapshot | undefined;
+  list(): MbsScoreSnapshot[];
+}
+
 export interface LocalStorageRepositories {
   holdings: HoldingRepository;
   watchlistItems: WatchlistItemRepository;
   thesisNotes: ThesisNoteRepository;
   reminders: ReminderRepository;
   portfolioRankerItems: PortfolioRankerItemRepository;
+  mbsScoreSnapshots: MbsScoreSnapshotRepository;
 }

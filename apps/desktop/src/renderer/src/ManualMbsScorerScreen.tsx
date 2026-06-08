@@ -13,7 +13,7 @@ import {
   Card,
   PageHeader
 } from '@thesis-investing/ui';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   buildManualMbsInput,
   createInitialMbsCategoryValues,
@@ -26,17 +26,26 @@ import {
   type CreateMockThesisInput,
   type MockThesis
 } from './data/mockTheses';
+import {
+  buildMbsScoreSnapshot,
+  getDefaultMbsScoreSnapshotsStorageClient,
+  type MbsScoreSnapshotsStorageClient
+} from './mbsScoreSnapshotsStorageClient';
+import type { MbsScoreSnapshot } from '@thesis-investing/core';
 
 type ManualMbsScorerScreenProps = {
   initialCategoryValues?: ManualMbsCategoryValueState;
   initialInvestmentIdeas?: MockThesis[];
   initialNotes?: string;
+  initialSavedSnapshots?: MbsScoreSnapshot[];
+  initialSnapshotStorageErrors?: string[];
   onCreateThesis?: (input: CreateMockThesisInput) => MockThesis;
   onUpdateThesisScore?: (
     thesisId: string,
     nextScore: number,
     updatedAt: string
   ) => void;
+  storageClient?: MbsScoreSnapshotsStorageClient | null;
   theses?: MockThesis[];
 };
 
@@ -208,10 +217,17 @@ export function ManualMbsScorerScreen({
   initialCategoryValues,
   initialInvestmentIdeas,
   initialNotes = '',
+  initialSavedSnapshots = [],
+  initialSnapshotStorageErrors = [],
   onCreateThesis,
   onUpdateThesisScore,
+  storageClient,
   theses
 }: ManualMbsScorerScreenProps): JSX.Element {
+  const resolvedStorageClient =
+    storageClient === undefined
+      ? getDefaultMbsScoreSnapshotsStorageClient()
+      : storageClient;
   const [fallbackInvestmentIdeas, setFallbackInvestmentIdeas] = useState<MockThesis[]>(
     () =>
       initialInvestmentIdeas
@@ -232,6 +248,16 @@ export function ManualMbsScorerScreen({
     ticker: ''
   });
   const [thesisActionMessage, setThesisActionMessage] = useState('');
+  const [savedSnapshots, setSavedSnapshots] = useState<MbsScoreSnapshot[]>(
+    () => initialSavedSnapshots.map((snapshot) => ({ ...snapshot }))
+  );
+  const [snapshotStorageErrors, setSnapshotStorageErrors] = useState(
+    initialSnapshotStorageErrors
+  );
+  const [isSnapshotLoading, setIsSnapshotLoading] = useState(
+    Boolean(resolvedStorageClient)
+  );
+  const [isSnapshotWriting, setIsSnapshotWriting] = useState(false);
   const [categoryValues, setCategoryValues] =
     useState<ManualMbsCategoryValueState>(() =>
       createInitialMbsCategoryValues(initialCategoryValues)
@@ -270,6 +296,60 @@ export function ManualMbsScorerScreen({
     [investmentIdeas, selectedThesisId]
   );
   const isCreatingNewThesis = selectedThesisId === CREATE_NEW_THESIS_ID;
+  const canSaveSnapshot =
+    scoreOutput.rating !== 'incomplete' &&
+    scoreOutput.missingCriteria.length === 0 &&
+    scoreOutput.errors.length === 0;
+
+  useEffect(() => {
+    const client = resolvedStorageClient;
+
+    if (!client) {
+      setIsSnapshotLoading(false);
+      return;
+    }
+
+    const activeClient = client;
+    let isMounted = true;
+
+    async function loadSnapshots(): Promise<void> {
+      setIsSnapshotLoading(true);
+      setSnapshotStorageErrors([]);
+
+      try {
+        const result = await activeClient.list();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!result.ok) {
+          setSnapshotStorageErrors(result.errors);
+          return;
+        }
+
+        setSavedSnapshots(result.value.map((snapshot) => ({ ...snapshot })));
+      } catch (error) {
+        if (isMounted) {
+          setSnapshotStorageErrors([
+            error instanceof Error
+              ? error.message
+              : 'Unable to load saved MBS snapshots.'
+          ]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsSnapshotLoading(false);
+        }
+      }
+    }
+
+    void loadSnapshots();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [resolvedStorageClient]);
 
   function updateCategoryValue(
     category: ManualBusinessScoreCategory,
@@ -348,6 +428,54 @@ export function ManualMbsScorerScreen({
       ticker: ''
     });
     setThesisActionMessage('New thesis created.');
+  }
+
+  async function saveScoreSnapshot(): Promise<void> {
+    setSnapshotStorageErrors([]);
+
+    if (!resolvedStorageClient) {
+      setSnapshotStorageErrors(['MBS snapshot storage is unavailable.']);
+      return;
+    }
+
+    const createdAt = new Date().toISOString();
+    const snapshot = buildMbsScoreSnapshot(scoreOutput, createdAt, {
+      companyName: selectedThesis?.companyName ?? newThesisFields.companyName,
+      thesisId: selectedThesis?.id,
+      ticker: selectedThesis?.ticker ?? newThesisFields.ticker
+    });
+
+    if (!snapshot) {
+      setSnapshotStorageErrors([
+        'Complete every MBS criterion before saving a snapshot.'
+      ]);
+      return;
+    }
+
+    setIsSnapshotWriting(true);
+
+    try {
+      const result = await resolvedStorageClient.save(snapshot);
+
+      if (!result.ok) {
+        setSnapshotStorageErrors(result.errors);
+        return;
+      }
+
+      setSavedSnapshots((currentSnapshots) => [
+        result.value,
+        ...currentSnapshots.filter((item) => item.id !== result.value.id)
+      ]);
+      setThesisActionMessage('MBS snapshot saved locally.');
+    } catch (error) {
+      setSnapshotStorageErrors([
+        error instanceof Error
+          ? error.message
+          : 'Unable to save MBS snapshot.'
+      ]);
+    } finally {
+      setIsSnapshotWriting(false);
+    }
   }
 
   return (
@@ -523,7 +651,7 @@ export function ManualMbsScorerScreen({
             <label className="mbs-notes-field">
               <span className="mbs-field-label">Optional thesis notes</span>
               <span className="mbs-field-description">
-                Notes are saved only in this screen state for now and do not
+                Notes can be included in a saved score snapshot and do not
                 affect the score.
               </span>
               <textarea
@@ -540,9 +668,25 @@ export function ManualMbsScorerScreen({
           className="mbs-score-panel-card"
           emphasis
           footer={
-            <Button onClick={clearInputs} type="button" variant="secondary">
-              Clear inputs
-            </Button>
+            <div className="mbs-thesis-actions">
+              <Button
+                disabled={
+                  !canSaveSnapshot ||
+                  isSnapshotLoading ||
+                  isSnapshotWriting ||
+                  !resolvedStorageClient
+                }
+                onClick={() => {
+                  void saveScoreSnapshot();
+                }}
+                type="button"
+              >
+                {isSnapshotWriting ? 'Saving snapshot...' : 'Save snapshot'}
+              </Button>
+              <Button onClick={clearInputs} type="button" variant="secondary">
+                Clear inputs
+              </Button>
+            </div>
           }
           title="Live score output"
         >
@@ -665,6 +809,39 @@ export function ManualMbsScorerScreen({
                 <p>No warnings or validation errors.</p>
               )}
             </details>
+
+            <section className="mbs-output-section" aria-label="Saved snapshots">
+              <div className="mbs-driver-card-header">
+                <span className="mbs-score-label">Saved snapshots</span>
+                <Badge variant={savedSnapshots.length > 0 ? 'accent' : 'neutral'}>
+                  {savedSnapshots.length}
+                </Badge>
+              </div>
+              {isSnapshotLoading ? (
+                <p>Loading saved snapshots...</p>
+              ) : savedSnapshots.length > 0 ? (
+                <ul className="mbs-driver-list">
+                  {savedSnapshots.slice(0, 3).map((snapshot) => (
+                    <li key={snapshot.id}>
+                      <span>
+                        {snapshot.ticker ?? snapshot.companyName ?? 'Manual score'}
+                        {snapshot.createdAt ? ` - ${snapshot.createdAt}` : ''}
+                      </span>
+                      <strong>{snapshot.score}</strong>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No saved MBS snapshots yet.</p>
+              )}
+              {snapshotStorageErrors.length > 0 ? (
+                <ul className="mbs-message-list" role="alert">
+                  {snapshotStorageErrors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
           </div>
         </Card>
       </div>

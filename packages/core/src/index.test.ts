@@ -5,6 +5,7 @@ import {
   isValidTickerSymbol,
   normalizeTickerSymbol,
   validateHolding,
+  validateMbsScoreSnapshot,
   validatePortfolioRankerItem,
   validateReminder,
   validateThesisNote,
@@ -13,6 +14,7 @@ import {
 import type {
   Holding,
   ManualBusinessScoreInput,
+  MbsScoreSnapshot,
   PortfolioRankerItem,
   Reminder,
   ThesisNote,
@@ -249,6 +251,60 @@ describe('validatePortfolioRankerItem', () => {
         manualScore: Number.NaN
       }).valid
     ).toBe(false);
+  });
+});
+
+describe('validateMbsScoreSnapshot', () => {
+  const validSnapshot: MbsScoreSnapshot = {
+    id: createId('score', 'MSFT snapshot'),
+    ticker: 'MSFT',
+    companyName: 'Microsoft',
+    score: 80,
+    maxScore: 100,
+    percentage: 80,
+    rating: 'strong',
+    completedCriteria: 7,
+    input: createCompleteMbsInput(8),
+    notes: 'Durable score snapshot.',
+    createdAt: '2026-05-24'
+  };
+
+  it('accepts a completed MBS score snapshot', () => {
+    expect(validateMbsScoreSnapshot(validSnapshot)).toEqual({
+      valid: true,
+      errors: []
+    });
+  });
+
+  it('rejects incomplete or invalid snapshot values', () => {
+    const result = validateMbsScoreSnapshot({
+      ...validSnapshot,
+      ticker: 'bad ticker',
+      companyName: '   ',
+      score: 120,
+      percentage: 120,
+      rating: 'incomplete',
+      completedCriteria: 6,
+      input: {
+        ...createCompleteMbsInput(8),
+        risk: 11
+      },
+      notes: '   ',
+      createdAt: '2026-02-30'
+    } as unknown as MbsScoreSnapshot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toEqual([
+      'MBS snapshot ticker must be a valid ticker symbol.',
+      'MBS snapshot company name cannot be blank when provided.',
+      'MBS snapshot score cannot exceed max score.',
+      'MBS snapshot percentage must be a finite number from 0 to 100.',
+      'MBS snapshot rating must be complete.',
+      'MBS snapshot must include every scoring criterion.',
+      'MBS snapshot risk must be a finite number from 0 to 10.',
+      'MBS snapshot notes cannot be blank when provided.',
+      'MBS snapshot created date must use YYYY-MM-DD format.'
+    ]);
   });
 });
 

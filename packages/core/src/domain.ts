@@ -148,6 +148,21 @@ export type PortfolioRankerItem = {
   updatedAt?: IsoDateString;
 };
 
+export type MbsScoreSnapshot = {
+  id: EntityId;
+  thesisId?: EntityId;
+  ticker?: TickerSymbol;
+  companyName?: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  rating: Exclude<ManualBusinessScoreRating, 'incomplete'>;
+  completedCriteria: number;
+  input: ManualBusinessScoreInput;
+  notes?: string;
+  createdAt?: IsoDateString;
+};
+
 export type ThemeBasketExample = {
   ticker?: TickerSymbol;
   companyName: string;
