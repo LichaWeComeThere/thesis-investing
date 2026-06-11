@@ -1,5 +1,6 @@
 import type { WatchlistItem } from '@thesis-investing/core';
 import type { DashboardSummariesStorageApi } from './dashboardSummariesStorage';
+import type { LocalDataStorageApi } from './localDataStorage';
 import type { MbsScoreSnapshotsStorageApi } from './mbsScoreSnapshotsStorage';
 import type { PortfolioRankerStorageApi } from './portfolioRankerStorage';
 import type { RemindersStorageApi } from './remindersStorage';
@@ -29,6 +30,7 @@ export type WatchlistStorageApi = {
 
 export type ThesisInvestingApi = {
   dashboardSummaries: DashboardSummariesStorageApi;
+  localData: LocalDataStorageApi;
   mbsScoreSnapshots: MbsScoreSnapshotsStorageApi;
   platform: string;
   portfolioRanker: PortfolioRankerStorageApi;
