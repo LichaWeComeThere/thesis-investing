@@ -137,7 +137,11 @@ Phase 1 does not include:
 
 ## Recommended Phase 2 Starting Point
 
-Start Phase 2 with local data safety and release hardening before adding any
+Phase 2 starts with a read-only local data management/status view in
+Settings/About so users can see where local data lives and what is persisted
+before any import/export, backup, sync, or live data work begins.
+
+After that, continue local data safety and release hardening before adding any
 external data source:
 
 - database backup and restore guidance

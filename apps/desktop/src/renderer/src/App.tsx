@@ -5,7 +5,8 @@ import {
   PageHeader,
   themeCssVariables
 } from '@thesis-investing/ui';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { LocalDataInfo } from '../../shared/localDataStorage';
 import {
   hasCompletedOnboarding,
   markOnboardingCompleted,
@@ -25,6 +26,10 @@ import {
   type CreateMockThesisInput,
   type MockThesis
 } from './data/mockTheses';
+import {
+  getDefaultLocalDataStorageClient,
+  type LocalDataStorageClient
+} from './localDataStorageClient';
 
 type NavigationView = {
   id: string;
@@ -75,7 +80,7 @@ const navigationViews: NavigationView[] = [
     navLabel: 'Thesis Monitor',
     icon: 'thesis-monitor',
     description:
-      'Future workspace for writing thesis notes and tracking whether user-defined thesis points remain intact. This feature is not built yet.'
+      'Write, persist, and review local thesis notes while tracking user-defined thesis status.'
   },
   {
     id: 'watchlist',
@@ -398,9 +403,112 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   );
 }
 
-function SettingsAboutScreen({
+const persistedWorkflowFallback = [
+  'Watchlist',
+  'Thesis Notes',
+  'Reminders',
+  'Portfolio Ranker Inputs',
+  'MBS Score Snapshots',
+  'Dashboard summaries read persisted local data'
+];
+
+const localOnlyItemFallback = [
+  'Theme Baskets are static local content',
+  'Selected route, filters, search, and sort controls',
+  'In-progress form drafts unless explicitly saved',
+  'Onboarding completion currently uses localStorage'
+];
+
+type SettingsAboutScreenProps = AppShellProps & {
+  initialLocalDataErrors?: string[];
+  initialLocalDataInfo?: LocalDataInfo;
+  localDataClient?: LocalDataStorageClient | null;
+};
+
+export function SettingsAboutScreen({
+  initialLocalDataErrors,
+  initialLocalDataInfo,
+  localDataClient,
   onResetOnboarding
-}: AppShellProps): JSX.Element {
+}: SettingsAboutScreenProps): JSX.Element {
+  const resolvedLocalDataClient = useMemo(
+    () =>
+      localDataClient === undefined
+        ? getDefaultLocalDataStorageClient()
+        : localDataClient,
+    [localDataClient]
+  );
+  const [localDataInfo, setLocalDataInfo] = useState<LocalDataInfo | null>(
+    () => initialLocalDataInfo ?? null
+  );
+  const [localDataErrors, setLocalDataErrors] = useState<string[]>(
+    () => initialLocalDataErrors ?? []
+  );
+  const [isLocalDataLoading, setIsLocalDataLoading] = useState(
+    () =>
+      resolvedLocalDataClient !== null &&
+      initialLocalDataInfo === undefined &&
+      initialLocalDataErrors === undefined
+  );
+
+  useEffect(() => {
+    if (
+      initialLocalDataInfo !== undefined ||
+      initialLocalDataErrors !== undefined
+    ) {
+      setIsLocalDataLoading(false);
+      return;
+    }
+
+    if (!resolvedLocalDataClient) {
+      setIsLocalDataLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    setIsLocalDataLoading(true);
+    setLocalDataErrors([]);
+
+    void resolvedLocalDataClient
+      .get()
+      .then((result) => {
+        if (isCancelled) {
+          return;
+        }
+
+        if (result.ok) {
+          setLocalDataInfo(result.value);
+          setLocalDataErrors([]);
+        } else {
+          setLocalDataErrors(result.errors);
+        }
+      })
+      .catch((error: unknown) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setLocalDataErrors([
+          error instanceof Error
+            ? error.message
+            : 'Unable to load local data status.'
+        ]);
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsLocalDataLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [initialLocalDataErrors, initialLocalDataInfo, resolvedLocalDataClient]);
+
+  const persistedWorkflows =
+    localDataInfo?.persistedWorkflows ?? persistedWorkflowFallback;
+  const localOnlyItems = localDataInfo?.localOnlyItems ?? localOnlyItemFallback;
+
   return (
     <div className="settings-about-screen">
       <PageHeader
@@ -414,11 +522,93 @@ function SettingsAboutScreen({
         <Card title="Workspace mode">
           <div className="settings-mode-panel">
             <p>
-              Thesis Investing currently runs as a local-first workspace. Your
-              scoring, thesis notes, watchlist entries, theme browsing, and
-              review dates are designed around local inputs while live
-              integrations remain off.
+              Thesis Investing currently runs as a local-first, offline
+              workspace. Your saved Phase 1 records stay on this device while
+              live integrations remain off.
             </p>
+          </div>
+        </Card>
+
+        <Card title="Local data status">
+          <div className="local-data-status-panel">
+            <p>
+              Phase 2 starts with visibility into local data. This section is
+              read-only: it does not delete, reset, import, export, back up, or
+              restore data.
+            </p>
+
+            <div className="local-data-status-grid">
+              <section aria-label="Local storage location">
+                <h2>Storage location</h2>
+                {isLocalDataLoading ? (
+                  <p className="local-data-status-message">
+                    Loading local data status.
+                  </p>
+                ) : localDataErrors.length > 0 ? (
+                  <div className="local-data-status-error" role="alert">
+                    <strong>Unable to load local data status.</strong>
+                    <ul>
+                      {localDataErrors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : localDataInfo ? (
+                  <dl className="local-data-status-list">
+                    <div>
+                      <dt>App data folder</dt>
+                      <dd>
+                        <code>{localDataInfo.userDataPath}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>SQLite database</dt>
+                      <dd>
+                        <code>{localDataInfo.databasePath}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Database file</dt>
+                      <dd>
+                        {localDataInfo.databaseFileExists
+                          ? 'Created on this device'
+                          : 'Not created yet'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Storage adapter</dt>
+                      <dd>{localDataInfo.storageAdapter}</dd>
+                    </div>
+                    <div>
+                      <dt>Status generated</dt>
+                      <dd>{formatLocalDataTimestamp(localDataInfo.generatedAt)}</dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="local-data-status-message">
+                    Local data path is available only inside the desktop app.
+                  </p>
+                )}
+              </section>
+
+              <section aria-label="Persisted local workflows">
+                <h2>Persisted locally</h2>
+                <ul>
+                  {persistedWorkflows.map((workflow) => (
+                    <li key={workflow}>{workflow}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section aria-label="Transient or static local items">
+                <h2>Still transient or static</h2>
+                <ul>
+                  {localOnlyItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+            </div>
           </div>
         </Card>
 
@@ -447,4 +637,17 @@ function SettingsAboutScreen({
       </div>
     </div>
   );
+}
+
+function formatLocalDataTimestamp(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(date);
 }

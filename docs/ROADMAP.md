@@ -35,9 +35,14 @@ Build a Windows-first desktop MVP that works offline with manual user input and 
 - Stage 23: Dashboard persisted local summary reads
 - Stage 24: Final QA, polish, and Phase 1 closeout
 
-## Phase 2: Live Data And Optional Sync
+## Phase 2: Local Data Management, Live Data, And Optional Sync
 
-Add live market data and optional sync only after the offline MVP is stable. Live data should be isolated behind provider interfaces, and sync should remain optional.
+Start with local data management visibility and release hardening before adding live market data or optional sync. Live data should be isolated behind provider interfaces, and sync should remain optional.
+
+- Stage 1: Local Data Management View
+- Future: local import/export and backup/restore planning
+- Future: optional live market data behind provider interfaces
+- Future: optional sync, auth, or cloud features only after explicit staging
 
 ## Phase 3: Research/Intelligence Layer
 

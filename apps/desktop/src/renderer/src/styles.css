@@ -3442,7 +3442,8 @@ select:focus-visible {
 }
 
 .settings-mode-panel,
-.settings-disclaimer {
+.settings-disclaimer,
+.local-data-status-panel {
   color: var(--ti-color-text-muted);
   display: grid;
   font-size: var(--ti-font-size-md);
@@ -3462,6 +3463,84 @@ select:focus-visible {
   border-radius: var(--ti-radius-lg);
   box-shadow: var(--ti-shadow-surface-inset);
   padding: 16px 18px;
+}
+
+.local-data-status-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.local-data-status-grid section {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border-muted);
+  border-radius: var(--ti-radius-md);
+  padding: 16px;
+}
+
+.local-data-status-grid h2 {
+  color: var(--ti-color-text);
+  font-size: var(--ti-font-size-sm);
+  letter-spacing: 0;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.local-data-status-grid ul,
+.local-data-status-error ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.local-data-status-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.local-data-status-list div {
+  display: grid;
+  gap: 4px;
+}
+
+.local-data-status-list dt {
+  color: var(--ti-color-text);
+  font-size: var(--ti-font-size-sm);
+  font-weight: 700;
+}
+
+.local-data-status-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.local-data-status-list code {
+  color: var(--ti-color-text);
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono',
+    monospace;
+  font-size: var(--ti-font-size-sm);
+}
+
+.local-data-status-message,
+.local-data-status-error {
+  background: rgba(76, 141, 255, 0.08);
+  border: 1px solid rgba(76, 141, 255, 0.18);
+  border-radius: var(--ti-radius-md);
+  margin: 0;
+  padding: 12px;
+}
+
+.local-data-status-error {
+  background: rgba(255, 184, 77, 0.1);
+  border-color: rgba(255, 184, 77, 0.26);
+  color: var(--ti-color-text);
+}
+
+.local-data-status-error strong {
+  display: block;
+  margin-bottom: 8px;
 }
 
 .planned-workspace-empty {
@@ -3566,6 +3645,10 @@ select:focus-visible {
 
   .portfolio-ranker-row-actions {
     flex-direction: column;
+  }
+
+  .local-data-status-grid {
+    grid-template-columns: 1fr;
   }
 
   .portfolio-ranker-remove-button,

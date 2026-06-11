@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { dashboardSummariesStorageChannels } from '../shared/dashboardSummariesStorage';
+import { localDataStorageChannels } from '../shared/localDataStorage';
 import { mbsScoreSnapshotsStorageChannels } from '../shared/mbsScoreSnapshotsStorage';
 import { portfolioRankerStorageChannels } from '../shared/portfolioRankerStorage';
 import { remindersStorageChannels } from '../shared/remindersStorage';
@@ -12,6 +13,9 @@ import {
 const thesisInvestingApi: ThesisInvestingApi = {
   dashboardSummaries: {
     get: () => ipcRenderer.invoke(dashboardSummariesStorageChannels.get)
+  },
+  localData: {
+    get: () => ipcRenderer.invoke(localDataStorageChannels.get)
   },
   mbsScoreSnapshots: {
     list: () => ipcRenderer.invoke(mbsScoreSnapshotsStorageChannels.list),
