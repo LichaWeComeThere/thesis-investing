@@ -71,7 +71,7 @@ describe('DashboardScreen', () => {
     expect(html).toContain('Open reminders');
     expect(html).toContain('Ranker inputs');
     expect(html).toContain('Saved scores');
-    expect(html).toContain('No saved local records yet.');
+    expect(html).toContain('No saved theses yet.');
     expect(html).toContain('No completed snapshots yet.');
   });
 
@@ -165,7 +165,7 @@ describe('DashboardScreen', () => {
     );
 
     expect(html).toContain('Latest');
-    expect(html).toContain('Curated');
+    expect(html).toContain('Market Pulse');
     expect(html).toContain(
       'Google, Blackstone to create new AI cloud company, WSJ reports'
     );

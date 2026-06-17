@@ -354,8 +354,8 @@ export function DashboardScreen({
 
             {!isSummaryLoading && summaryErrors.length === 0 && isSummaryEmpty ? (
               <p className="dashboard-summary-empty">
-                No saved local records yet. Add records in the workspaces to
-                populate this summary.
+                No saved theses yet. Start by scoring a business or creating a
+                thesis note.
               </p>
             ) : null}
 

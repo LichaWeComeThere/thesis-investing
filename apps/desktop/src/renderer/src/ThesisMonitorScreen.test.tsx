@@ -40,10 +40,12 @@ describe('ThesisMonitorScreen', () => {
     expect(html).toContain('Review customer retention');
   });
 
-  it('renders demo thesis queue cards when no local notes exist', () => {
+  it('renders sample thesis queue cards when no local notes exist', () => {
     const html = renderToStaticMarkup(<ThesisMonitorScreen />);
 
-    expect(html).toContain('Review, rank, and update stock theses');
+    expect(html).toContain('Review and update saved thesis notes');
+    expect(html).toContain('No local thesis notes yet');
+    expect(html).toContain('Sample thesis preview');
     expect(html).toContain('+ New Thesis');
     expect(html).toContain('NVDA');
     expect(html).toContain('NVIDIA');
@@ -57,7 +59,7 @@ describe('ThesisMonitorScreen', () => {
     expect(html).toContain('Review workflow');
   });
 
-  it('renders session theses in the demo queue from props', () => {
+  it('renders session theses in the sample queue from props', () => {
     const sessionThesis = createMockThesisFromMbsScore(cloneMockTheses(), {
       companyName: 'MVP Session Co',
       createdAt: '2026-05-24T12:00:00.000Z',

@@ -45,16 +45,16 @@ describe('SettingsAboutScreen', () => {
     );
 
     expect(html).toContain('Local data status');
-    expect(html).toContain('Phase 2 starts with visibility into local data.');
+    expect(html).toContain('This read-only view shows where local data lives');
     expect(html).toContain('Watchlist');
     expect(html).toContain('Thesis Notes');
     expect(html).toContain('Reminders');
     expect(html).toContain('Portfolio Ranker Inputs');
     expect(html).toContain('MBS Score Snapshots');
     expect(html).toContain('Dashboard summaries read persisted local data');
-    expect(html).toContain('Theme Baskets are static local content');
+    expect(html).toContain('Theme Library uses included reference content');
     expect(html).toContain('In-progress form drafts unless explicitly saved');
-    expect(html).toContain('Onboarding completion currently uses localStorage');
+    expect(html).toContain('Onboarding preference is saved locally');
     expect(html).toContain('thesis-investing.sqlite');
     expect(html).toContain('Created on this device');
     expect(html).toContain('node:sqlite');
@@ -71,6 +71,6 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('Unable to load local data status.');
     expect(html).toContain('Unable to read app data path.');
     expect(html).toContain('Persisted locally');
-    expect(html).toContain('Still transient or static');
+    expect(html).toContain('Local-only items');
   });
 });

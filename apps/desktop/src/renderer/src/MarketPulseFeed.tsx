@@ -80,7 +80,7 @@ export function MarketPulseFeed(): JSX.Element {
           <p>Market Pulse</p>
           <h2>Latest</h2>
         </div>
-        <Badge variant="neutral">Curated</Badge>
+        <Badge variant="neutral">Market Pulse</Badge>
       </div>
 
       <div className="market-pulse-list">

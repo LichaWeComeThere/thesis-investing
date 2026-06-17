@@ -585,7 +585,12 @@ export function RemindersScreen({
               </table>
             </div>
           ) : (
-            <p>No local reminders yet.</p>
+            <div className="reminders-empty-state">
+              <h3>No review reminders yet</h3>
+              <p>
+                Add a review date to keep thesis checks on schedule.
+              </p>
+            </div>
           )}
         </Card>
 
@@ -621,7 +626,13 @@ export function RemindersScreen({
               </div>
             </article>
           ) : (
-            <p>Select or save a local reminder to review details.</p>
+            <div className="reminders-empty-state">
+              <h3>No reminder selected</h3>
+              <p>
+                Save a reminder or choose one from the list to review the
+                details here.
+              </p>
+            </div>
           )}
         </Card>
       </div>

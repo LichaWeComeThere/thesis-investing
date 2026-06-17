@@ -259,3 +259,129 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Compact watchlist alignment pass. */
+.watchlist-screen {
+  gap: 18px;
+}
+
+.watchlist-workspace-grid {
+  gap: 16px;
+}
+
+.watchlist-form-grid {
+  gap: 12px;
+}
+
+.watchlist-field {
+  gap: 6px;
+}
+
+.watchlist-note-field {
+  margin-top: 12px;
+}
+
+.watchlist-note-field textarea {
+  min-height: 72px;
+}
+
+.watchlist-actions {
+  margin-top: 16px;
+}
+
+.watchlist-layout {
+  align-items: stretch;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+}
+
+.watchlist-layout > .ti-card {
+  padding: 22px !important;
+}
+
+.watchlist-layout > .ti-card > div {
+  margin-top: 14px !important;
+}
+
+.watchlist-table th,
+.watchlist-table td {
+  padding: 9px 8px;
+}
+
+.watchlist-details {
+  gap: 14px;
+}
+
+.watchlist-meta-grid {
+  gap: 10px;
+}
+
+.watchlist-meta-grid div {
+  padding: 10px;
+}
+
+.watchlist-layout .ti-card p {
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.watchlist-empty-state {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  color: var(--ti-color-text-muted);
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.watchlist-empty-state h3 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.watchlist-empty-state p {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 0 !important;
+}
+
+@media (max-width: 780px) {
+  .watchlist-screen,
+  .watchlist-workspace-grid,
+  .watchlist-layout,
+  .watchlist-layout > .ti-card,
+  .watchlist-table-wrap,
+  .watchlist-details,
+  .watchlist-empty-state {
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .watchlist-workspace-grid,
+  .watchlist-layout {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: hidden;
+  }
+
+  .watchlist-table-wrap {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .watchlist-table {
+    min-width: 560px;
+  }
+
+  .watchlist-row-actions {
+    min-width: 0;
+  }
+}

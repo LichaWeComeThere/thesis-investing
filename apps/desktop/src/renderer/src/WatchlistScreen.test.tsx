@@ -43,6 +43,8 @@ describe('WatchlistScreen', () => {
     const html = renderToStaticMarkup(<WatchlistScreen />);
 
     expect(html).toContain('Watchlist thesis queue');
+    expect(html).toContain('No watchlist items yet');
+    expect(html).toContain('Add a ticker to start tracking a thesis candidate.');
     expect(html).toContain('CRWD');
     expect(html).toContain('CrowdStrike');
     expect(html).toContain('PLTR');
