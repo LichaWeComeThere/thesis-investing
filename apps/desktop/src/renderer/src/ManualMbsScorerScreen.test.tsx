@@ -37,6 +37,37 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('Save snapshot');
   });
 
+  it('renders beginner guided scoring by default with plain-English options', () => {
+    const html = renderToStaticMarkup(
+      <ManualMbsScorerScreen
+        initialCategoryValues={{
+          businessQuality: '7',
+          risk: '10'
+        }}
+      />
+    );
+
+    expect(html).toContain('Auto-Fill');
+    expect(html).toContain('Beginner Guided');
+    expect(html).toContain('Advanced Manual');
+    expect(html).toContain(
+      'Answer simple questions and the app converts them into 0-10 scores.'
+    );
+    expect(html).toContain('How durable is this business?');
+    expect(html).toContain('Good business with stable demand');
+    expect(html).toContain(
+      "How strong is the company&#x27;s competitive advantage?"
+    );
+    expect(html).toContain('Strong brand/network/platform advantage');
+    expect(html).toContain('How risky is the thesis?');
+    expect(html).toContain(
+      'Higher score means lower risk / better risk profile.'
+    );
+    expect(html).toContain('Low risk / well understood');
+    expect(html).toContain('Score 7 / 10');
+    expect(html).toContain('Score 10 / 10');
+  });
+
   it('renders selected thesis controls from shared mock theses', () => {
     const html = renderToStaticMarkup(<ManualMbsScorerScreen />);
 

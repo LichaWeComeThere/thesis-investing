@@ -3831,6 +3831,79 @@ select:focus-visible {
   margin-bottom: 8px;
 }
 
+.mbs-scoring-mode-panel {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 8px;
+}
+
+.mbs-scoring-mode-label {
+  color: var(--ti-color-text-subtle);
+  flex: 0 0 100%;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.mbs-scoring-mode-toggle {
+  background: rgba(5, 8, 12, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 13px;
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+}
+
+.mbs-scoring-mode-toggle .ti-button {
+  min-height: 30px;
+  padding: 6px 9px !important;
+}
+
+.mbs-scoring-mode-panel p {
+  color: var(--ti-color-text-muted);
+  flex: 1 1 260px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.mbs-autofill-panel {
+  align-items: center;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+    var(--ti-color-surface-muted);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 14px;
+  box-shadow: var(--ti-shadow-surface-inset);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.mbs-autofill-panel div {
+  display: grid;
+  gap: 5px;
+}
+
+.mbs-autofill-panel p {
+  color: var(--ti-color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mbs-autofill-panel .ti-button {
+  flex: 0 0 auto;
+}
+
 .mbs-input-grid {
   gap: 8px;
   grid-template-columns: repeat(2, minmax(220px, 1fr));
@@ -3857,6 +3930,96 @@ select:focus-visible {
 }
 
 .mbs-score-range {
+  padding: 4px 6px;
+}
+
+.mbs-input-grid--guided {
+  grid-template-columns: repeat(2, minmax(250px, 1fr));
+}
+
+.mbs-guided-card {
+  display: grid;
+}
+
+.mbs-guided-question {
+  display: grid;
+  gap: 3px;
+}
+
+.mbs-guided-question span {
+  color: var(--ti-color-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.mbs-guided-question small {
+  color: var(--ti-color-accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.mbs-guided-options {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mbs-guided-option {
+  align-items: center;
+  background: rgba(10, 17, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 11px;
+  color: var(--ti-color-text-muted);
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 6px 8px;
+  text-align: left;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.mbs-guided-option:hover {
+  background: rgba(72, 224, 204, 0.08);
+  border-color: rgba(72, 224, 204, 0.24);
+  color: var(--ti-color-text);
+  transform: translateY(-1px);
+}
+
+.mbs-guided-option[aria-pressed="true"] {
+  background:
+    linear-gradient(180deg, rgba(72, 224, 204, 0.18), rgba(72, 224, 204, 0.08)),
+    rgba(10, 17, 24, 0.84);
+  border-color: rgba(72, 224, 204, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(72, 224, 204, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--ti-color-text);
+}
+
+.mbs-guided-option span {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.mbs-guided-option strong {
+  background: rgba(72, 224, 204, 0.12);
+  border: 1px solid rgba(72, 224, 204, 0.22);
+  border-radius: var(--ti-radius-pill);
+  color: var(--ti-color-accent);
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 1;
   padding: 4px 6px;
 }
 
@@ -4278,6 +4441,7 @@ select:focus-visible {
   }
 
   .mbs-input-grid,
+  .mbs-input-grid--guided,
   .mbs-selected-thesis-card,
   .mbs-new-thesis-grid,
   .mbs-score-summary,
@@ -4287,6 +4451,15 @@ select:focus-visible {
   .portfolio-ranker-entry-grid,
   .local-data-status-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mbs-guided-options {
+    grid-template-columns: 1fr;
+  }
+
+  .mbs-autofill-panel {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .portfolio-ranker-show-more {
