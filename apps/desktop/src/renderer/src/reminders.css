@@ -116,7 +116,10 @@
 }
 
 .reminders-table-wrap {
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
 }
 
 .reminders-table {
@@ -224,5 +227,171 @@
   .reminders-layout,
   .reminders-meta-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Compact two-column calendar layout. */
+.reminders-screen {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  max-width: none;
+  width: min(100%, 1360px);
+}
+
+.reminders-screen > header {
+  grid-column: 1 / -1;
+}
+
+.reminders-screen > .ti-card {
+  grid-column: 1;
+}
+
+.reminders-screen > .ti-card,
+.reminders-layout > .ti-card {
+  padding: 22px !important;
+}
+
+.reminders-screen > .ti-card > div,
+.reminders-layout > .ti-card > div {
+  margin-top: 14px !important;
+}
+
+.reminders-layout {
+  display: contents;
+}
+
+.reminders-layout > .ti-card:nth-child(1) {
+  grid-column: 1;
+}
+
+.reminders-layout > .ti-card:nth-child(2) {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 360px;
+}
+
+.reminders-layout > .ti-card:nth-child(3) {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.reminders-form-grid {
+  gap: 12px;
+}
+
+.reminders-field {
+  gap: 6px;
+}
+
+.reminders-field input,
+.reminders-field textarea,
+.reminders-field select {
+  border-radius: 13px;
+  padding: 8px 10px;
+}
+
+.reminders-note-field,
+.reminders-completed-field {
+  margin-top: 12px;
+}
+
+.reminders-note-field textarea {
+  min-height: 72px;
+}
+
+.reminders-actions {
+  margin-top: 16px;
+}
+
+.reminders-table th,
+.reminders-table td {
+  padding: 9px 8px;
+}
+
+.reminders-details {
+  gap: 14px;
+}
+
+.reminders-meta-grid {
+  gap: 10px;
+}
+
+.reminders-meta-grid div {
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.reminders-empty-state {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  color: var(--ti-color-text-muted);
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.reminders-empty-state h3 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.reminders-empty-state p {
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+@media (max-width: 1080px) {
+  .reminders-screen {
+    display: flex;
+    max-width: 1120px;
+  }
+
+  .reminders-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .reminders-layout > .ti-card:nth-child(1),
+  .reminders-layout > .ti-card:nth-child(2),
+  .reminders-layout > .ti-card:nth-child(3) {
+    grid-column: auto;
+    grid-row: auto;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 780px) {
+  .reminders-screen,
+  .reminders-screen > .ti-card,
+  .reminders-layout,
+  .reminders-layout > .ti-card,
+  .reminders-table-wrap,
+  .reminders-details,
+  .reminders-empty-state {
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .reminders-layout {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: hidden;
+  }
+
+  .reminders-form-grid,
+  .reminders-meta-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reminders-table {
+    min-width: 560px;
   }
 }

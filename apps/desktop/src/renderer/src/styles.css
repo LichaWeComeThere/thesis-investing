@@ -3130,6 +3130,31 @@ select:focus-visible {
   width: 100%;
 }
 
+.thesis-empty-state {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.018)),
+    rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  color: var(--ti-color-text-muted);
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.thesis-empty-state h3 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.thesis-empty-state p {
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+}
+
 .thesis-queue-card:hover {
   background:
     linear-gradient(145deg, rgba(72, 224, 204, 0.07), rgba(255, 255, 255, 0.025)),
@@ -3514,13 +3539,18 @@ select:focus-visible {
 .local-data-status-list dd {
   margin: 0;
   overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .local-data-status-list code {
   color: var(--ti-color-text);
+  display: block;
   font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono',
     monospace;
   font-size: var(--ti-font-size-sm);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .local-data-status-message,
@@ -3677,5 +3707,803 @@ select:focus-visible {
   .thesis-monitor-layout,
   .watchlist-layout {
     grid-template-columns: 1fr;
+  }
+
+  .settings-about-screen,
+  .settings-about-grid,
+  .settings-about-grid > .ti-card,
+  .local-data-status-panel,
+  .local-data-status-grid,
+  .local-data-status-grid section,
+  .local-data-status-list {
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .local-data-status-grid {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: hidden;
+  }
+}
+
+/* Compact workspace pass: frontend layout only. */
+.mbs-screen,
+.portfolio-ranker-screen,
+.thesis-monitor-screen,
+.watchlist-screen,
+.theme-baskets-screen,
+.settings-about-screen {
+  gap: 16px;
+}
+
+.mbs-workspace-grid {
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 380px);
+}
+
+.mbs-workspace-grid > .mbs-score-panel-card,
+.portfolio-ranker-layout > .ti-card:last-child,
+.thesis-workspace-grid > .ti-card:last-child,
+.watchlist-workspace-grid > .ti-card:last-child {
+  top: 16px;
+}
+
+.mbs-form-card,
+.mbs-score-panel-card,
+.portfolio-ranker-workspace-card,
+.portfolio-ranker-output-card,
+.thesis-form-card,
+.thesis-health-card,
+.watchlist-form-card,
+.watchlist-summary-card,
+.theme-baskets-library-card,
+.settings-about-grid > .ti-card {
+  padding: 22px !important;
+}
+
+.mbs-form-card > div,
+.mbs-score-panel-card > div,
+.portfolio-ranker-workspace-card > div,
+.portfolio-ranker-output-card > div,
+.thesis-form-card > div,
+.thesis-health-card > div,
+.watchlist-form-card > div,
+.watchlist-summary-card > div,
+.theme-baskets-library-card > div,
+.settings-about-grid > .ti-card > div {
+  margin-top: 14px !important;
+}
+
+.mbs-thesis-link-panel {
+  border-radius: 18px;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.mbs-thesis-link-header h2 {
+  font-size: 16px;
+}
+
+.mbs-thesis-select-field {
+  gap: 5px;
+}
+
+.mbs-thesis-select-field input,
+.mbs-thesis-select-field select {
+  min-height: 34px;
+  padding: 7px 9px;
+}
+
+.mbs-selected-thesis-card {
+  gap: 6px;
+}
+
+.mbs-selected-thesis-card div {
+  border-radius: 14px;
+  padding: 7px 8px;
+}
+
+.mbs-selected-thesis-card strong {
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.mbs-selected-thesis-card small {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.mbs-thesis-actions {
+  gap: 8px;
+}
+
+.mbs-thesis-actions .ti-button {
+  min-height: 34px;
+  padding: 7px 10px !important;
+}
+
+.mbs-section-kicker {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mbs-scoring-mode-panel {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 8px;
+}
+
+.mbs-scoring-mode-label {
+  color: var(--ti-color-text-subtle);
+  flex: 0 0 100%;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.mbs-scoring-mode-toggle {
+  background: rgba(5, 8, 12, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 13px;
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+}
+
+.mbs-scoring-mode-toggle .ti-button {
+  min-height: 30px;
+  padding: 6px 9px !important;
+}
+
+.mbs-scoring-mode-panel p {
+  color: var(--ti-color-text-muted);
+  flex: 1 1 260px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.mbs-autofill-panel {
+  align-items: center;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+    var(--ti-color-surface-muted);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 14px;
+  box-shadow: var(--ti-shadow-surface-inset);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.mbs-autofill-panel div {
+  display: grid;
+  gap: 5px;
+}
+
+.mbs-autofill-panel p {
+  color: var(--ti-color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mbs-autofill-panel .ti-button {
+  flex: 0 0 auto;
+}
+
+.mbs-input-grid {
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.mbs-category-card {
+  border-radius: 14px;
+  gap: 5px;
+  padding: 8px;
+}
+
+.mbs-field-label {
+  font-size: 13px;
+}
+
+.mbs-field-description {
+  display: -webkit-box;
+  font-size: 11px;
+  line-height: 1.3;
+  min-height: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.mbs-score-range {
+  padding: 4px 6px;
+}
+
+.mbs-input-grid--guided {
+  grid-template-columns: repeat(2, minmax(250px, 1fr));
+}
+
+.mbs-guided-card {
+  display: grid;
+}
+
+.mbs-guided-question {
+  display: grid;
+  gap: 3px;
+}
+
+.mbs-guided-question span {
+  color: var(--ti-color-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.mbs-guided-question small {
+  color: var(--ti-color-accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.mbs-guided-options {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mbs-guided-option {
+  align-items: center;
+  background: rgba(10, 17, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 11px;
+  color: var(--ti-color-text-muted);
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 6px 8px;
+  text-align: left;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.mbs-guided-option:hover {
+  background: rgba(72, 224, 204, 0.08);
+  border-color: rgba(72, 224, 204, 0.24);
+  color: var(--ti-color-text);
+  transform: translateY(-1px);
+}
+
+.mbs-guided-option[aria-pressed="true"] {
+  background:
+    linear-gradient(180deg, rgba(72, 224, 204, 0.18), rgba(72, 224, 204, 0.08)),
+    rgba(10, 17, 24, 0.84);
+  border-color: rgba(72, 224, 204, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(72, 224, 204, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--ti-color-text);
+}
+
+.mbs-guided-option span {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.mbs-guided-option strong {
+  background: rgba(72, 224, 204, 0.12);
+  border: 1px solid rgba(72, 224, 204, 0.22);
+  border-radius: var(--ti-radius-pill);
+  color: var(--ti-color-accent);
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 6px;
+}
+
+.mbs-field input,
+.mbs-notes-field textarea,
+.portfolio-ranker-field input,
+.portfolio-ranker-field textarea,
+.thesis-field input,
+.thesis-field textarea,
+.thesis-field select,
+.watchlist-field input,
+.watchlist-field textarea {
+  border-radius: 13px;
+  min-height: 34px;
+  padding: 7px 9px;
+}
+
+.mbs-notes-panel {
+  border-radius: 18px;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.mbs-notes-field textarea {
+  min-height: 54px;
+}
+
+.mbs-output-panel {
+  gap: 10px;
+}
+
+.mbs-hero-score {
+  border-radius: 18px;
+  gap: 6px;
+  padding: 13px;
+}
+
+.mbs-hero-score strong {
+  font-size: clamp(30px, 2.6vw, 38px);
+}
+
+.mbs-score-summary {
+  gap: 8px;
+}
+
+.mbs-score-card {
+  min-height: 62px;
+  padding: 8px;
+}
+
+.mbs-score-card strong {
+  font-size: 18px;
+}
+
+.mbs-driver-grid {
+  gap: 8px;
+}
+
+.mbs-driver-card,
+.mbs-interpretation-card,
+.mbs-complete-indicator,
+.mbs-output-section {
+  border-radius: 16px;
+  padding: 10px;
+}
+
+.mbs-driver-list {
+  gap: 6px;
+}
+
+.mbs-driver-list li {
+  padding: 8px 0;
+}
+
+.mbs-interpretation-card p,
+.mbs-output-section p {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.mbs-output-section ul,
+.mbs-output-section p {
+  margin-top: 8px;
+}
+
+.portfolio-ranker-layout {
+  gap: 16px;
+  grid-template-columns: minmax(620px, 1.58fr) minmax(340px, 0.82fr);
+}
+
+.portfolio-ranker-workspace-card,
+.portfolio-ranker-output-card {
+  min-height: 0;
+}
+
+.portfolio-ranker-toolbar {
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.portfolio-ranker-toolbar h2 {
+  font-size: 20px;
+}
+
+.portfolio-ranker-toolbar p {
+  font-size: 13px;
+}
+
+.portfolio-ranker-filter-row {
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+}
+
+.portfolio-ranker-rows {
+  gap: 10px;
+}
+
+.portfolio-ranker-row {
+  border-radius: 18px;
+  gap: 9px;
+  padding: 12px;
+}
+
+.portfolio-ranker-row-header {
+  gap: 10px;
+}
+
+.portfolio-ranker-rank-badge {
+  border-radius: 13px;
+  font-size: 15px;
+  height: 34px;
+  min-width: 34px;
+}
+
+.portfolio-ranker-row-summary {
+  gap: 2px;
+}
+
+.portfolio-ranker-row-summary h3 {
+  font-size: 20px;
+}
+
+.portfolio-ranker-thesis-meta {
+  gap: 6px;
+}
+
+.portfolio-ranker-meta-chip {
+  padding: 5px 8px;
+}
+
+.portfolio-ranker-review-dates {
+  gap: 6px;
+}
+
+.portfolio-ranker-review-dates span {
+  padding: 7px 8px;
+}
+
+.portfolio-ranker-editor {
+  flex-basis: 150px;
+  padding: 8px 10px;
+}
+
+.portfolio-ranker-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.portfolio-ranker-show-more {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.024);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 10px 12px;
+}
+
+.portfolio-ranker-show-more p {
+  color: var(--ti-color-text-muted);
+  font-size: 13px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.portfolio-ranker-output-hero {
+  gap: 10px;
+}
+
+.portfolio-ranker-output-hero div {
+  min-height: 92px;
+  padding: 14px;
+}
+
+.portfolio-ranker-preview-heading,
+.portfolio-ranker-preview-row {
+  padding: 10px 12px;
+}
+
+.portfolio-ranker-score-guide,
+.portfolio-ranker-weakest-card {
+  border-radius: 16px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.thesis-workspace-grid {
+  align-items: stretch;
+  gap: 16px;
+  grid-template-columns: minmax(300px, 0.92fr) minmax(520px, 1.55fr) minmax(300px, 0.92fr);
+}
+
+.thesis-queue-rail {
+  gap: 12px;
+  min-height: calc(100vh - 126px);
+  padding: 16px;
+}
+
+.thesis-queue-header {
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.thesis-queue-header h2 {
+  font-size: 20px;
+}
+
+.thesis-queue-list {
+  gap: 8px;
+}
+
+.thesis-queue-card {
+  gap: 6px;
+  padding: 11px;
+}
+
+.thesis-queue-workflow {
+  margin-top: auto;
+  padding: 12px;
+}
+
+.thesis-form-card,
+.thesis-health-card {
+  min-height: calc(100vh - 126px);
+}
+
+.thesis-form-grid {
+  gap: 12px;
+}
+
+.thesis-body-field {
+  margin-top: 12px;
+}
+
+.thesis-form-card .thesis-body-field textarea {
+  min-height: clamp(110px, 14vh, 160px);
+}
+
+.thesis-actions {
+  margin-top: 16px;
+}
+
+.thesis-health-hero,
+.watchlist-summary-hero {
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.thesis-health-hero strong,
+.watchlist-summary-hero strong {
+  font-size: 40px;
+}
+
+.thesis-health-grid,
+.watchlist-summary-grid {
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.thesis-health-grid div,
+.watchlist-summary-grid div {
+  border-radius: 16px;
+  min-height: 76px;
+  padding: 12px;
+}
+
+.thesis-next-action,
+.watchlist-next-action {
+  border-radius: 16px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.thesis-selected-snapshot {
+  border-radius: 16px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.thesis-details,
+.watchlist-details {
+  border-radius: 18px;
+  gap: 14px;
+  padding: 14px;
+}
+
+.watchlist-workspace-grid {
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+}
+
+.theme-baskets-screen {
+  width: 100%;
+}
+
+.theme-baskets-layout {
+  gap: 18px;
+}
+
+.theme-baskets-list {
+  gap: 8px;
+}
+
+.theme-basket-list-item {
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.theme-basket-details {
+  border-radius: 20px;
+  gap: 14px;
+  padding: 16px;
+}
+
+.theme-basket-section {
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.settings-about-screen {
+  max-width: none;
+  width: 100%;
+}
+
+.settings-about-grid {
+  align-items: start;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+}
+
+.settings-about-grid > .ti-card:nth-child(2) {
+  grid-row: span 2;
+}
+
+.settings-about-grid > .ti-card:nth-child(4) {
+  align-self: start;
+}
+
+.settings-mode-panel,
+.settings-disclaimer,
+.local-data-status-panel {
+  font-size: 15px;
+  gap: 10px;
+  line-height: 1.5;
+}
+
+.local-data-status-grid {
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.local-data-status-grid section {
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.local-data-status-grid ul,
+.local-data-status-error ul,
+.local-data-status-list {
+  gap: 8px;
+}
+
+@media (max-width: 1320px) {
+  .thesis-workspace-grid {
+    grid-template-columns: minmax(270px, 0.88fr) minmax(0, 1.45fr) minmax(270px, 0.88fr);
+  }
+}
+
+@media (max-width: 1080px) {
+  .portfolio-ranker-layout,
+  .thesis-workspace-grid,
+  .watchlist-workspace-grid,
+  .settings-about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .thesis-queue-rail,
+  .thesis-form-card,
+  .thesis-health-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 780px) {
+  .mbs-form-card,
+  .mbs-score-panel-card,
+  .portfolio-ranker-workspace-card,
+  .portfolio-ranker-output-card,
+  .thesis-form-card,
+  .thesis-health-card,
+  .watchlist-form-card,
+  .watchlist-summary-card,
+  .theme-baskets-library-card,
+  .settings-about-grid > .ti-card {
+    padding: 20px !important;
+  }
+
+  .mbs-input-grid,
+  .mbs-input-grid--guided,
+  .mbs-selected-thesis-card,
+  .mbs-new-thesis-grid,
+  .mbs-score-summary,
+  .mbs-driver-grid,
+  .portfolio-ranker-filter-row,
+  .portfolio-ranker-row-header,
+  .portfolio-ranker-entry-grid,
+  .local-data-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mbs-guided-options {
+    grid-template-columns: 1fr;
+  }
+
+  .mbs-autofill-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .portfolio-ranker-show-more {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .theme-baskets-layout,
+  .watchlist-workspace-grid,
+  .watchlist-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-baskets-screen,
+  .theme-baskets-layout,
+  .watchlist-screen,
+  .watchlist-layout,
+  .reminders-screen,
+  .reminders-layout {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .theme-baskets-library-card,
+  .theme-basket-details,
+  .watchlist-layout > .ti-card,
+  .reminders-screen > .ti-card,
+  .reminders-layout > .ti-card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .theme-basket-example-table,
+  .watchlist-table,
+  .reminders-table {
+    min-width: 620px;
+  }
+
+  .theme-basket-example-table-wrap,
+  .watchlist-table-wrap,
+  .reminders-table-wrap {
+    max-width: 100%;
+    min-width: 0;
   }
 }

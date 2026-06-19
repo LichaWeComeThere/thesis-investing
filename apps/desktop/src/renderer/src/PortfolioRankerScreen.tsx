@@ -45,6 +45,8 @@ type ThesisStatusDisplay = {
   variant: BadgeVariant;
 };
 
+const DEFAULT_VISIBLE_DEMO_IDEA_COUNT = 4;
+
 export function PortfolioRankerScreen({
   initialRows,
   initialPersistedRowIds = [],
@@ -68,6 +70,9 @@ export function PortfolioRankerScreen({
       : storageClient;
   const [rows, setRows] = useState<PortfolioRankerRowState[]>(() =>
     startingRows.map((row) => ({ ...row }))
+  );
+  const [showAllDemoIdeas, setShowAllDemoIdeas] = useState(
+    () => initialRows !== undefined
   );
   const [nextRowNumber, setNextRowNumber] = useState(() =>
     getNextPortfolioRankerRowNumber(startingRows, startingRows.length + 1)
@@ -111,11 +116,13 @@ export function PortfolioRankerScreen({
           // No persisted rows yet — leave the demo default rows visible until
           // the user edits/persists. Editing a default row will persist it.
           setPersistedRowIds(new Set());
+          setShowAllDemoIdeas(false);
           return;
         }
 
         const persistedRows = result.value.map(portfolioRankerItemToRow);
         setRows(persistedRows);
+        setShowAllDemoIdeas(true);
         setPersistedRowIds(
           new Set(result.value.map((item) => item.id))
         );
@@ -241,7 +248,16 @@ export function PortfolioRankerScreen({
     }
   }
 
-  const rankerInput = useMemo(() => buildPortfolioRankerInput(rows), [rows]);
+  const shouldLimitDemoIdeas =
+    initialRows === undefined && persistedRowIds.size === 0 && !showAllDemoIdeas;
+  const visibleRows = shouldLimitDemoIdeas
+    ? rows.slice(0, DEFAULT_VISIBLE_DEMO_IDEA_COUNT)
+    : rows;
+  const hiddenDemoIdeaCount = Math.max(rows.length - visibleRows.length, 0);
+  const rankerInput = useMemo(
+    () => buildPortfolioRankerInput(visibleRows),
+    [visibleRows]
+  );
   const rankedItems = useMemo(
     () => rankManualPortfolioItems(rankerInput),
     [rankerInput]
@@ -294,6 +310,7 @@ export function PortfolioRankerScreen({
   }
 
   function addRow(): void {
+    setShowAllDemoIdeas(true);
     setRows((currentRows) => [
       ...currentRows,
       createEmptyPortfolioRankerRow(`idea-${nextRowNumber}`)
@@ -341,6 +358,7 @@ export function PortfolioRankerScreen({
     }
 
     setRows(defaultRows.map((row) => ({ ...row })));
+    setShowAllDemoIdeas(false);
     setNextRowNumber(getNextPortfolioRankerRowNumber(defaultRows, defaultRows.length + 1));
   }
 
@@ -355,7 +373,7 @@ export function PortfolioRankerScreen({
   return (
     <div className="portfolio-ranker-screen">
       <PageHeader
-        badge={<Badge variant="accent">Demo Rankings</Badge>}
+        badge={<Badge variant="accent">Thesis Board</Badge>}
         description="Rank investment ideas by thesis score, status, conviction, risk, and review priority."
         eyebrow="Idea Ranking Board"
         title="Portfolio Ranker"
@@ -405,7 +423,7 @@ export function PortfolioRankerScreen({
           </div>
 
           <div className="portfolio-ranker-rows">
-            {rows.map((row, index) => {
+            {visibleRows.map((row, index) => {
               const rankedItem = rankedItemsById.get(row.id);
               const thesis = mockThesesById.get(row.id);
               const thesisStatus = getThesisStatus(thesis);
@@ -547,6 +565,23 @@ export function PortfolioRankerScreen({
             })}
           </div>
 
+          {hiddenDemoIdeaCount > 0 ? (
+            <div className="portfolio-ranker-show-more">
+              <p>
+                Showing {visibleRows.length} focused sample ideas.{' '}
+                {hiddenDemoIdeaCount} more remain available.
+              </p>
+              <Button
+                onClick={() => setShowAllDemoIdeas(true)}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                Show more ideas
+              </Button>
+            </div>
+          ) : null}
+
           <div className="portfolio-ranker-actions">
             <Button
               disabled={isWriting || isLoading}
@@ -589,7 +624,7 @@ export function PortfolioRankerScreen({
             <div>
               <span>Ranked ideas</span>
               <strong>
-                {rankedCount} / {rows.length}
+                {rankedCount} / {visibleRows.length}
               </strong>
             </div>
             <div>

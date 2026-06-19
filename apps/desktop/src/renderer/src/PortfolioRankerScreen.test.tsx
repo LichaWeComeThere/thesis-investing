@@ -43,7 +43,7 @@ describe('PortfolioRankerScreen', () => {
       />
     );
 
-    expect(html).toContain('Demo Rankings');
+    expect(html).toContain('Thesis Board');
     expect(html).toContain('Portfolio Ranker');
     expect(html).toContain('Rank investment ideas by thesis score');
     expect(html).toContain('Investment ideas');
@@ -170,6 +170,22 @@ describe('PortfolioRankerScreen', () => {
     );
 
     expect(html).toContain('Portfolio Ranker');
+  });
+
+  it('shows four default sample ideas before expanding the board', () => {
+    const html = renderToStaticMarkup(
+      <PortfolioRankerScreen storageClient={null} />
+    );
+
+    expect(html).toContain('NVDA');
+    expect(html).toContain('MSFT');
+    expect(html).toContain('CRWD');
+    expect(html).toContain('TSLA');
+    expect(html).not.toContain('AVGO');
+    expect(html).not.toContain('PLTR');
+    expect(html).toContain('Showing 4 focused sample ideas');
+    expect(html).toContain('Show more ideas');
+    expect(html).toContain('Ranked ideas</span><strong>4 / 4');
   });
 
   it('uses session theses for default demo ranker rows', () => {

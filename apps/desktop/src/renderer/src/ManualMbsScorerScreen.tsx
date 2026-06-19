@@ -83,6 +83,104 @@ type ScoreStatus = {
   variant: BadgeVariant;
 };
 
+type ScoringMode = 'autofill' | 'guided' | 'manual';
+
+type AutoFillScoreSource = {
+  label: string;
+  values: Partial<Record<ManualBusinessScoreCategory, number>>;
+};
+
+type GuidedScoreOption = {
+  label: string;
+  score: number;
+};
+
+type GuidedScoreCriterion = {
+  question: string;
+  helper?: string;
+  options: GuidedScoreOption[];
+};
+
+const guidedScoreCriteria: Record<
+  ManualBusinessScoreCategory,
+  GuidedScoreCriterion
+> = {
+  businessQuality: {
+    question: 'How durable is this business?',
+    options: [
+      { label: 'Weak or inconsistent business', score: 2 },
+      { label: 'Average business', score: 5 },
+      { label: 'Good business with stable demand', score: 7 },
+      { label: 'Excellent business with durable economics', score: 10 }
+    ]
+  },
+  moat: {
+    question: "How strong is the company's competitive advantage?",
+    options: [
+      { label: 'Easy to copy', score: 2 },
+      { label: 'Some differentiation', score: 5 },
+      { label: 'Strong brand/network/platform advantage', score: 8 },
+      { label: 'Very hard to disrupt', score: 10 }
+    ]
+  },
+  management: {
+    question: 'How much do you trust leadership execution?',
+    options: [
+      { label: 'Poor or unclear execution', score: 2 },
+      { label: 'Average execution', score: 5 },
+      { label: 'Good operators', score: 7 },
+      { label: 'Excellent long-term operators', score: 10 }
+    ]
+  },
+  balanceSheet: {
+    question: 'How financially strong is the company?',
+    options: [
+      { label: 'High debt or fragile', score: 2 },
+      { label: 'Manageable', score: 5 },
+      { label: 'Healthy', score: 7 },
+      { label: 'Very strong cash/debt position', score: 10 }
+    ]
+  },
+  growth: {
+    question: 'How strong is the growth outlook?',
+    options: [
+      { label: 'Shrinking or flat', score: 2 },
+      { label: 'Slow growth', score: 5 },
+      { label: 'Solid growth', score: 7 },
+      { label: 'High durable growth', score: 10 }
+    ]
+  },
+  valuation: {
+    question: 'How reasonable is the current price?',
+    options: [
+      { label: 'Very expensive', score: 2 },
+      { label: 'Somewhat expensive', score: 5 },
+      { label: 'Fair', score: 7 },
+      { label: 'Attractive', score: 10 }
+    ]
+  },
+  risk: {
+    question: 'How risky is the thesis?',
+    helper: 'Higher score means lower risk / better risk profile.',
+    options: [
+      { label: 'Very risky', score: 2 },
+      { label: 'Moderate risk', score: 5 },
+      { label: 'Manageable risk', score: 7 },
+      { label: 'Low risk / well understood', score: 10 }
+    ]
+  }
+};
+
+const scoringModeDescriptions: Record<ScoringMode, string> = {
+  autofill: 'Use available data to prefill the score. Review and adjust before saving.',
+  guided: 'Answer simple questions and the app converts them into 0-10 scores.',
+  manual: 'Enter exact 0-10 scores yourself.'
+};
+
+function getAvailableAutoFillScoreSource(): AutoFillScoreSource | null {
+  return null;
+}
+
 function getCompletedDrivers(
   input: Partial<Record<ManualBusinessScoreCategory, number>>
 ): ScoreDriver[] {
@@ -213,6 +311,20 @@ function getScoreInterpretation(
     : 'Weak thesis profile. Review the lowest-scoring categories before ranking this idea.';
 }
 
+function getCategoryScoreValue(
+  categoryValues: ManualMbsCategoryValueState,
+  category: ManualBusinessScoreCategory
+): number | null {
+  const value = categoryValues[category]?.trim();
+
+  if (!value) {
+    return null;
+  }
+
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+}
+
 export function ManualMbsScorerScreen({
   initialCategoryValues,
   initialInvestmentIdeas,
@@ -262,6 +374,7 @@ export function ManualMbsScorerScreen({
     useState<ManualMbsCategoryValueState>(() =>
       createInitialMbsCategoryValues(initialCategoryValues)
   );
+  const [scoringMode, setScoringMode] = useState<ScoringMode>('guided');
   const [notes, setNotes] = useState(initialNotes);
 
   const scoreInput = useMemo(
@@ -282,6 +395,10 @@ export function ManualMbsScorerScreen({
   const weakestDrivers = useMemo(
     () => getWeakestDrivers(scoreOutput.input),
     [scoreOutput.input]
+  );
+  const availableAutoFillScoreSource = useMemo(
+    () => getAvailableAutoFillScoreSource(),
+    []
   );
   const scoreStatus = useMemo(
     () => getScoreStatusLabel(scoreOutput, weakestDrivers),
@@ -359,6 +476,28 @@ export function ManualMbsScorerScreen({
       ...currentValues,
       [category]: value
     }));
+  }
+
+  function autoFillAvailableFields(): void {
+    const source = availableAutoFillScoreSource;
+
+    if (!source) {
+      return;
+    }
+
+    setCategoryValues((currentValues) => {
+      const nextValues = { ...currentValues };
+
+      for (const category of MBS_CATEGORIES) {
+        const value = source.values[category];
+
+        if (value !== undefined) {
+          nextValues[category] = String(value);
+        }
+      }
+
+      return nextValues;
+    });
   }
 
   function clearInputs(): void {
@@ -614,33 +753,154 @@ export function ManualMbsScorerScreen({
             <span>Score the business across seven compact criteria.</span>
           </div>
 
-          <div className="mbs-input-grid">
-            {MBS_CATEGORIES.map((category) => (
-              <label className="mbs-field mbs-category-card" key={category}>
-                <span className="mbs-category-card-header">
-                  <span className="mbs-field-label">
-                    {categoryLabels[category]}
-                  </span>
-                  <span className="mbs-score-range">0-10</span>
-                </span>
-                <span className="mbs-field-description">
-                  {categoryDescriptions[category]}
-                </span>
-                <input
-                  aria-label={`${categoryLabels[category]} score`}
-                  inputMode="decimal"
-                  max={MBS_CATEGORY_MAX_SCORE}
-                  min={MBS_CATEGORY_MIN_SCORE}
-                  onChange={(event) =>
-                    updateCategoryValue(category, event.currentTarget.value)
-                  }
-                placeholder="0-10"
-                type="text"
-                value={categoryValues[category] ?? ''}
-              />
-              </label>
-            ))}
+          <div className="mbs-scoring-mode-panel">
+            <span className="mbs-scoring-mode-label">Scoring Mode</span>
+            <div
+              aria-label="Scoring mode"
+              className="mbs-scoring-mode-toggle"
+              role="group"
+            >
+              <Button
+                aria-pressed={scoringMode === 'autofill'}
+                isActive={scoringMode === 'autofill'}
+                onClick={() => setScoringMode('autofill')}
+                size="sm"
+                type="button"
+                variant={scoringMode === 'autofill' ? 'primary' : 'secondary'}
+              >
+                Auto-Fill
+              </Button>
+              <Button
+                aria-pressed={scoringMode === 'guided'}
+                isActive={scoringMode === 'guided'}
+                onClick={() => setScoringMode('guided')}
+                size="sm"
+                type="button"
+                variant={scoringMode === 'guided' ? 'primary' : 'secondary'}
+              >
+                Beginner Guided
+              </Button>
+              <Button
+                aria-pressed={scoringMode === 'manual'}
+                isActive={scoringMode === 'manual'}
+                onClick={() => setScoringMode('manual')}
+                size="sm"
+                type="button"
+                variant={scoringMode === 'manual' ? 'primary' : 'secondary'}
+              >
+                Advanced Manual
+              </Button>
+            </div>
+            <p>{scoringModeDescriptions[scoringMode]}</p>
           </div>
+
+          {scoringMode === 'autofill' ? (
+            <section className="mbs-autofill-panel" aria-label="Auto-Fill scoring">
+              <div>
+                <span className="mbs-field-label">Auto-Fill</span>
+                {availableAutoFillScoreSource ? (
+                  <p>
+                    Using local/sample data from {availableAutoFillScoreSource.label}.
+                    Review the filled scores before saving.
+                  </p>
+                ) : (
+                  <p>
+                    Auto-Fill is not connected yet. Use Beginner Guided or
+                    Advanced Manual for now.
+                  </p>
+                )}
+              </div>
+              <Button
+                disabled={!availableAutoFillScoreSource}
+                onClick={autoFillAvailableFields}
+                size="sm"
+                type="button"
+              >
+                Auto-fill available fields
+              </Button>
+            </section>
+          ) : scoringMode === 'guided' ? (
+            <div className="mbs-input-grid mbs-input-grid--guided">
+              {MBS_CATEGORIES.map((category) => {
+                const selectedScore = getCategoryScoreValue(
+                  categoryValues,
+                  category
+                );
+                const criterion = guidedScoreCriteria[category];
+
+                return (
+                  <section
+                    className="mbs-field mbs-category-card mbs-guided-card"
+                    key={category}
+                  >
+                    <div className="mbs-category-card-header">
+                      <span className="mbs-field-label">
+                        {categoryLabels[category]}
+                      </span>
+                      <span className="mbs-score-range">
+                        Score {selectedScore ?? '-'} / 10
+                      </span>
+                    </div>
+                    <div className="mbs-guided-question">
+                      <span>{criterion.question}</span>
+                      {criterion.helper ? <small>{criterion.helper}</small> : null}
+                    </div>
+                    <div
+                      aria-label={`${categoryLabels[category]} guided options`}
+                      className="mbs-guided-options"
+                    >
+                      {criterion.options.map((option) => {
+                        const isSelected = selectedScore === option.score;
+
+                        return (
+                          <button
+                            aria-pressed={isSelected}
+                            className="mbs-guided-option"
+                            key={option.label}
+                            onClick={() =>
+                              updateCategoryValue(category, String(option.score))
+                            }
+                            type="button"
+                          >
+                            <span>{option.label}</span>
+                            <strong>{option.score}</strong>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mbs-input-grid">
+              {MBS_CATEGORIES.map((category) => (
+                <label className="mbs-field mbs-category-card" key={category}>
+                  <span className="mbs-category-card-header">
+                    <span className="mbs-field-label">
+                      {categoryLabels[category]}
+                    </span>
+                    <span className="mbs-score-range">0-10</span>
+                  </span>
+                  <span className="mbs-field-description">
+                    {categoryDescriptions[category]}
+                  </span>
+                  <input
+                    aria-label={`${categoryLabels[category]} score`}
+                    inputMode="decimal"
+                    max={MBS_CATEGORY_MAX_SCORE}
+                    min={MBS_CATEGORY_MIN_SCORE}
+                    onChange={(event) =>
+                      updateCategoryValue(category, event.currentTarget.value)
+                    }
+                    placeholder="0-10"
+                    type="text"
+                    value={categoryValues[category] ?? ''}
+                  />
+                </label>
+              ))}
+            </div>
+          )}
 
           <div className="mbs-notes-panel">
             <div className="mbs-section-kicker">

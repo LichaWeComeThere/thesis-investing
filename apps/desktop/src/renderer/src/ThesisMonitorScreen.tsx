@@ -351,7 +351,7 @@ export function ThesisMonitorScreen({
           <div className="thesis-queue-header">
             <div>
               <h2>Thesis Queue</h2>
-              <p>Review, rank, and update stock theses</p>
+              <p>Review and update saved thesis notes</p>
             </div>
             <Button
               disabled={isWriting || isLoading}
@@ -397,7 +397,16 @@ export function ThesisMonitorScreen({
                   );
                 })
             ) : (
-              demoTheses.map((thesis) => {
+              <>
+                <div className="thesis-empty-state">
+                  <h3>No local thesis notes yet</h3>
+                  <p>
+                    Create a note or select a sample thesis to preview the
+                    workflow.
+                  </p>
+                  <Badge variant="neutral">Sample thesis preview</Badge>
+                </div>
+                {demoTheses.map((thesis) => {
                   const isSelected = thesis.id === selectedMockThesisId;
 
                   return (
@@ -429,7 +438,8 @@ export function ThesisMonitorScreen({
                       <span className="thesis-queue-open">Preview</span>
                     </button>
                   );
-                })
+                })}
+              </>
             )}
           </div>
 
@@ -609,7 +619,7 @@ export function ThesisMonitorScreen({
             <p>
               {selectedNote
                 ? 'Review the selected thesis detail card below or update the manual checklist.'
-                : 'Select a mock thesis to populate the selected snapshot or save a new note.'}
+                : 'Select a sample thesis to populate the selected snapshot or save a new note.'}
             </p>
           </div>
 

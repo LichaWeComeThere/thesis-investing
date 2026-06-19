@@ -549,3 +549,132 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Compact command-center pass: layout only. */
+.dashboard-screen {
+  gap: 16px;
+}
+
+.dashboard-content-layout {
+  gap: 16px;
+  grid-template-columns: minmax(300px, 350px) minmax(0, 1fr);
+}
+
+.dashboard-main-stack {
+  gap: 16px;
+}
+
+.market-pulse-feed {
+  --dashboard-sticky-offset: 18px;
+  height: min(720px, calc(100vh - 126px));
+  padding: 14px;
+}
+
+.market-pulse-header {
+  padding-bottom: 12px;
+}
+
+.market-pulse-header h2 {
+  font-size: 22px;
+}
+
+.market-pulse-item {
+  gap: 7px;
+  padding: 11px 4px;
+}
+
+.market-pulse-item h3 {
+  font-size: 13px;
+}
+
+.dashboard-health-section {
+  gap: 10px;
+}
+
+.dashboard-health-grid {
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.dashboard-health-card {
+  min-height: 128px;
+  padding: 22px !important;
+}
+
+.dashboard-health-card-content {
+  gap: 8px;
+}
+
+.dashboard-health-card-content strong {
+  font-size: clamp(32px, 2.5vw, 44px);
+}
+
+.dashboard-summary-empty,
+.dashboard-summary-message {
+  padding: 12px 14px;
+}
+
+.dashboard-command-grid,
+.dashboard-lower-grid {
+  gap: 16px;
+}
+
+.review-priority-list,
+.recent-activity-list,
+.quick-action-grid {
+  gap: 10px;
+}
+
+.review-priority-card,
+.market-regime-card,
+.dashboard-lower-grid > .ti-card {
+  padding: 24px !important;
+}
+
+.review-priority-item {
+  gap: 8px;
+  padding: 12px;
+}
+
+.review-priority-item strong {
+  font-size: 22px;
+}
+
+.market-regime-hero {
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.market-regime-hero strong {
+  font-size: clamp(24px, 1.8vw, 32px);
+}
+
+.market-regime-tags {
+  margin-top: 12px;
+}
+
+.recent-activity-item {
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.quick-action-card {
+  min-height: 86px;
+  padding: 13px;
+}
+
+@media (min-width: 1500px) {
+  .dashboard-content-layout {
+    grid-template-columns: clamp(320px, 20vw, 380px) minmax(0, 1fr);
+  }
+
+  .dashboard-main-stack {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .dashboard-health-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

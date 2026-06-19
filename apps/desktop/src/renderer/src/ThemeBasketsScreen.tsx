@@ -34,7 +34,7 @@ export function ThemeBasketsScreen({
       <Card className="theme-baskets-library-card" title="Theme library">
         <div className="theme-baskets-layout">
           <div
-            aria-label="Static theme basket list"
+            aria-label="Theme basket list"
             className="theme-baskets-list"
           >
             {STATIC_THEME_BASKETS.map((basket) => {
@@ -65,7 +65,7 @@ export function ThemeBasketsScreen({
                 </p>
                 <h2>{selectedBasket.name}</h2>
               </div>
-              <Badge variant="neutral">Static</Badge>
+              <Badge variant="neutral">Theme Library</Badge>
             </div>
 
             <p className="theme-basket-description">

@@ -308,7 +308,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           </Badge>
         </div>
 
-        <nav className="navigation-list" aria-label="MVP areas">
+        <nav className="navigation-list" aria-label="Research workspaces">
           {navigationViews.map((view) => {
             const isActive = view.id === selectedView.id;
 
@@ -367,7 +367,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
             <PageHeader
               badge={<Badge variant="accent">{selectedView.title}</Badge>}
               description={selectedView.description}
-              eyebrow="Phase 1 Offline Windows MVP"
+              eyebrow="Local workspace"
               title={selectedView.title}
             />
 
@@ -377,9 +377,9 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
                 <div>
                   <h2>{selectedView.title}</h2>
                   <p>
-                    This placeholder reserves space for a future offline MVP
-                    screen. No portfolio workflows, scoring actions, live data,
-                    or trading tools are available here.
+                    This workspace is reserved for a future research screen.
+                    No portfolio workflows, scoring actions, live data, or
+                    trading tools are available here.
                   </p>
                 </div>
               </div>
@@ -413,11 +413,22 @@ const persistedWorkflowFallback = [
 ];
 
 const localOnlyItemFallback = [
-  'Theme Baskets are static local content',
+  'Theme Library uses included reference content',
   'Selected route, filters, search, and sort controls',
   'In-progress form drafts unless explicitly saved',
-  'Onboarding completion currently uses localStorage'
+  'Onboarding preference is saved locally'
 ];
+
+const localDataDisplayLabels: Record<string, string> = {
+  'Onboarding completion currently uses localStorage':
+    'Onboarding preference is saved locally',
+  'Theme Baskets are static local content':
+    'Theme Library uses included reference content'
+};
+
+function formatLocalDataDisplayLabel(label: string): string {
+  return localDataDisplayLabels[label] ?? label;
+}
 
 type SettingsAboutScreenProps = AppShellProps & {
   initialLocalDataErrors?: string[];
@@ -513,7 +524,7 @@ export function SettingsAboutScreen({
     <div className="settings-about-screen">
       <PageHeader
         badge={<Badge variant="accent">Settings/About</Badge>}
-        description="Review the local workspace mode, app boundaries, and first-run onboarding controls."
+        description="Review local workspace mode, data visibility, app boundaries, and onboarding controls."
         eyebrow="Settings/About"
         title="Settings/About"
       />
@@ -523,8 +534,8 @@ export function SettingsAboutScreen({
           <div className="settings-mode-panel">
             <p>
               Thesis Investing currently runs as a local-first, offline
-              workspace. Your saved Phase 1 records stay on this device while
-              live integrations remain off.
+              workspace. Saved records stay on this device while live
+              integrations remain off.
             </p>
           </div>
         </Card>
@@ -532,9 +543,9 @@ export function SettingsAboutScreen({
         <Card title="Local data status">
           <div className="local-data-status-panel">
             <p>
-              Phase 2 starts with visibility into local data. This section is
-              read-only: it does not delete, reset, import, export, back up, or
-              restore data.
+              This read-only view shows where local data lives and what is
+              currently persisted. It does not delete, reset, import, export,
+              back up, or restore data.
             </p>
 
             <div className="local-data-status-grid">
@@ -600,11 +611,11 @@ export function SettingsAboutScreen({
                 </ul>
               </section>
 
-              <section aria-label="Transient or static local items">
-                <h2>Still transient or static</h2>
+              <section aria-label="Local-only items">
+                <h2>Local-only items</h2>
                 <ul>
                   {localOnlyItems.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={item}>{formatLocalDataDisplayLabel(item)}</li>
                   ))}
                 </ul>
               </section>

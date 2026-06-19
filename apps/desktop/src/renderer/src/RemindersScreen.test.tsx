@@ -65,6 +65,13 @@ describe('RemindersScreen', () => {
     expect(html).toContain('Reminders storage unavailable.');
   });
 
+  it('renders a helpful empty state when no reminders are saved', () => {
+    const html = renderToStaticMarkup(<RemindersScreen storageClient={null} />);
+
+    expect(html).toContain('No review reminders yet');
+    expect(html).toContain('Add a review date to keep thesis checks on schedule.');
+  });
+
   it('converts populated form input into a validated reminder', () => {
     const form = {
       ...createEmptyReminderForm('valid'),

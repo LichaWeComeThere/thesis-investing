@@ -472,13 +472,22 @@ export function WatchlistScreen({
               </table>
             </div>
           ) : (
-            <div className="watchlist-details">
-              <h3>No watchlist theses yet</h3>
+            <div className="watchlist-empty-state">
+              <h3>No watchlist items yet</h3>
               <p>
-                Add a thesis to Watchlist or Researching status to see it here.
+                Add a ticker to start tracking a thesis candidate.
               </p>
             </div>
           )}
+
+          {!isLoading && watchlistTheses.length > 0 && items.length === 0 ? (
+            <div className="watchlist-empty-state">
+              <h3>No watchlist items yet</h3>
+              <p>
+                Add a ticker to start tracking a thesis candidate.
+              </p>
+            </div>
+          ) : null}
 
           {items.length > 0 ? (
             <div className="watchlist-table-wrap">
@@ -592,7 +601,13 @@ export function WatchlistScreen({
               </div>
             </article>
           ) : (
-            <p>Select or save a local watchlist item to review details.</p>
+            <div className="watchlist-empty-state">
+              <h3>No item selected</h3>
+              <p>
+                Save a watchlist item or select a sample thesis to review the
+                detail panel.
+              </p>
+            </div>
           )}
         </Card>
       </div>
