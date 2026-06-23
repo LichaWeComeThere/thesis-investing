@@ -3496,6 +3496,37 @@ select:focus-visible {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.local-data-export-panel {
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border-muted);
+  border-radius: var(--ti-radius-md);
+  display: grid;
+  gap: 14px;
+  margin-top: 4px;
+  padding: 16px;
+}
+
+.local-data-export-panel h2 {
+  color: var(--ti-color-text);
+  font-size: var(--ti-font-size-sm);
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.local-data-export-actions {
+  align-items: flex-start;
+  display: grid;
+  gap: 12px;
+}
+
+.local-data-export-actions code {
+  color: var(--ti-color-text);
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono',
+    monospace;
+  overflow-wrap: anywhere;
+}
+
 .local-data-status-grid section {
   background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border-muted);
@@ -4400,7 +4431,8 @@ select:focus-visible {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.local-data-status-grid section {
+.local-data-status-grid section,
+.local-data-export-panel {
   border-radius: 16px;
   padding: 12px;
 }

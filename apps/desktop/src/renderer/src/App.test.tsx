@@ -58,6 +58,8 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('thesis-investing.sqlite');
     expect(html).toContain('Created on this device');
     expect(html).toContain('node:sqlite');
+    expect(html).toContain('Export local data');
+    expect(html).toContain('Save a JSON copy of persisted local records');
   });
 
   it('renders a non-crashing local data status error', () => {
@@ -72,5 +74,57 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('Unable to read app data path.');
     expect(html).toContain('Persisted locally');
     expect(html).toContain('Local-only items');
+  });
+
+  it('renders a local data export success state', () => {
+    const html = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataExportState={{
+          status: 'completed',
+          outcome: {
+            status: 'completed',
+            counts: {
+              mbsScoreSnapshots: 1,
+              portfolioRankerItems: 1,
+              reminders: 1,
+              thesisNotes: 1,
+              watchlistItems: 1
+            },
+            exportedAt: '2026-06-10T12:00:00.000Z',
+            filePath: 'C:\\Users\\Test\\Documents\\thesis-export.json'
+          }
+        }}
+        initialLocalDataInfo={localDataInfo}
+        onResetOnboarding={() => undefined}
+      />
+    );
+
+    expect(html).toContain('Local data export saved.');
+    expect(html).toContain('thesis-export.json');
+    expect(html).toContain('Exported 1 watchlist items');
+  });
+
+  it('renders local data export cancel and error states without crashing', () => {
+    const canceledHtml = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataExportState={{ status: 'canceled' }}
+        initialLocalDataInfo={localDataInfo}
+        onResetOnboarding={() => undefined}
+      />
+    );
+    const errorHtml = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataExportState={{
+          status: 'error',
+          errors: ['Unable to write export file.']
+        }}
+        initialLocalDataInfo={localDataInfo}
+        onResetOnboarding={() => undefined}
+      />
+    );
+
+    expect(canceledHtml).toContain('Export canceled. No file was created.');
+    expect(errorHtml).toContain('Unable to export local data.');
+    expect(errorHtml).toContain('Unable to write export file.');
   });
 });
