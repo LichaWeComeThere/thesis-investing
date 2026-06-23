@@ -54,6 +54,12 @@ describe('ManualMbsScorerScreen', () => {
       'Answer simple questions and the app converts them into 0-10 scores.'
     );
     expect(html).toContain('How durable is this business?');
+    expect(html).toContain(
+      'Customer value, margins, repeatability, and operating quality.'
+    );
+    expect(html).toContain(
+      '0-3 weak | 4-6 average | 7-8 durable | 9-10 exceptional'
+    );
     expect(html).toContain('Good business with stable demand');
     expect(html).toContain(
       "How strong is the company&#x27;s competitive advantage?"
@@ -62,6 +68,9 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('How risky is the thesis?');
     expect(html).toContain(
       'Higher score means lower risk / better risk profile.'
+    );
+    expect(html).toContain(
+      '0-3 high risk | 4-6 mixed | 7-8 manageable | 9-10 low-risk profile'
     );
     expect(html).toContain('Low risk / well understood');
     expect(html).toContain('Score 7 / 10');

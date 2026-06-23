@@ -62,13 +62,23 @@ const categoryLabels: Record<ManualBusinessScoreCategory, string> = {
 };
 
 const categoryDescriptions: Record<ManualBusinessScoreCategory, string> = {
-  businessQuality: 'Durability, margins, customer value, and operating quality.',
-  moat: 'Competitive advantages, switching costs, brand, scale, or network effects.',
-  management: 'Capital allocation, execution, incentives, and communication.',
+  businessQuality: 'Customer value, margins, repeatability, and operating quality.',
+  moat: 'How hard it is for competitors to copy or weaken the business.',
+  management: 'Leadership execution, incentives, communication, and capital allocation.',
   balanceSheet: 'Debt, liquidity, resilience, and financial flexibility.',
-  growth: 'User-assessed revenue, earnings, cash flow, or market expansion quality.',
-  valuation: 'Manual view of price paid relative to business quality and prospects.',
-  risk: 'Manual view of downside, cyclicality, concentration, disruption, or fragility.'
+  growth: 'Revenue, earnings, cash flow, or market expansion quality.',
+  valuation: 'How reasonable the price is versus quality and future prospects.',
+  risk: 'Downside risk, fragility, cyclicality, concentration, and disruption exposure.'
+};
+
+const categoryScoringGuides: Record<ManualBusinessScoreCategory, string> = {
+  businessQuality: '0-3 weak | 4-6 average | 7-8 durable | 9-10 exceptional',
+  moat: '0-3 easy to copy | 4-6 some edge | 7-8 strong | 9-10 very hard to disrupt',
+  management: '0-3 weak | 4-6 average | 7-8 trusted | 9-10 excellent stewards',
+  balanceSheet: '0-3 fragile | 4-6 manageable | 7-8 healthy | 9-10 very strong',
+  growth: '0-3 flat or shrinking | 4-6 slow | 7-8 solid | 9-10 durable high growth',
+  valuation: '0-3 expensive | 4-6 stretched | 7-8 fair | 9-10 attractive',
+  risk: '0-3 high risk | 4-6 mixed | 7-8 manageable | 9-10 low-risk profile'
 };
 
 type ScoreDriver = {
@@ -842,6 +852,7 @@ export function ManualMbsScorerScreen({
                       </span>
                     </div>
                     <div className="mbs-guided-question">
+                      <small>{categoryDescriptions[category]}</small>
                       <span>{criterion.question}</span>
                       {criterion.helper ? <small>{criterion.helper}</small> : null}
                     </div>
@@ -868,6 +879,9 @@ export function ManualMbsScorerScreen({
                         );
                       })}
                     </div>
+                    <span className="mbs-score-guide">
+                      {categoryScoringGuides[category]}
+                    </span>
                   </section>
                 );
               })}
@@ -897,6 +911,9 @@ export function ManualMbsScorerScreen({
                     type="text"
                     value={categoryValues[category] ?? ''}
                   />
+                  <span className="mbs-score-guide">
+                    {categoryScoringGuides[category]}
+                  </span>
                 </label>
               ))}
             </div>

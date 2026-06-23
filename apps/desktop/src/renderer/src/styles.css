@@ -3929,6 +3929,12 @@ select:focus-visible {
   -webkit-line-clamp: 1;
 }
 
+.mbs-score-guide {
+  color: var(--ti-color-text-muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
 .mbs-score-range {
   padding: 4px 6px;
 }
