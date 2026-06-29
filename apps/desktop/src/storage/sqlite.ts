@@ -12,6 +12,7 @@ export interface SqliteStorageOptions {
 export interface SqliteStorage {
   repositories: LocalStorageRepositories;
   close(): void;
+  runInTransaction<T>(operation: () => T): T;
 }
 
 export async function createSqliteStorage(
@@ -22,7 +23,19 @@ export async function createSqliteStorage(
 
   return {
     repositories: createSqliteRepositories(database),
-    close: () => database.close()
+    close: () => database.close(),
+    runInTransaction: <T>(operation: () => T): T => {
+      database.exec("BEGIN IMMEDIATE;");
+
+      try {
+        const result = operation();
+        database.exec("COMMIT;");
+        return result;
+      } catch (error) {
+        database.exec("ROLLBACK;");
+        throw error;
+      }
+    }
   };
 }
 

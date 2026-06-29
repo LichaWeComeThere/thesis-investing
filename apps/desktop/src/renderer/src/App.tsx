@@ -8,7 +8,9 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import type {
   LocalDataExportOutcome,
-  LocalDataInfo
+  LocalDataInfo,
+  LocalDataImportOutcome,
+  LocalDataImportPreview
 } from '../../shared/localDataStorage';
 import {
   hasCompletedOnboarding,
@@ -435,6 +437,7 @@ function formatLocalDataDisplayLabel(label: string): string {
 
 type SettingsAboutScreenProps = AppShellProps & {
   initialLocalDataExportState?: LocalDataExportState;
+  initialLocalDataImportState?: LocalDataImportState;
   initialLocalDataErrors?: string[];
   initialLocalDataInfo?: LocalDataInfo;
   localDataClient?: LocalDataStorageClient | null;
@@ -459,8 +462,36 @@ type LocalDataExportState =
       status: 'error';
     };
 
+type LocalDataImportState =
+  | {
+      status: 'idle';
+    }
+  | {
+      status: 'selecting';
+    }
+  | {
+      preview: LocalDataImportPreview;
+      status: 'preview';
+    }
+  | {
+      preview: LocalDataImportPreview;
+      status: 'importing';
+    }
+  | {
+      outcome: LocalDataImportOutcome;
+      status: 'completed';
+    }
+  | {
+      status: 'canceled';
+    }
+  | {
+      errors: string[];
+      status: 'error';
+    };
+
 export function SettingsAboutScreen({
   initialLocalDataExportState,
+  initialLocalDataImportState,
   initialLocalDataErrors,
   initialLocalDataInfo,
   localDataClient,
@@ -488,6 +519,10 @@ export function SettingsAboutScreen({
   const [localDataExportState, setLocalDataExportState] =
     useState<LocalDataExportState>(
       () => initialLocalDataExportState ?? { status: 'idle' }
+    );
+  const [localDataImportState, setLocalDataImportState] =
+    useState<LocalDataImportState>(
+      () => initialLocalDataImportState ?? { status: 'idle' }
     );
 
   useEffect(() => {
@@ -547,8 +582,22 @@ export function SettingsAboutScreen({
   const persistedWorkflows =
     localDataInfo?.persistedWorkflows ?? persistedWorkflowFallback;
   const localOnlyItems = localDataInfo?.localOnlyItems ?? localOnlyItemFallback;
+  const isImportBusy =
+    localDataImportState.status === 'selecting' ||
+    localDataImportState.status === 'importing';
   const isExportDisabled =
-    localDataExportState.status === 'exporting' || !resolvedLocalDataClient;
+    localDataExportState.status === 'exporting' ||
+    isImportBusy ||
+    !resolvedLocalDataClient;
+  const isImportDisabled =
+    localDataExportState.status === 'exporting' ||
+    isImportBusy ||
+    !resolvedLocalDataClient;
+  const activeImportPreview =
+    localDataImportState.status === 'preview' ||
+    localDataImportState.status === 'importing'
+      ? localDataImportState.preview
+      : null;
 
   async function exportLocalData(): Promise<void> {
     if (!resolvedLocalDataClient) {
@@ -593,6 +642,82 @@ export function SettingsAboutScreen({
     }
   }
 
+  async function previewLocalDataImport(): Promise<void> {
+    if (!resolvedLocalDataClient) {
+      setLocalDataImportState({
+        status: 'error',
+        errors: ['Local data import is available only inside the desktop app.']
+      });
+      return;
+    }
+
+    setLocalDataImportState({ status: 'selecting' });
+
+    try {
+      const result = await resolvedLocalDataClient.previewImportFromJson();
+
+      if (!result.ok) {
+        setLocalDataImportState({ status: 'error', errors: result.errors });
+        return;
+      }
+
+      if (result.value.status === 'canceled') {
+        setLocalDataImportState({ status: 'canceled' });
+        return;
+      }
+
+      setLocalDataImportState({
+        status: 'preview',
+        preview: result.value.preview
+      });
+    } catch (error) {
+      setLocalDataImportState({
+        status: 'error',
+        errors: [
+          error instanceof Error
+            ? error.message
+            : 'Unable to preview local data import.'
+        ]
+      });
+    }
+  }
+
+  async function confirmLocalDataImport(
+    preview: LocalDataImportPreview
+  ): Promise<void> {
+    if (!resolvedLocalDataClient) {
+      setLocalDataImportState({
+        status: 'error',
+        errors: ['Local data import is available only inside the desktop app.']
+      });
+      return;
+    }
+
+    setLocalDataImportState({ status: 'importing', preview });
+
+    try {
+      const result = await resolvedLocalDataClient.importFromJson(
+        preview.previewId
+      );
+
+      if (!result.ok) {
+        setLocalDataImportState({ status: 'error', errors: result.errors });
+        return;
+      }
+
+      setLocalDataImportState({ status: 'completed', outcome: result.value });
+    } catch (error) {
+      setLocalDataImportState({
+        status: 'error',
+        errors: [
+          error instanceof Error
+            ? error.message
+            : 'Unable to import local data.'
+        ]
+      });
+    }
+  }
+
   return (
     <div className="settings-about-screen">
       <PageHeader
@@ -617,9 +742,9 @@ export function SettingsAboutScreen({
           <div className="local-data-status-panel">
             <p>
               This read-only view shows where local data lives and what is
-              currently persisted. It can export a JSON copy for recordkeeping,
-              but it does not delete, reset, import, schedule backups, or
-              restore data.
+              currently persisted. It can export a JSON copy and append records
+              from a validated export after confirmation, but it does not
+              delete, reset, overwrite, schedule backups, or restore data.
             </p>
 
             <div className="local-data-status-grid">
@@ -768,6 +893,152 @@ export function SettingsAboutScreen({
                     <strong>Unable to export local data.</strong>
                     <ul>
                       {localDataExportState.errors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <section
+              aria-label="Local data import"
+              className="local-data-import-panel"
+            >
+              <div>
+                <h2>Import local data</h2>
+                <p>
+                  Select a JSON file created by Thesis Investing. The app checks
+                  the format and shows record counts before anything is written.
+                  Confirmed imports append records and never overwrite or delete
+                  existing local data.
+                </p>
+              </div>
+
+              <div className="local-data-import-actions">
+                <Button
+                  disabled={isImportDisabled}
+                  onClick={() => {
+                    void previewLocalDataImport();
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  {localDataImportState.status === 'selecting'
+                    ? 'Selecting import file'
+                    : activeImportPreview
+                      ? 'Choose another file'
+                      : 'Import local data'}
+                </Button>
+
+                {activeImportPreview ? (
+                  <div className="local-data-import-preview" role="status">
+                    <strong>Import preview ready.</strong>
+                    <p>
+                      <code>{activeImportPreview.fileName}</code> uses export
+                      format version {activeImportPreview.formatVersion} and was
+                      generated{' '}
+                      {formatLocalDataTimestamp(activeImportPreview.exportedAt)}.
+                    </p>
+                    <dl className="local-data-import-counts">
+                      <div>
+                        <dt>Watchlist items</dt>
+                        <dd>{activeImportPreview.counts.watchlistItems}</dd>
+                      </div>
+                      <div>
+                        <dt>Thesis Notes</dt>
+                        <dd>{activeImportPreview.counts.thesisNotes}</dd>
+                      </div>
+                      <div>
+                        <dt>Reminders</dt>
+                        <dd>{activeImportPreview.counts.reminders}</dd>
+                      </div>
+                      <div>
+                        <dt>Portfolio Ranker Inputs</dt>
+                        <dd>
+                          {activeImportPreview.counts.portfolioRankerItems}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>MBS Score Snapshots</dt>
+                        <dd>{activeImportPreview.counts.mbsScoreSnapshots}</dd>
+                      </div>
+                    </dl>
+                    {activeImportPreview.warnings.length > 0 ? (
+                      <ul className="local-data-import-warnings">
+                        {activeImportPreview.warnings.map((warning) => (
+                          <li key={warning}>{warning}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    <p>
+                      Importing is append-only. Existing records remain
+                      unchanged, and colliding IDs are assigned new local IDs.
+                    </p>
+                    <div className="local-data-import-confirmation">
+                      <Button
+                        disabled={localDataImportState.status === 'importing'}
+                        onClick={() => {
+                          void confirmLocalDataImport(activeImportPreview);
+                        }}
+                        type="button"
+                      >
+                        {localDataImportState.status === 'importing'
+                          ? 'Importing local data'
+                          : 'Confirm import'}
+                      </Button>
+                      <Button
+                        disabled={localDataImportState.status === 'importing'}
+                        onClick={() => {
+                          setLocalDataImportState({ status: 'idle' });
+                        }}
+                        type="button"
+                        variant="secondary"
+                      >
+                        Cancel import
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {localDataImportState.status === 'completed' ? (
+                  <div className="local-data-status-message" role="status">
+                    <strong>Local data import complete.</strong>
+                    <p>
+                      Imported {localDataImportState.outcome.imported.watchlistItems}{' '}
+                      watchlist items,{' '}
+                      {localDataImportState.outcome.imported.thesisNotes} thesis
+                      notes, {localDataImportState.outcome.imported.reminders}{' '}
+                      reminders,{' '}
+                      {
+                        localDataImportState.outcome.imported
+                          .portfolioRankerItems
+                      }{' '}
+                      portfolio ranker inputs, and{' '}
+                      {localDataImportState.outcome.imported.mbsScoreSnapshots}{' '}
+                      MBS score snapshots.
+                    </p>
+                    {localDataImportState.outcome.warnings.length > 0 ? (
+                      <ul className="local-data-import-warnings">
+                        {localDataImportState.outcome.warnings.map((warning) => (
+                          <li key={warning}>{warning}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {localDataImportState.status === 'canceled' ? (
+                  <p className="local-data-status-message" role="status">
+                    Import canceled. No records were changed.
+                  </p>
+                ) : null}
+
+                {localDataImportState.status === 'error' ? (
+                  <div className="local-data-status-error" role="alert">
+                    <strong>Unable to import local data.</strong>
+                    <ul>
+                      {localDataImportState.errors.map((error) => (
                         <li key={error}>{error}</li>
                       ))}
                     </ul>

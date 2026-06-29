@@ -8,8 +8,14 @@ import type {
 
 export const localDataStorageChannels = {
   exportToJson: 'local-data:export-to-json',
-  get: 'local-data:get'
+  get: 'local-data:get',
+  importFromJson: 'local-data:import-from-json',
+  previewImportFromJson: 'local-data:preview-import-from-json'
 } as const;
+
+export const LOCAL_DATA_EXPORT_FORMAT =
+  'thesis-investing-local-data-export' as const;
+export const LOCAL_DATA_EXPORT_FORMAT_VERSION = 1 as const;
 
 export type LocalDataInfo = {
   databaseFileExists: boolean;
@@ -30,8 +36,8 @@ export type LocalDataExportCounts = {
 };
 
 export type LocalDataExportDocument = {
-  format: 'thesis-investing-local-data-export';
-  formatVersion: 1;
+  format: typeof LOCAL_DATA_EXPORT_FORMAT;
+  formatVersion: typeof LOCAL_DATA_EXPORT_FORMAT_VERSION;
   appName: 'Thesis Investing';
   appVersion?: string;
   exportedAt: string;
@@ -57,6 +63,30 @@ export type LocalDataExportOutcome =
       status: 'canceled';
     };
 
+export type LocalDataImportPreview = {
+  counts: LocalDataExportCounts;
+  exportedAt: string;
+  fileName: string;
+  formatVersion: typeof LOCAL_DATA_EXPORT_FORMAT_VERSION;
+  previewId: string;
+  warnings: string[];
+};
+
+export type LocalDataImportPreviewOutcome =
+  | {
+      status: 'ready';
+      preview: LocalDataImportPreview;
+    }
+  | {
+      status: 'canceled';
+    };
+
+export type LocalDataImportOutcome = {
+  status: 'completed';
+  imported: LocalDataExportCounts;
+  warnings: string[];
+};
+
 export type LocalDataStorageResult<T> =
   | {
       ok: true;
@@ -70,4 +100,10 @@ export type LocalDataStorageResult<T> =
 export type LocalDataStorageApi = {
   exportToJson(): Promise<LocalDataStorageResult<LocalDataExportOutcome>>;
   get(): Promise<LocalDataStorageResult<LocalDataInfo>>;
+  importFromJson(
+    previewId: string
+  ): Promise<LocalDataStorageResult<LocalDataImportOutcome>>;
+  previewImportFromJson(): Promise<
+    LocalDataStorageResult<LocalDataImportPreviewOutcome>
+  >;
 };

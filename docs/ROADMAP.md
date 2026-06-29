@@ -41,7 +41,8 @@ Start with local data management visibility and release hardening before adding 
 
 - Stage 1: Local Data Management View
 - Stage 2: Local Data Export
-- Future: local import, restore, and backup/restore planning
+- Stage 3: Local Data Import
+- Future: local restore and backup/restore planning
 - Future: optional live market data behind provider interfaces
 - Future: optional sync, auth, or cloud features only after explicit staging
 

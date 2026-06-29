@@ -231,12 +231,17 @@ Move these remaining persistence improvements into Phase 2 or later:
 - thesis checklist text unless a migration explicitly adds it
 - incomplete MBS scorer draft autosave
 - named ranker snapshots, history, or ranker-to-thesis-note linking
-- local import for persisted records
 - local database backup, restore, and recovery UX
 
 Phase 2 Stage 2 introduces a non-destructive JSON export for persisted Phase 1
 records. It does not add import, restore, reset/delete database actions, or raw
 SQLite file export.
+
+Phase 2 Stage 3 introduces validated, preview-first JSON import for Stage 2
+export files. Confirmed imports append through existing repositories and remap
+colliding IDs without overwriting or deleting existing records. Database restore,
+replacement, backup scheduling, and semantic merge/deduplication remain future
+work.
 
 ## Migration Risks
 
