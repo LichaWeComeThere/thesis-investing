@@ -20,6 +20,23 @@ describe("SQLite local storage", () => {
     storage.close();
   });
 
+  it("rolls back repository writes when a storage transaction fails", async () => {
+    const storage = await createSqliteStorage();
+
+    expect(() =>
+      storage.runInTransaction(() => {
+        storage.repositories.watchlistItems.create({
+          id: "watchlist_transaction",
+          ticker: "MSFT"
+        });
+        throw new Error("Stop transaction.");
+      })
+    ).toThrow("Stop transaction.");
+    expect(storage.repositories.watchlistItems.list()).toEqual([]);
+
+    storage.close();
+  });
+
   it("runs migrations and creates local tables", async () => {
     const database = await createSqliteDatabase();
 

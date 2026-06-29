@@ -83,8 +83,11 @@ errors are shown in Settings/About without crashing the app.
 
 ## Current Limitations
 
-There is no import or restore flow yet. Exported JSON files are intended for
-recordkeeping and future migration planning, not as a supported restore format.
+Phase 2, Stage 3 can append records from valid version 1 export files after a
+preview and explicit confirmation. Import is not a destructive restore or merge:
+it does not replace the database, overwrite records, or delete existing data.
+See [Local Data Import](LOCAL_DATA_IMPORT.md) for validation and collision rules.
+
 Users should treat exported files as private research data and store them in a
 location they trust.
 

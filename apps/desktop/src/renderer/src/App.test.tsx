@@ -60,6 +60,9 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('node:sqlite');
     expect(html).toContain('Export local data');
     expect(html).toContain('Save a JSON copy of persisted local records');
+    expect(html).toContain('Import local data');
+    expect(html).toContain('Select a JSON file created by Thesis Investing');
+    expect(html).toContain('never overwrite or delete existing local data');
   });
 
   it('renders a non-crashing local data status error', () => {
@@ -126,5 +129,89 @@ describe('SettingsAboutScreen', () => {
     expect(canceledHtml).toContain('Export canceled. No file was created.');
     expect(errorHtml).toContain('Unable to export local data.');
     expect(errorHtml).toContain('Unable to write export file.');
+  });
+
+  it('renders an import preview that requires separate confirmation', () => {
+    const html = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataImportState={{
+          status: 'preview',
+          preview: {
+            counts: {
+              mbsScoreSnapshots: 5,
+              portfolioRankerItems: 4,
+              reminders: 3,
+              thesisNotes: 2,
+              watchlistItems: 1
+            },
+            exportedAt: '2026-06-10T12:00:00.000Z',
+            fileName: 'thesis-export.json',
+            formatVersion: 1,
+            previewId: 'preview-test',
+            warnings: [
+              '1 imported record ID already exists and will be remapped.'
+            ]
+          }
+        }}
+        initialLocalDataInfo={localDataInfo}
+        onResetOnboarding={() => undefined}
+      />
+    );
+
+    expect(html).toContain('Import preview ready.');
+    expect(html).toContain('thesis-export.json');
+    expect(html).toContain('Watchlist items');
+    expect(html).toContain('MBS Score Snapshots');
+    expect(html).toContain('Confirm import');
+    expect(html).toContain('Cancel import');
+    expect(html).toContain('Existing records remain unchanged');
+  });
+
+  it('renders import success, cancel, and error states without crashing', () => {
+    const successHtml = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataImportState={{
+          status: 'completed',
+          outcome: {
+            status: 'completed',
+            imported: {
+              mbsScoreSnapshots: 1,
+              portfolioRankerItems: 1,
+              reminders: 1,
+              thesisNotes: 1,
+              watchlistItems: 1
+            },
+            warnings: []
+          }
+        }}
+        initialLocalDataInfo={localDataInfo}
+        onResetOnboarding={() => undefined}
+      />
+    );
+    const canceledHtml = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataImportState={{ status: 'canceled' }}
+        initialLocalDataInfo={localDataInfo}
+        onResetOnboarding={() => undefined}
+      />
+    );
+    const errorHtml = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataImportState={{
+          status: 'error',
+          errors: ['The selected file is not valid JSON.']
+        }}
+        initialLocalDataInfo={localDataInfo}
+        onResetOnboarding={() => undefined}
+      />
+    );
+
+    expect(successHtml).toContain('Local data import complete.');
+    expect(successHtml).toContain('Imported 1 watchlist items');
+    expect(canceledHtml).toContain(
+      'Import canceled. No records were changed.'
+    );
+    expect(errorHtml).toContain('Unable to import local data.');
+    expect(errorHtml).toContain('The selected file is not valid JSON.');
   });
 });

@@ -10,6 +10,8 @@ Phase 2, Stage 1 adds a read-only local data management/status view in Settings/
 
 Phase 2, Stage 2 adds a non-destructive local JSON export action in Settings/About. The export writes a user-selected `.json` file containing persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS Score Snapshots, plus metadata and counts. It does not add import, restore, reset/delete database actions, backup scheduling, cloud sync, or raw SQLite export.
 
+Phase 2, Stage 3 adds a validated local JSON import for Stage 2 export files. File selection produces a read-only preview, and a separate confirmation appends records through existing repositories. ID collisions are remapped so existing records are never overwritten. Import does not replace the database, delete records, or act as a destructive restore.
+
 ## Package Boundary
 
 Local persistence currently lives in `apps/desktop/src/storage`.
@@ -21,6 +23,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
 - The renderer can request a local JSON export through `window.thesisInvesting.localData.exportToJson()`, but the save dialog, SQLite reads, and file write happen in the Electron main process.
+- The renderer can request import preview and confirmation through `window.thesisInvesting.localData.previewImportFromJson()` and `window.thesisInvesting.localData.importFromJson(previewId)`. Electron main owns file reading, parsing, validation, pending preview data, and transactional repository writes.
 
 ## SQLite Choice
 
@@ -84,7 +87,8 @@ This persistence layer does not add:
 - Dashboard write/delete behavior
 - Named portfolio ranker snapshots or history
 - Local data delete/reset actions
-- Import, restore, backup scheduling, or raw database export flows
+- Database restore/replacement, backup scheduling, or raw database export flows
+- Semantic merge or duplicate detection beyond collision-safe ID remapping
 - SQLite-backed local preferences
 - Live stock APIs
 - Cloud sync, Supabase, or auth

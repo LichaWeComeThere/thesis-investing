@@ -1,8 +1,12 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import type { LocalDataExportDocument } from '../shared/localDataStorage';
 import { createSqliteStorage } from '../storage/sqlite';
-import { createLocalDataStorageService } from './localDataStorageService';
+import {
+  buildLocalDataExportDocument,
+  createLocalDataStorageService
+} from './localDataStorageService';
 
 describe('localDataStorageService', () => {
   it('returns read-only local data status', async () => {
@@ -262,4 +266,394 @@ describe('localDataStorageService', () => {
 
     await service.close();
   });
+
+  it('previews a valid import without mutating storage', async () => {
+    const storage = await createSqliteStorage();
+    const service = createImportService(storage, createPopulatedExport());
+
+    await expect(service.previewImportFromJson()).resolves.toEqual({
+      ok: true,
+      value: {
+        status: 'ready',
+        preview: {
+          counts: populatedCounts,
+          exportedAt: '2026-06-10T12:00:00.000Z',
+          fileName: 'thesis-export.json',
+          formatVersion: 1,
+          previewId: 'preview-test',
+          warnings: []
+        }
+      }
+    });
+    expect(storage.repositories.watchlistItems.list()).toEqual([]);
+    expect(storage.repositories.thesisNotes.list()).toEqual([]);
+    expect(storage.repositories.reminders.list()).toEqual([]);
+    expect(storage.repositories.portfolioRankerItems.list()).toEqual([]);
+    expect(storage.repositories.mbsScoreSnapshots.list()).toEqual([]);
+
+    await service.close();
+  });
+
+  it('imports a valid export only after confirmation', async () => {
+    const storage = await createSqliteStorage();
+    const service = createImportService(storage, createPopulatedExport());
+
+    await service.previewImportFromJson();
+    await expect(service.importFromJson('preview-test')).resolves.toEqual({
+      ok: true,
+      value: {
+        status: 'completed',
+        imported: populatedCounts,
+        warnings: []
+      }
+    });
+
+    expect(storage.repositories.watchlistItems.list()).toMatchObject([
+      { id: 'watchlist_msft', ticker: 'MSFT', thesisNoteId: 'thesis_msft' }
+    ]);
+    expect(storage.repositories.thesisNotes.list()).toHaveLength(1);
+    expect(storage.repositories.reminders.list()).toHaveLength(1);
+    expect(storage.repositories.portfolioRankerItems.list()).toHaveLength(1);
+    expect(storage.repositories.mbsScoreSnapshots.list()).toMatchObject([
+      { id: 'score_msft', thesisId: 'thesis_msft', ticker: 'MSFT' }
+    ]);
+    await expect(service.importFromJson('preview-test')).resolves.toEqual({
+      ok: false,
+      errors: [
+        'Import preview is no longer available. Select the file again.'
+      ]
+    });
+
+    await service.close();
+  });
+
+  it('imports an empty export without changing storage', async () => {
+    const storage = await createSqliteStorage();
+    const service = createImportService(storage, createEmptyExport());
+
+    await expect(service.previewImportFromJson()).resolves.toMatchObject({
+      ok: true,
+      value: {
+        status: 'ready',
+        preview: {
+          counts: emptyCounts,
+          warnings: ['This export contains no persisted records to import.']
+        }
+      }
+    });
+    await expect(service.importFromJson('preview-test')).resolves.toEqual({
+      ok: true,
+      value: {
+        status: 'completed',
+        imported: emptyCounts,
+        warnings: ['This export contains no persisted records to import.']
+      }
+    });
+    expect(storage.repositories.watchlistItems.list()).toEqual([]);
+
+    await service.close();
+  });
+
+  it('rejects invalid JSON without creating a preview', async () => {
+    const storage = await createSqliteStorage();
+    const service = createImportService(storage, '{not-json');
+
+    await expect(service.previewImportFromJson()).resolves.toEqual({
+      ok: false,
+      errors: ['The selected file is not valid JSON.']
+    });
+    expect(storage.repositories.watchlistItems.list()).toEqual([]);
+
+    await service.close();
+  });
+
+  it('rejects the wrong export format and unsupported versions', async () => {
+    const storage = await createSqliteStorage();
+    const wrongFormat = {
+      ...createEmptyExport(),
+      format: 'unrelated-export'
+    };
+    const wrongFormatService = createImportService(storage, wrongFormat);
+
+    await expect(
+      wrongFormatService.previewImportFromJson()
+    ).resolves.toEqual({
+      ok: false,
+      errors: [
+        'The selected file is not a Thesis Investing local data export.'
+      ]
+    });
+    await wrongFormatService.close();
+
+    const versionStorage = await createSqliteStorage();
+    const unsupportedVersion = {
+      ...createEmptyExport(),
+      formatVersion: 2
+    };
+    const versionService = createImportService(
+      versionStorage,
+      unsupportedVersion
+    );
+
+    await expect(versionService.previewImportFromJson()).resolves.toEqual({
+      ok: false,
+      errors: ['Unsupported local data export format version: 2.']
+    });
+    await versionService.close();
+  });
+
+  it('rejects missing or invalid export data arrays', async () => {
+    const storage = await createSqliteStorage();
+    const invalidDocument = createEmptyExport() as unknown as Record<
+      string,
+      unknown
+    >;
+    invalidDocument.data = {
+      watchlistItems: 'not-an-array'
+    };
+    const service = createImportService(storage, invalidDocument);
+
+    const result = await service.previewImportFromJson();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors).toContain(
+        'Export data watchlistItems must be an array.'
+      );
+      expect(result.errors).toContain(
+        'Export data thesisNotes must be an array.'
+      );
+    }
+
+    await service.close();
+  });
+
+  it('returns a clean canceled import without reading or writing', async () => {
+    let readWasCalled = false;
+    const storage = await createSqliteStorage();
+    const service = createLocalDataStorageService({
+      createStorage: () => Promise.resolve(storage),
+      getUserDataPath: () => '/tmp/thesis-user-data',
+      readTextFile: async () => {
+        readWasCalled = true;
+        return '';
+      },
+      showOpenDialog: async () => ({ canceled: true, filePaths: [] })
+    });
+
+    await expect(service.previewImportFromJson()).resolves.toEqual({
+      ok: true,
+      value: { status: 'canceled' }
+    });
+    expect(readWasCalled).toBe(false);
+    expect(storage.repositories.watchlistItems.list()).toEqual([]);
+
+    await service.close();
+  });
+
+  it('requires the current preview ID before importing', async () => {
+    const storage = await createSqliteStorage();
+    const service = createImportService(storage, createPopulatedExport());
+
+    await service.previewImportFromJson();
+    await expect(service.importFromJson('wrong-preview')).resolves.toEqual({
+      ok: false,
+      errors: [
+        'Import preview is no longer available. Select the file again.'
+      ]
+    });
+    expect(storage.repositories.watchlistItems.list()).toEqual([]);
+
+    await service.close();
+  });
+
+  it('appends colliding records with remapped IDs and preserves originals', async () => {
+    const storage = await createSqliteStorage();
+    seedCollidingRecords(storage);
+    const service = createImportService(storage, createPopulatedExport());
+
+    await expect(service.previewImportFromJson()).resolves.toMatchObject({
+      ok: true,
+      value: {
+        status: 'ready',
+        preview: {
+          warnings: [
+            '5 imported record IDs already exist and will be remapped. Existing records will not be changed.'
+          ]
+        }
+      }
+    });
+    await service.importFromJson('preview-test');
+
+    expect(storage.repositories.thesisNotes.getById('thesis_msft')).toMatchObject(
+      { title: 'Existing thesis' }
+    );
+    expect(
+      storage.repositories.thesisNotes.getById('thesis_msft-import-1')
+    ).toMatchObject({ title: 'Microsoft thesis' });
+    expect(
+      storage.repositories.watchlistItems.getById('watchlist_msft-import-1')
+    ).toMatchObject({ thesisNoteId: 'thesis_msft-import-1' });
+    expect(
+      storage.repositories.mbsScoreSnapshots.getById('score_msft-import-1')
+    ).toMatchObject({ thesisId: 'thesis_msft-import-1' });
+    expect(storage.repositories.watchlistItems.list()).toHaveLength(2);
+    expect(storage.repositories.thesisNotes.list()).toHaveLength(2);
+    expect(storage.repositories.reminders.list()).toHaveLength(2);
+    expect(storage.repositories.portfolioRankerItems.list()).toHaveLength(2);
+    expect(storage.repositories.mbsScoreSnapshots.list()).toHaveLength(2);
+
+    await service.close();
+  });
 });
+
+const emptyCounts = {
+  mbsScoreSnapshots: 0,
+  portfolioRankerItems: 0,
+  reminders: 0,
+  thesisNotes: 0,
+  watchlistItems: 0
+};
+
+const populatedCounts = {
+  mbsScoreSnapshots: 1,
+  portfolioRankerItems: 1,
+  reminders: 1,
+  thesisNotes: 1,
+  watchlistItems: 1
+};
+
+function createEmptyExport(): LocalDataExportDocument {
+  return buildLocalDataExportDocument({
+    exportedAt: '2026-06-10T12:00:00.000Z',
+    mbsScoreSnapshots: [],
+    portfolioRankerItems: [],
+    reminders: [],
+    thesisNotes: [],
+    watchlistItems: []
+  });
+}
+
+function createPopulatedExport(): LocalDataExportDocument {
+  return buildLocalDataExportDocument({
+    exportedAt: '2026-06-10T12:00:00.000Z',
+    mbsScoreSnapshots: [
+      {
+        companyName: 'Microsoft',
+        completedCriteria: 7,
+        createdAt: '2026-06-09',
+        id: 'score_msft',
+        input: {
+          balanceSheet: 8,
+          businessQuality: 9,
+          growth: 7,
+          management: 8,
+          moat: 9,
+          risk: 7,
+          valuation: 6
+        },
+        maxScore: 100,
+        percentage: 77.1,
+        rating: 'strong',
+        score: 77.1,
+        thesisId: 'thesis_msft',
+        ticker: 'msft'
+      }
+    ],
+    portfolioRankerItems: [
+      {
+        companyName: 'Microsoft',
+        id: 'ranker_msft',
+        manualScore: 86,
+        notes: 'Durable local score.',
+        ticker: 'msft'
+      }
+    ],
+    reminders: [
+      {
+        dueDate: '2026-06-30',
+        id: 'reminder_msft',
+        title: 'Review Microsoft thesis',
+        type: 'thesis-review'
+      }
+    ],
+    thesisNotes: [
+      {
+        body: 'Local thesis body.',
+        id: 'thesis_msft',
+        status: 'active',
+        ticker: 'msft',
+        title: 'Microsoft thesis'
+      }
+    ],
+    watchlistItems: [
+      {
+        companyName: 'Microsoft',
+        id: 'watchlist_msft',
+        note: 'Local watchlist note.',
+        tags: ['software'],
+        thesisNoteId: 'thesis_msft',
+        ticker: 'msft'
+      }
+    ]
+  });
+}
+
+function createImportService(
+  storage: Awaited<ReturnType<typeof createSqliteStorage>>,
+  document: LocalDataExportDocument | Record<string, unknown> | string
+) {
+  return createLocalDataStorageService({
+    createImportPreviewId: () => 'preview-test',
+    createStorage: () => Promise.resolve(storage),
+    getUserDataPath: () => '/tmp/thesis-user-data',
+    readTextFile: async () =>
+      typeof document === 'string' ? document : JSON.stringify(document),
+    showOpenDialog: async () => ({
+      canceled: false,
+      filePaths: ['/tmp/thesis-export.json']
+    })
+  });
+}
+
+function seedCollidingRecords(
+  storage: Awaited<ReturnType<typeof createSqliteStorage>>
+): void {
+  storage.repositories.thesisNotes.create({
+    body: 'Existing body.',
+    id: 'thesis_msft',
+    status: 'active',
+    title: 'Existing thesis'
+  });
+  storage.repositories.watchlistItems.create({
+    id: 'watchlist_msft',
+    ticker: 'AAPL'
+  });
+  storage.repositories.reminders.create({
+    dueDate: '2026-07-01',
+    id: 'reminder_msft',
+    title: 'Existing reminder',
+    type: 'custom'
+  });
+  storage.repositories.portfolioRankerItems.create({
+    id: 'ranker_msft',
+    ticker: 'AAPL'
+  });
+  storage.repositories.mbsScoreSnapshots.create({
+    completedCriteria: 7,
+    id: 'score_msft',
+    input: {
+      balanceSheet: 5,
+      businessQuality: 5,
+      growth: 5,
+      management: 5,
+      moat: 5,
+      risk: 5,
+      valuation: 5
+    },
+    maxScore: 100,
+    percentage: 50,
+    rating: 'mixed',
+    score: 50
+  });
+}

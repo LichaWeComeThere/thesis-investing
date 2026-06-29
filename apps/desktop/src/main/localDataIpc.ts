@@ -7,6 +7,7 @@ export function registerLocalDataIpc(): void {
   const service = createSqliteLocalDataStorageService({
     appVersion: app.getVersion(),
     getUserDataPath: () => app.getPath('userData'),
+    showOpenDialog: (options) => dialog.showOpenDialog(options),
     showSaveDialog: (options) => dialog.showSaveDialog(options)
   });
 
@@ -14,6 +15,12 @@ export function registerLocalDataIpc(): void {
     service.exportToJson()
   );
   ipcMain.handle(localDataStorageChannels.get, () => service.get());
+  ipcMain.handle(localDataStorageChannels.importFromJson, (_event, previewId) =>
+    service.importFromJson(previewId)
+  );
+  ipcMain.handle(localDataStorageChannels.previewImportFromJson, () =>
+    service.previewImportFromJson()
+  );
 
   app.once('before-quit', () => {
     void service.close();

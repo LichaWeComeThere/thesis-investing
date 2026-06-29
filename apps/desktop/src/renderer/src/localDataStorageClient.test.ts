@@ -22,6 +22,24 @@ describe('localDataStorageClient', () => {
           storageAdapter: 'node:sqlite',
           userDataPath: 'C:\\Users\\Test'
         }
+      }),
+      importFromJson: async () => ({
+        ok: true,
+        value: {
+          status: 'completed',
+          imported: {
+            mbsScoreSnapshots: 0,
+            portfolioRankerItems: 0,
+            reminders: 0,
+            thesisNotes: 0,
+            watchlistItems: 0
+          },
+          warnings: []
+        }
+      }),
+      previewImportFromJson: async () => ({
+        ok: true,
+        value: { status: 'canceled' }
       })
     };
 

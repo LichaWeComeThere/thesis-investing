@@ -3496,7 +3496,8 @@ select:focus-visible {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.local-data-export-panel {
+.local-data-export-panel,
+.local-data-import-panel {
   background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border-muted);
   border-radius: var(--ti-radius-md);
@@ -3506,7 +3507,8 @@ select:focus-visible {
   padding: 16px;
 }
 
-.local-data-export-panel h2 {
+.local-data-export-panel h2,
+.local-data-import-panel h2 {
   color: var(--ti-color-text);
   font-size: var(--ti-font-size-sm);
   letter-spacing: 0;
@@ -3514,17 +3516,73 @@ select:focus-visible {
   text-transform: uppercase;
 }
 
-.local-data-export-actions {
+.local-data-export-actions,
+.local-data-import-actions {
   align-items: flex-start;
   display: grid;
   gap: 12px;
 }
 
-.local-data-export-actions code {
+.local-data-export-actions code,
+.local-data-import-actions code {
   color: var(--ti-color-text);
   font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono',
     monospace;
   overflow-wrap: anywhere;
+}
+
+.local-data-import-preview {
+  background: rgba(76, 141, 255, 0.08);
+  border: 1px solid rgba(76, 141, 255, 0.18);
+  border-radius: var(--ti-radius-md);
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.local-data-import-preview p,
+.local-data-import-warnings {
+  margin: 0;
+}
+
+.local-data-import-counts {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+}
+
+.local-data-import-counts div {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--ti-color-border-muted);
+  border-radius: var(--ti-radius-sm);
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+
+.local-data-import-counts dt {
+  color: var(--ti-color-text-muted);
+  font-size: var(--ti-font-size-sm);
+}
+
+.local-data-import-counts dd {
+  color: var(--ti-color-text);
+  font-size: var(--ti-font-size-lg);
+  font-weight: 700;
+  margin: 0;
+}
+
+.local-data-import-warnings {
+  display: grid;
+  gap: 6px;
+  padding-left: 20px;
+}
+
+.local-data-import-confirmation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .local-data-status-grid section {
@@ -4432,7 +4490,8 @@ select:focus-visible {
 }
 
 .local-data-status-grid section,
-.local-data-export-panel {
+.local-data-export-panel,
+.local-data-import-panel {
   border-radius: 16px;
   padding: 12px;
 }
@@ -4488,6 +4547,10 @@ select:focus-visible {
   .portfolio-ranker-row-header,
   .portfolio-ranker-entry-grid,
   .local-data-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .local-data-import-counts {
     grid-template-columns: 1fr;
   }
 

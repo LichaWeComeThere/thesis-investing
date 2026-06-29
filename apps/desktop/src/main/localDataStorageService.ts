@@ -1,21 +1,31 @@
+import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
 
 import type {
   LocalDataExportCounts,
   LocalDataExportDocument,
   LocalDataExportOutcome,
   LocalDataInfo,
+  LocalDataImportOutcome,
+  LocalDataImportPreviewOutcome,
   LocalDataStorageResult
 } from '../shared/localDataStorage';
+import {
+  LOCAL_DATA_EXPORT_FORMAT,
+  LOCAL_DATA_EXPORT_FORMAT_VERSION
+} from '../shared/localDataStorage';
 import { createSqliteStorage, type SqliteStorage } from '../storage/sqlite';
+import {
+  appendLocalDataImport,
+  getLocalDataImportWarnings,
+  parseLocalDataImportDocument
+} from './localDataImport';
 
 const DATABASE_FILENAME = 'thesis-investing.sqlite';
-const EXPORT_FORMAT = 'thesis-investing-local-data-export';
-const EXPORT_FORMAT_VERSION = 1;
 
-export type LocalDataExportStorageFactory = () => Promise<SqliteStorage>;
+export type LocalDataStorageFactory = () => Promise<SqliteStorage>;
 export type LocalDataSaveDialogResult = {
   canceled: boolean;
   filePath?: string;
@@ -26,6 +36,16 @@ export type LocalDataSaveDialog = (options: {
   properties: Array<'createDirectory' | 'showOverwriteConfirmation'>;
   title: string;
 }) => Promise<LocalDataSaveDialogResult>;
+export type LocalDataOpenDialogResult = {
+  canceled: boolean;
+  filePaths: string[];
+};
+export type LocalDataOpenDialog = (options: {
+  filters: Array<{ extensions: string[]; name: string }>;
+  properties: Array<'openFile'>;
+  title: string;
+}) => Promise<LocalDataOpenDialogResult>;
+export type LocalDataReadTextFile = (filePath: string) => Promise<string>;
 export type LocalDataWriteTextFile = (
   filePath: string,
   contents: string
@@ -33,11 +53,14 @@ export type LocalDataWriteTextFile = (
 
 export type LocalDataStorageServiceOptions = {
   appVersion?: string;
-  createStorage?: LocalDataExportStorageFactory;
+  createImportPreviewId?: () => string;
+  createStorage?: LocalDataStorageFactory;
   databaseFileExists?: (databasePath: string) => boolean;
   databaseFilename?: string;
   getUserDataPath: () => string;
   now?: () => Date;
+  readTextFile?: LocalDataReadTextFile;
+  showOpenDialog?: LocalDataOpenDialog;
   showSaveDialog?: LocalDataSaveDialog;
   storageAdapter?: LocalDataInfo['storageAdapter'];
   writeTextFile?: LocalDataWriteTextFile;
@@ -47,24 +70,37 @@ export type LocalDataStorageService = {
   close(): Promise<void>;
   exportToJson(): Promise<LocalDataStorageResult<LocalDataExportOutcome>>;
   get(): Promise<LocalDataStorageResult<LocalDataInfo>>;
+  importFromJson(
+    previewId: string
+  ): Promise<LocalDataStorageResult<LocalDataImportOutcome>>;
+  previewImportFromJson(): Promise<
+    LocalDataStorageResult<LocalDataImportPreviewOutcome>
+  >;
 };
 
 export function createLocalDataStorageService({
   appVersion,
+  createImportPreviewId = randomUUID,
   createStorage,
   databaseFileExists = existsSync,
   databaseFilename = DATABASE_FILENAME,
   getUserDataPath,
   now = () => new Date(),
+  readTextFile = (filePath) => readFile(filePath, 'utf8'),
+  showOpenDialog,
   showSaveDialog,
   storageAdapter = 'node:sqlite',
   writeTextFile = writeFile
 }: LocalDataStorageServiceOptions): LocalDataStorageService {
   let storagePromise: Promise<SqliteStorage> | null = null;
+  let pendingImport: {
+    document: LocalDataExportDocument;
+    previewId: string;
+  } | null = null;
 
-  async function getExportStorage(): Promise<SqliteStorage> {
+  async function getStorage(): Promise<SqliteStorage> {
     if (!createStorage) {
-      throw new Error('Local data export storage is unavailable.');
+      throw new Error('Local data storage is unavailable.');
     }
 
     storagePromise ??= createStorage().catch((error: unknown) => {
@@ -106,7 +142,7 @@ export function createLocalDataStorageService({
           return success({ status: 'canceled' });
         }
 
-        const storage = await getExportStorage();
+        const storage = await getStorage();
         const exportDocument = buildLocalDataExportDocument({
           appVersion,
           exportedAt,
@@ -153,6 +189,74 @@ export function createLocalDataStorageService({
             : 'Unknown local data status error.'
         ]);
       }
+    },
+    async importFromJson(previewId) {
+      return runStorageOperation(async () => {
+        if (!pendingImport || pendingImport.previewId !== previewId) {
+          return failure([
+            'Import preview is no longer available. Select the file again.'
+          ]);
+        }
+
+        const storage = await getStorage();
+        const warnings = getLocalDataImportWarnings(
+          storage,
+          pendingImport.document
+        );
+        const imported = appendLocalDataImport(storage, pendingImport.document);
+        pendingImport = null;
+
+        return success({
+          status: 'completed',
+          imported,
+          warnings
+        });
+      });
+    },
+    async previewImportFromJson() {
+      return runStorageOperation(async () => {
+        if (!showOpenDialog) {
+          return failure(['Local data import dialog is unavailable.']);
+        }
+
+        const openResult = await showOpenDialog({
+          filters: [{ extensions: ['json'], name: 'JSON files' }],
+          properties: ['openFile'],
+          title: 'Import local Thesis Investing data'
+        });
+
+        if (openResult.canceled || openResult.filePaths.length === 0) {
+          pendingImport = null;
+          return success({ status: 'canceled' });
+        }
+
+        const filePath = openResult.filePaths[0];
+        const parsed = parseLocalDataImportDocument(
+          await readTextFile(filePath)
+        );
+
+        if (!parsed.ok) {
+          pendingImport = null;
+          return parsed;
+        }
+
+        const storage = await getStorage();
+        const previewId = createImportPreviewId();
+        const warnings = getLocalDataImportWarnings(storage, parsed.value);
+        pendingImport = { document: parsed.value, previewId };
+
+        return success({
+          status: 'ready',
+          preview: {
+            counts: parsed.value.counts,
+            exportedAt: parsed.value.exportedAt,
+            fileName: basename(filePath),
+            formatVersion: parsed.value.formatVersion,
+            previewId,
+            warnings
+          }
+        });
+      });
     }
   };
 }
@@ -161,10 +265,15 @@ export function createSqliteLocalDataStorageService({
   appVersion,
   databaseFilename = DATABASE_FILENAME,
   getUserDataPath,
+  showOpenDialog,
   showSaveDialog
 }: Pick<
   LocalDataStorageServiceOptions,
-  'appVersion' | 'databaseFilename' | 'getUserDataPath' | 'showSaveDialog'
+  | 'appVersion'
+  | 'databaseFilename'
+  | 'getUserDataPath'
+  | 'showOpenDialog'
+  | 'showSaveDialog'
 >): LocalDataStorageService {
   return createLocalDataStorageService({
     appVersion,
@@ -175,6 +284,7 @@ export function createSqliteLocalDataStorageService({
     },
     databaseFilename,
     getUserDataPath,
+    showOpenDialog,
     showSaveDialog
   });
 }
@@ -204,8 +314,8 @@ export function buildLocalDataExportDocument({
   };
 
   return {
-    format: EXPORT_FORMAT,
-    formatVersion: EXPORT_FORMAT_VERSION,
+    format: LOCAL_DATA_EXPORT_FORMAT,
+    formatVersion: LOCAL_DATA_EXPORT_FORMAT_VERSION,
     appName: 'Thesis Investing',
     appVersion,
     exportedAt,
@@ -238,7 +348,7 @@ async function runStorageOperation<T>(
     return await operation();
   } catch (error) {
     return failure([
-      error instanceof Error ? error.message : 'Unknown local data export error.'
+      error instanceof Error ? error.message : 'Unknown local data operation error.'
     ]);
   }
 }
