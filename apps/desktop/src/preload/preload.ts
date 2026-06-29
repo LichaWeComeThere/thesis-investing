@@ -15,6 +15,8 @@ const thesisInvestingApi: ThesisInvestingApi = {
     get: () => ipcRenderer.invoke(dashboardSummariesStorageChannels.get)
   },
   localData: {
+    exportToJson: () =>
+      ipcRenderer.invoke(localDataStorageChannels.exportToJson),
     get: () => ipcRenderer.invoke(localDataStorageChannels.get)
   },
   mbsScoreSnapshots: {

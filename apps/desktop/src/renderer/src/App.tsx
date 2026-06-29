@@ -6,7 +6,10 @@ import {
   themeCssVariables
 } from '@thesis-investing/ui';
 import { useEffect, useMemo, useState } from 'react';
-import type { LocalDataInfo } from '../../shared/localDataStorage';
+import type {
+  LocalDataExportOutcome,
+  LocalDataInfo
+} from '../../shared/localDataStorage';
 import {
   hasCompletedOnboarding,
   markOnboardingCompleted,
@@ -431,12 +434,33 @@ function formatLocalDataDisplayLabel(label: string): string {
 }
 
 type SettingsAboutScreenProps = AppShellProps & {
+  initialLocalDataExportState?: LocalDataExportState;
   initialLocalDataErrors?: string[];
   initialLocalDataInfo?: LocalDataInfo;
   localDataClient?: LocalDataStorageClient | null;
 };
 
+type LocalDataExportState =
+  | {
+      status: 'idle';
+    }
+  | {
+      status: 'exporting';
+    }
+  | {
+      outcome: Extract<LocalDataExportOutcome, { status: 'completed' }>;
+      status: 'completed';
+    }
+  | {
+      status: 'canceled';
+    }
+  | {
+      errors: string[];
+      status: 'error';
+    };
+
 export function SettingsAboutScreen({
+  initialLocalDataExportState,
   initialLocalDataErrors,
   initialLocalDataInfo,
   localDataClient,
@@ -461,6 +485,10 @@ export function SettingsAboutScreen({
       initialLocalDataInfo === undefined &&
       initialLocalDataErrors === undefined
   );
+  const [localDataExportState, setLocalDataExportState] =
+    useState<LocalDataExportState>(
+      () => initialLocalDataExportState ?? { status: 'idle' }
+    );
 
   useEffect(() => {
     if (
@@ -519,6 +547,51 @@ export function SettingsAboutScreen({
   const persistedWorkflows =
     localDataInfo?.persistedWorkflows ?? persistedWorkflowFallback;
   const localOnlyItems = localDataInfo?.localOnlyItems ?? localOnlyItemFallback;
+  const isExportDisabled =
+    localDataExportState.status === 'exporting' || !resolvedLocalDataClient;
+
+  async function exportLocalData(): Promise<void> {
+    if (!resolvedLocalDataClient) {
+      setLocalDataExportState({
+        status: 'error',
+        errors: ['Local data export is available only inside the desktop app.']
+      });
+      return;
+    }
+
+    setLocalDataExportState({ status: 'exporting' });
+
+    try {
+      const result = await resolvedLocalDataClient.exportToJson();
+
+      if (!result.ok) {
+        setLocalDataExportState({
+          status: 'error',
+          errors: result.errors
+        });
+        return;
+      }
+
+      if (result.value.status === 'canceled') {
+        setLocalDataExportState({ status: 'canceled' });
+        return;
+      }
+
+      setLocalDataExportState({
+        status: 'completed',
+        outcome: result.value
+      });
+    } catch (error) {
+      setLocalDataExportState({
+        status: 'error',
+        errors: [
+          error instanceof Error
+            ? error.message
+            : 'Unable to export local data.'
+        ]
+      });
+    }
+  }
 
   return (
     <div className="settings-about-screen">
@@ -544,8 +617,9 @@ export function SettingsAboutScreen({
           <div className="local-data-status-panel">
             <p>
               This read-only view shows where local data lives and what is
-              currently persisted. It does not delete, reset, import, export,
-              back up, or restore data.
+              currently persisted. It can export a JSON copy for recordkeeping,
+              but it does not delete, reset, import, schedule backups, or
+              restore data.
             </p>
 
             <div className="local-data-status-grid">
@@ -620,6 +694,87 @@ export function SettingsAboutScreen({
                 </ul>
               </section>
             </div>
+
+            <section
+              aria-label="Local data export"
+              className="local-data-export-panel"
+            >
+              <div>
+                <h2>Export local data</h2>
+                <p>
+                  Save a JSON copy of persisted local records: Watchlist,
+                  Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS
+                  Score Snapshots. Static Theme Baskets, transient UI state,
+                  app logs, and raw SQLite files are not included.
+                </p>
+              </div>
+
+              <div className="local-data-export-actions">
+                <Button
+                  disabled={isExportDisabled}
+                  onClick={() => {
+                    void exportLocalData();
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  {localDataExportState.status === 'exporting'
+                    ? 'Exporting local data'
+                    : 'Export local data'}
+                </Button>
+
+                {localDataExportState.status === 'completed' ? (
+                  <div className="local-data-status-message" role="status">
+                    <strong>Local data export saved.</strong>
+                    <p>
+                      Saved to{' '}
+                      <code>{localDataExportState.outcome.filePath}</code>.
+                    </p>
+                    <p>
+                      Exported {localDataExportState.outcome.counts.watchlistItems}{' '}
+                      watchlist items,{' '}
+                      {localDataExportState.outcome.counts.thesisNotes} thesis
+                      notes, {localDataExportState.outcome.counts.reminders}{' '}
+                      reminders,{' '}
+                      {
+                        localDataExportState.outcome.counts
+                          .portfolioRankerItems
+                      }{' '}
+                      portfolio ranker inputs, and{' '}
+                      {
+                        localDataExportState.outcome.counts
+                          .mbsScoreSnapshots
+                      }{' '}
+                      MBS score snapshots.
+                    </p>
+                    <p>
+                      Export generated{' '}
+                      {formatLocalDataTimestamp(
+                        localDataExportState.outcome.exportedAt
+                      )}
+                      .
+                    </p>
+                  </div>
+                ) : null}
+
+                {localDataExportState.status === 'canceled' ? (
+                  <p className="local-data-status-message" role="status">
+                    Export canceled. No file was created.
+                  </p>
+                ) : null}
+
+                {localDataExportState.status === 'error' ? (
+                  <div className="local-data-status-error" role="alert">
+                    <strong>Unable to export local data.</strong>
+                    <ul>
+                      {localDataExportState.errors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </section>
           </div>
         </Card>
 

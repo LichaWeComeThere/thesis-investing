@@ -6,7 +6,9 @@ The goal is to give desktop workflows a repository layer for offline data while 
 
 Phase 1, Stages 18 through 23 complete the visible persistence rollout for Watchlist items, Thesis Notes, Reminders, Portfolio Ranker inputs, MBS Score Snapshots, and read-only Dashboard summary reads. Theme Baskets remain static local data, onboarding completion remains in renderer `localStorage`, and a small set of UI-only fields remain transient by design.
 
-Phase 2, Stage 1 adds a read-only local data management/status view in Settings/About. It shows where the app data folder and SQLite database live, whether the local database file exists, which workflows are persisted, and which data remains transient or static. It does not add import/export, backups, restore, cloud sync, or destructive data actions.
+Phase 2, Stage 1 adds a read-only local data management/status view in Settings/About. It shows where the app data folder and SQLite database live, whether the local database file exists, which workflows are persisted, and which data remains transient or static.
+
+Phase 2, Stage 2 adds a non-destructive local JSON export action in Settings/About. The export writes a user-selected `.json` file containing persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS Score Snapshots, plus metadata and counts. It does not add import, restore, reset/delete database actions, backup scheduling, cloud sync, or raw SQLite export.
 
 ## Package Boundary
 
@@ -17,7 +19,8 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - UI code should depend on narrow preload/IPC clients instead of raw SQLite details when persistence is wired into screens.
 - The Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and MBS Scorer screens read and write through the local persistence boundary.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
-- The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, but it does not expose file editing or destructive actions.
+- The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
+- The renderer can request a local JSON export through `window.thesisInvesting.localData.exportToJson()`, but the save dialog, SQLite reads, and file write happen in the Electron main process.
 
 ## SQLite Choice
 
@@ -81,7 +84,7 @@ This persistence layer does not add:
 - Dashboard write/delete behavior
 - Named portfolio ranker snapshots or history
 - Local data delete/reset actions
-- Import/export, database backups, or restore flows
+- Import, restore, backup scheduling, or raw database export flows
 - SQLite-backed local preferences
 - Live stock APIs
 - Cloud sync, Supabase, or auth

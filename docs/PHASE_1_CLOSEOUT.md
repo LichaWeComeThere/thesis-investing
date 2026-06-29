@@ -110,7 +110,8 @@ release checks, use the [release smoke test checklist](RELEASE_SMOKE_TEST.md).
 - The Windows app is packaged as an unsigned unpacked folder only.
 - No installer, code signing, or auto-update flow exists yet.
 - Data is local-only; there is no cloud sync, account system, or auth.
-- Import, export, database backups, and restore flows are not implemented yet.
+- Import, database backups, and restore flows were not implemented in Phase 1;
+  local JSON export begins in Phase 2.
 - First-run onboarding completion still uses renderer `localStorage`.
 - Selected sidebar route, selected row IDs, search text, filters, sort toggles,
   and in-progress form fields remain transient UI state.
@@ -133,19 +134,20 @@ Phase 1 does not include:
 - buy, sell, hold, sizing, ranking, allocation, or model-portfolio advice
 - background reminders, OS notifications, or calendar integrations
 - app-wide preferences stored in SQLite
-- local import/export, backups, or restore flows
+- local import, backups, restore flows, or broader data movement tooling
 
-## Recommended Phase 2 Starting Point
+## Recommended Phase 2 Path
 
-Phase 2 starts with a read-only local data management/status view in
-Settings/About so users can see where local data lives and what is persisted
-before any import/export, backup, sync, or live data work begins.
+Phase 2 starts with read-only local data management/status in Settings/About so
+users can see where local data lives and what is persisted before broader data
+movement, sync, or live data work begins. The next local data step is a
+non-destructive JSON export of persisted Phase 1 records.
 
 After that, continue local data safety and release hardening before adding any
 external data source:
 
 - database backup and restore guidance
-- local export/import for persisted Phase 1 records
+- local import for persisted Phase 1 records
 - SQLite-backed local preferences, including onboarding completion if desired
 - a release artifact review for installer, icon, metadata, signing, and
   auto-update decisions

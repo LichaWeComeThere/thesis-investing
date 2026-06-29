@@ -40,7 +40,8 @@ Build a Windows-first desktop MVP that works offline with manual user input and 
 Start with local data management visibility and release hardening before adding live market data or optional sync. Live data should be isolated behind provider interfaces, and sync should remain optional.
 
 - Stage 1: Local Data Management View
-- Future: local import/export and backup/restore planning
+- Stage 2: Local Data Export
+- Future: local import, restore, and backup/restore planning
 - Future: optional live market data behind provider interfaces
 - Future: optional sync, auth, or cloud features only after explicit staging
 
