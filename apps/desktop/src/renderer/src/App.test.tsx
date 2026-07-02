@@ -45,7 +45,9 @@ describe('SettingsAboutScreen', () => {
     );
 
     expect(html).toContain('Local data status');
-    expect(html).toContain('This read-only view shows where local data lives');
+    expect(html).toContain(
+      'Your saved Thesis Investing records are stored locally on this computer'
+    );
     expect(html).toContain('Watchlist');
     expect(html).toContain('Thesis Notes');
     expect(html).toContain('Reminders');
@@ -59,10 +61,14 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('Created on this device');
     expect(html).toContain('node:sqlite');
     expect(html).toContain('Export local data');
-    expect(html).toContain('Save a JSON copy of persisted local records');
+    expect(html).toContain('Create a JSON backup of persisted local records');
     expect(html).toContain('Import local data');
-    expect(html).toContain('Select a JSON file created by Thesis Investing');
+    expect(html).toContain('Choose a JSON backup created by Thesis Investing');
+    expect(html).toContain('no records are written during preview');
     expect(html).toContain('never overwrite or delete existing local data');
+    expect(html).toContain('Backup guidance');
+    expect(html).toContain('does not upload them or provide cloud backup');
+    expect(html).toContain('another computer or local profile');
   });
 
   it('renders a non-crashing local data status error', () => {
@@ -102,8 +108,11 @@ describe('SettingsAboutScreen', () => {
       />
     );
 
-    expect(html).toContain('Local data export saved.');
+    expect(html).toContain('Backup JSON saved.');
     expect(html).toContain('thesis-export.json');
+    expect(html).toContain(
+      'Your records in Thesis Investing were not changed.'
+    );
     expect(html).toContain('Exported 1 watchlist items');
   });
 
@@ -126,8 +135,13 @@ describe('SettingsAboutScreen', () => {
       />
     );
 
-    expect(canceledHtml).toContain('Export canceled. No file was created.');
+    expect(canceledHtml).toContain(
+      'Export canceled. Nothing was changed and no backup file was created.'
+    );
     expect(errorHtml).toContain('Unable to export local data.');
+    expect(errorHtml).toContain(
+      'The backup file could not be saved. Choose another location and try again.'
+    );
     expect(errorHtml).toContain('Unable to write export file.');
   });
 
@@ -158,13 +172,15 @@ describe('SettingsAboutScreen', () => {
       />
     );
 
-    expect(html).toContain('Import preview ready.');
+    expect(html).toContain(
+      'Import preview ready. No records have been written.'
+    );
     expect(html).toContain('thesis-export.json');
     expect(html).toContain('Watchlist items');
     expect(html).toContain('MBS Score Snapshots');
     expect(html).toContain('Confirm import');
     expect(html).toContain('Cancel import');
-    expect(html).toContain('Existing records remain unchanged');
+    expect(html).toContain('Existing records will not be overwritten');
   });
 
   it('renders import success, cancel, and error states without crashing', () => {
@@ -206,12 +222,16 @@ describe('SettingsAboutScreen', () => {
       />
     );
 
-    expect(successHtml).toContain('Local data import complete.');
+    expect(successHtml).toContain('Backup import complete.');
+    expect(successHtml).toContain('Existing records were not overwritten.');
     expect(successHtml).toContain('Imported 1 watchlist items');
     expect(canceledHtml).toContain(
-      'Import canceled. No records were changed.'
+      'Import canceled. No records were added or changed.'
     );
     expect(errorHtml).toContain('Unable to import local data.');
+    expect(errorHtml).toContain(
+      'Choose a JSON backup created by Thesis Investing and try again.'
+    );
     expect(errorHtml).toContain('The selected file is not valid JSON.');
   });
 });

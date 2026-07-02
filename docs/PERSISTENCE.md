@@ -12,6 +12,8 @@ Phase 2, Stage 2 adds a non-destructive local JSON export action in Settings/Abo
 
 Phase 2, Stage 3 adds a validated local JSON import for Stage 2 export files. File selection produces a read-only preview, and a separate confirmation appends records through existing repositories. ID collisions are remapped so existing records are never overwritten. Import does not replace the database, delete records, or act as a destructive restore.
 
+Phase 2, Stage 4 hardens the user-facing safety guidance around local data transfer. Settings/About now explains that exports are manual JSON backups stored wherever the user chooses, import accepts Thesis Investing exports only, previews do not write workflow records, and confirmed imports append without overwriting or deleting existing records. This stage adds no new data actions, schema changes, or storage APIs.
+
 ## Package Boundary
 
 Local persistence currently lives in `apps/desktop/src/storage`.
@@ -24,6 +26,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
 - The renderer can request a local JSON export through `window.thesisInvesting.localData.exportToJson()`, but the save dialog, SQLite reads, and file write happen in the Electron main process.
 - The renderer can request import preview and confirmation through `window.thesisInvesting.localData.previewImportFromJson()` and `window.thesisInvesting.localData.importFromJson(previewId)`. Electron main owns file reading, parsing, validation, pending preview data, and transactional repository writes.
+- Settings/About provides backup guidance and status messaging without bypassing or widening these existing preload APIs.
 
 ## SQLite Choice
 
