@@ -22,6 +22,7 @@ import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
 import { RemindersScreen } from './RemindersScreen';
 import { ThemeBasketsScreen } from './ThemeBasketsScreen';
+import { ThesisBoardScreen } from './ThesisBoardScreen';
 import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 import { WatchlistScreen } from './WatchlistScreen';
 import {
@@ -47,6 +48,7 @@ type NavigationView = {
 type NavigationIconId =
   | 'dashboard'
   | 'mbs-scorer'
+  | 'thesis-board'
   | 'portfolio-ranker'
   | 'thesis-monitor'
   | 'watchlist'
@@ -70,6 +72,14 @@ const navigationViews: NavigationView[] = [
     icon: 'mbs-scorer',
     description:
       'Score business quality, moat, management, balance sheet, growth, valuation, and risk.'
+  },
+  {
+    id: 'thesis-board',
+    title: 'Thesis Board',
+    navLabel: 'Thesis Board',
+    icon: 'thesis-board',
+    description:
+      'Combine ranked investment ideas, thesis details, and MBS scoring context in one workspace.'
   },
   {
     id: 'portfolio-ranker',
@@ -152,6 +162,15 @@ function NavigationIcon({ icon }: { icon: NavigationIconId }): JSX.Element {
           <path d="M8 12h4" />
           <path d="m15 13 1.5 1.5L20 11" />
           <rect height="18" rx="3" width="16" x="4" y="3" />
+        </svg>
+      );
+    case 'thesis-board':
+      return (
+        <svg {...navIconProps}>
+          <path d="M4 6h16" />
+          <path d="M4 12h10" />
+          <path d="M4 18h7" />
+          <path d="m15 17 2 2 4-5" />
         </svg>
       );
     case 'portfolio-ranker':
@@ -352,6 +371,8 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
             onUpdateThesisScore={updateThesisScore}
             theses={theses}
           />
+        ) : selectedView.id === 'thesis-board' ? (
+          <ThesisBoardScreen theses={theses} />
         ) : selectedView.id === 'portfolio-ranker' ? (
           <PortfolioRankerScreen
             onOpenWorkspace={setSelectedViewId}
