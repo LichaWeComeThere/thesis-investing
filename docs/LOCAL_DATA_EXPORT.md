@@ -7,6 +7,18 @@ Electron main/storage layer, asks the user where to save a `.json` file, and
 writes a structured copy for recordkeeping. It does not import, restore, reset,
 delete, or modify local records.
 
+## Export A Backup
+
+1. Open **Settings/About** and find **Local data status**.
+2. Select **Export local data**.
+3. Choose a trusted location and file name for the `.json` backup.
+4. After the success message appears, confirm the saved path and record counts.
+
+Exporting copies the records listed below. It does not move, overwrite, or
+delete the records stored by Thesis Investing on this computer. Keep the JSON
+file somewhere you trust and protect it as you would other private research
+notes. Thesis Investing does not upload the backup or provide cloud backup.
+
 ## Included Data
 
 The export includes user-entered persisted records from:
@@ -88,8 +100,10 @@ preview and explicit confirmation. Import is not a destructive restore or merge:
 it does not replace the database, overwrite records, or delete existing data.
 See [Local Data Import](LOCAL_DATA_IMPORT.md) for validation and collision rules.
 
-Users should treat exported files as private research data and store them in a
-location they trust.
+Export is manual. This stage does not schedule backups, encrypt export files,
+upload them, or manage backup retention. Export files can be used to move saved
+records to another computer or local profile through the preview-first import
+flow.
 
 Thesis Investing remains educational software only. The export does not add live
 stock APIs, AI analyst behavior, brokerage or trading execution, cloud sync, or

@@ -762,10 +762,11 @@ export function SettingsAboutScreen({
         <Card title="Local data status">
           <div className="local-data-status-panel">
             <p>
-              This read-only view shows where local data lives and what is
-              currently persisted. It can export a JSON copy and append records
-              from a validated export after confirmation, but it does not
-              delete, reset, overwrite, schedule backups, or restore data.
+              Your saved Thesis Investing records are stored locally on this
+              computer. Export creates a JSON backup, while import accepts only
+              Thesis Investing export files, previews them first, and appends
+              records only after confirmation. Existing records are never
+              overwritten or deleted.
             </p>
 
             <div className="local-data-status-grid">
@@ -848,10 +849,12 @@ export function SettingsAboutScreen({
               <div>
                 <h2>Export local data</h2>
                 <p>
-                  Save a JSON copy of persisted local records: Watchlist,
+                  Create a JSON backup of persisted local records: Watchlist,
                   Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS
-                  Score Snapshots. Static Theme Baskets, transient UI state,
-                  app logs, and raw SQLite files are not included.
+                  Score Snapshots. Choose where to save the file. Exporting
+                  copies these records without changing them in the app.
+                  Static Theme Baskets, transient UI state, app logs, and raw
+                  SQLite files are not included.
                 </p>
               </div>
 
@@ -871,10 +874,11 @@ export function SettingsAboutScreen({
 
                 {localDataExportState.status === 'completed' ? (
                   <div className="local-data-status-message" role="status">
-                    <strong>Local data export saved.</strong>
+                    <strong>Backup JSON saved.</strong>
                     <p>
-                      Saved to{' '}
+                      A copy of your persisted local records was saved to{' '}
                       <code>{localDataExportState.outcome.filePath}</code>.
+                      Your records in Thesis Investing were not changed.
                     </p>
                     <p>
                       Exported {localDataExportState.outcome.counts.watchlistItems}{' '}
@@ -905,13 +909,18 @@ export function SettingsAboutScreen({
 
                 {localDataExportState.status === 'canceled' ? (
                   <p className="local-data-status-message" role="status">
-                    Export canceled. No file was created.
+                    Export canceled. Nothing was changed and no backup file was
+                    created.
                   </p>
                 ) : null}
 
                 {localDataExportState.status === 'error' ? (
                   <div className="local-data-status-error" role="alert">
                     <strong>Unable to export local data.</strong>
+                    <p>
+                      The backup file could not be saved. Choose another
+                      location and try again.
+                    </p>
                     <ul>
                       {localDataExportState.errors.map((error) => (
                         <li key={error}>{error}</li>
@@ -929,10 +938,11 @@ export function SettingsAboutScreen({
               <div>
                 <h2>Import local data</h2>
                 <p>
-                  Select a JSON file created by Thesis Investing. The app checks
-                  the format and shows record counts before anything is written.
-                  Confirmed imports append records and never overwrite or delete
-                  existing local data.
+                  Choose a JSON backup created by Thesis Investing. Other JSON
+                  files are rejected. The app validates the file and previews
+                  record counts before confirmation; no records are written
+                  during preview. Confirmed imports append new records and never
+                  overwrite or delete existing local data.
                 </p>
               </div>
 
@@ -954,7 +964,7 @@ export function SettingsAboutScreen({
 
                 {activeImportPreview ? (
                   <div className="local-data-import-preview" role="status">
-                    <strong>Import preview ready.</strong>
+                    <strong>Import preview ready. No records have been written.</strong>
                     <p>
                       <code>{activeImportPreview.fileName}</code> uses export
                       format version {activeImportPreview.formatVersion} and was
@@ -993,8 +1003,9 @@ export function SettingsAboutScreen({
                       </ul>
                     ) : null}
                     <p>
-                      Importing is append-only. Existing records remain
-                      unchanged, and colliding IDs are assigned new local IDs.
+                      Review the counts above, then select Confirm import to add
+                      these records. Existing records will not be overwritten,
+                      and colliding IDs will be assigned new local IDs.
                     </p>
                     <div className="local-data-import-confirmation">
                       <Button
@@ -1024,7 +1035,11 @@ export function SettingsAboutScreen({
 
                 {localDataImportState.status === 'completed' ? (
                   <div className="local-data-status-message" role="status">
-                    <strong>Local data import complete.</strong>
+                    <strong>Backup import complete.</strong>
+                    <p>
+                      The confirmed records were added to this local profile.
+                      Existing records were not overwritten.
+                    </p>
                     <p>
                       Imported {localDataImportState.outcome.imported.watchlistItems}{' '}
                       watchlist items,{' '}
@@ -1051,13 +1066,17 @@ export function SettingsAboutScreen({
 
                 {localDataImportState.status === 'canceled' ? (
                   <p className="local-data-status-message" role="status">
-                    Import canceled. No records were changed.
+                    Import canceled. No records were added or changed.
                   </p>
                 ) : null}
 
                 {localDataImportState.status === 'error' ? (
                   <div className="local-data-status-error" role="alert">
                     <strong>Unable to import local data.</strong>
+                    <p>
+                      The selected file could not be prepared for import. Choose
+                      a JSON backup created by Thesis Investing and try again.
+                    </p>
                     <ul>
                       {localDataImportState.errors.map((error) => (
                         <li key={error}>{error}</li>
@@ -1065,6 +1084,29 @@ export function SettingsAboutScreen({
                     </ul>
                   </div>
                 ) : null}
+              </div>
+            </section>
+
+            <section
+              aria-label="Backup guidance"
+              className="local-data-backup-guidance"
+            >
+              <div>
+                <h2>Backup guidance</h2>
+                <ul>
+                  <li>
+                    Use Export local data to create a JSON backup of your saved
+                    records.
+                  </li>
+                  <li>
+                    Keep backup files in a location you trust. Thesis Investing
+                    does not upload them or provide cloud backup.
+                  </li>
+                  <li>
+                    On another computer or local profile, use Import local data
+                    to preview and append records from a Thesis Investing backup.
+                  </li>
+                </ul>
               </div>
             </section>
           </div>
