@@ -180,9 +180,9 @@ export function ThesisBoardScreen({
   return (
     <div className="thesis-board-screen">
       <PageHeader
-        badge={<Badge variant="accent">Prototype</Badge>}
-        description="Review ranked investment ideas, thesis details, and editable local MBS score inputs in one workspace."
-        eyebrow="Merged workflow"
+        badge={<Badge variant="accent">Thesis workflow</Badge>}
+        description="Review, rank, and update investment ideas from one focused workspace."
+        eyebrow="Investment workspace"
         title="Thesis Board"
       />
 

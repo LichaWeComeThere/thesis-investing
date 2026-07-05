@@ -8,7 +8,7 @@
   text-rendering: optimizeLegibility;
 }
 
-/* Thesis Board prototype: local-only merged workflow workspace. */
+/* Thesis Board workspace: local-only investment workflow. */
 .thesis-board-screen {
   display: flex;
   flex-direction: column;

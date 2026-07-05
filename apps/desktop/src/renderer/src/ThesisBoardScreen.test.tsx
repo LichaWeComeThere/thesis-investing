@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { ThesisBoardScreen } from './ThesisBoardScreen';
 
 describe('ThesisBoardScreen', () => {
-  it('renders the merged workflow prototype with ranked theses and MBS fields', () => {
+  it('renders the investment workspace with ranked theses and MBS fields', () => {
     const html = renderToStaticMarkup(<ThesisBoardScreen />);
 
     expect(html).toContain('Thesis Board');
-    expect(html).toContain('Review ranked investment ideas');
+    expect(html).toContain(
+      'Review, rank, and update investment ideas from one focused workspace.'
+    );
     expect(html).toContain('Ranked theses');
     expect(html).toContain('NVDA');
     expect(html).toContain('NVIDIA');
