@@ -10,6 +10,10 @@ describe('ThesisBoardScreen', () => {
     expect(html).toContain(
       'Review, rank, and update investment ideas from one focused workspace.'
     );
+    expect(html).toContain(
+      'Prototype workspace - this board currently uses local mock data.'
+    );
+    expect(html).toContain('Changes here are not saved yet.');
     expect(html).toContain('Ranked theses');
     expect(html).toContain('NVDA');
     expect(html).toContain('NVIDIA');

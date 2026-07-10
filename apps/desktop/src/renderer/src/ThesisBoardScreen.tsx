@@ -186,6 +186,11 @@ export function ThesisBoardScreen({
         title="Thesis Board"
       />
 
+      <p className="thesis-board-prototype-note" role="note">
+        Prototype workspace - this board currently uses local mock data. Changes
+        here are not saved yet.
+      </p>
+
       <div className="thesis-board-layout">
         <Card className="thesis-board-rank-card" title="Ranked theses">
           <div className="thesis-board-panel-kicker">
