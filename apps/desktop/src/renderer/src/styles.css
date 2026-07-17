@@ -420,6 +420,20 @@
   max-width: 1680px;
 }
 
+.thesis-board-prototype-note {
+  align-items: center;
+  background: rgba(72, 224, 204, 0.08);
+  border: 1px solid rgba(72, 224, 204, 0.22);
+  border-radius: 8px;
+  color: var(--ti-color-text-muted);
+  display: flex;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 920px;
+  padding: 10px 12px;
+}
+
 .thesis-board-layout {
   gap: 18px;
   grid-template-columns: minmax(208px, 0.54fr) minmax(620px, 1.9fr) minmax(
