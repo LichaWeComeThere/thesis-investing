@@ -19,6 +19,13 @@ describe('localDataStorageClient', () => {
           generatedAt: '2026-06-10T12:00:00.000Z',
           localOnlyItems: [],
           persistedWorkflows: [],
+          recordCounts: {
+            mbsScoreSnapshots: 0,
+            portfolioRankerItems: 0,
+            reminders: 0,
+            thesisNotes: 0,
+            watchlistItems: 0
+          },
           storageAdapter: 'node:sqlite',
           userDataPath: 'C:\\Users\\Test'
         }
@@ -40,6 +47,13 @@ describe('localDataStorageClient', () => {
       previewImportFromJson: async () => ({
         ok: true,
         value: { status: 'canceled' }
+      }),
+      openDataFolder: async () => ({
+        ok: true,
+        value: {
+          folderPath: 'C:\\Users\\Test',
+          status: 'opened'
+        }
       })
     };
 
@@ -53,6 +67,13 @@ describe('localDataStorageClient', () => {
     });
 
     expect(getDefaultLocalDataStorageClient()).toBe(localDataApi);
+    expect(Object.keys(localDataApi).sort()).toEqual([
+      'exportToJson',
+      'get',
+      'importFromJson',
+      'openDataFolder',
+      'previewImportFromJson'
+    ]);
 
     Reflect.deleteProperty(globalThis, 'window');
   });

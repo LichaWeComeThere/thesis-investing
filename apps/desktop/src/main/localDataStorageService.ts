@@ -9,6 +9,7 @@ import type {
   LocalDataExportOutcome,
   LocalDataInfo,
   LocalDataImportOutcome,
+  LocalDataOpenFolderOutcome,
   LocalDataImportPreviewOutcome,
   LocalDataStorageResult
 } from '../shared/localDataStorage';
@@ -50,6 +51,7 @@ export type LocalDataWriteTextFile = (
   filePath: string,
   contents: string
 ) => Promise<void>;
+export type LocalDataOpenPath = (path: string) => Promise<string>;
 
 export type LocalDataStorageServiceOptions = {
   appVersion?: string;
@@ -59,6 +61,7 @@ export type LocalDataStorageServiceOptions = {
   databaseFilename?: string;
   getUserDataPath: () => string;
   now?: () => Date;
+  openPath?: LocalDataOpenPath;
   readTextFile?: LocalDataReadTextFile;
   showOpenDialog?: LocalDataOpenDialog;
   showSaveDialog?: LocalDataSaveDialog;
@@ -73,6 +76,7 @@ export type LocalDataStorageService = {
   importFromJson(
     previewId: string
   ): Promise<LocalDataStorageResult<LocalDataImportOutcome>>;
+  openDataFolder(): Promise<LocalDataStorageResult<LocalDataOpenFolderOutcome>>;
   previewImportFromJson(): Promise<
     LocalDataStorageResult<LocalDataImportPreviewOutcome>
   >;
@@ -86,6 +90,7 @@ export function createLocalDataStorageService({
   databaseFilename = DATABASE_FILENAME,
   getUserDataPath,
   now = () => new Date(),
+  openPath,
   readTextFile = (filePath) => readFile(filePath, 'utf8'),
   showOpenDialog,
   showSaveDialog,
@@ -172,13 +177,18 @@ export function createLocalDataStorageService({
       try {
         const userDataPath = getUserDataPath();
         const databasePath = join(userDataPath, databaseFilename);
+        const databaseExists = databaseFileExists(databasePath);
+        const recordCounts = databaseExists
+          ? await getLocalDataRecordCounts(getStorage)
+          : createEmptyLocalDataCounts();
 
         return success({
-          databaseFileExists: databaseFileExists(databasePath),
+          databaseFileExists: databaseExists,
           databasePath,
           generatedAt: now().toISOString(),
           localOnlyItems: getLocalOnlyItems(),
           persistedWorkflows: getPersistedWorkflows(),
+          recordCounts,
           storageAdapter,
           userDataPath
         });
@@ -210,6 +220,27 @@ export function createLocalDataStorageService({
           status: 'completed',
           imported,
           warnings
+        });
+      });
+    },
+    async openDataFolder() {
+      return runStorageOperation(async () => {
+        if (!openPath) {
+          return failure(['Opening the local data folder is unavailable.']);
+        }
+
+        const userDataPath = getUserDataPath();
+        const openError = await openPath(userDataPath);
+
+        if (openError) {
+          return failure([
+            `Unable to open the local data folder: ${openError}`
+          ]);
+        }
+
+        return success({
+          folderPath: userDataPath,
+          status: 'opened'
         });
       });
     },
@@ -265,6 +296,7 @@ export function createSqliteLocalDataStorageService({
   appVersion,
   databaseFilename = DATABASE_FILENAME,
   getUserDataPath,
+  openPath,
   showOpenDialog,
   showSaveDialog
 }: Pick<
@@ -272,6 +304,7 @@ export function createSqliteLocalDataStorageService({
   | 'appVersion'
   | 'databaseFilename'
   | 'getUserDataPath'
+  | 'openPath'
   | 'showOpenDialog'
   | 'showSaveDialog'
 >): LocalDataStorageService {
@@ -284,6 +317,7 @@ export function createSqliteLocalDataStorageService({
     },
     databaseFilename,
     getUserDataPath,
+    openPath,
     showOpenDialog,
     showSaveDialog
   });
@@ -305,13 +339,13 @@ export function buildLocalDataExportDocument({
   thesisNotes,
   watchlistItems
 }: LocalDataExportDocumentInput): LocalDataExportDocument {
-  const counts: LocalDataExportCounts = {
-    watchlistItems: watchlistItems.length,
-    thesisNotes: thesisNotes.length,
-    reminders: reminders.length,
-    portfolioRankerItems: portfolioRankerItems.length,
-    mbsScoreSnapshots: mbsScoreSnapshots.length
-  };
+  const counts = createLocalDataCounts({
+    mbsScoreSnapshots,
+    portfolioRankerItems,
+    reminders,
+    thesisNotes,
+    watchlistItems
+  });
 
   return {
     format: LOCAL_DATA_EXPORT_FORMAT,
@@ -339,6 +373,46 @@ function createDefaultExportFilename(exportedAt: string): string {
     .replace('Z', '');
 
   return `thesis-investing-local-data-export-${timestamp}.json`;
+}
+
+async function getLocalDataRecordCounts(
+  getStorage: () => Promise<SqliteStorage>
+): Promise<LocalDataExportCounts> {
+  const storage = await getStorage();
+
+  return createLocalDataCounts({
+    mbsScoreSnapshots: storage.repositories.mbsScoreSnapshots.list(),
+    portfolioRankerItems: storage.repositories.portfolioRankerItems.list(),
+    reminders: storage.repositories.reminders.list(),
+    thesisNotes: storage.repositories.thesisNotes.list(),
+    watchlistItems: storage.repositories.watchlistItems.list()
+  });
+}
+
+function createLocalDataCounts({
+  mbsScoreSnapshots,
+  portfolioRankerItems,
+  reminders,
+  thesisNotes,
+  watchlistItems
+}: LocalDataExportDocument['data']): LocalDataExportCounts {
+  return {
+    watchlistItems: watchlistItems.length,
+    thesisNotes: thesisNotes.length,
+    reminders: reminders.length,
+    portfolioRankerItems: portfolioRankerItems.length,
+    mbsScoreSnapshots: mbsScoreSnapshots.length
+  };
+}
+
+function createEmptyLocalDataCounts(): LocalDataExportCounts {
+  return {
+    mbsScoreSnapshots: 0,
+    portfolioRankerItems: 0,
+    reminders: 0,
+    thesisNotes: 0,
+    watchlistItems: 0
+  };
 }
 
 async function runStorageOperation<T>(

@@ -21,8 +21,27 @@ const localDataInfo = {
     'MBS Score Snapshots',
     'Dashboard summaries read persisted local data'
   ],
+  recordCounts: {
+    mbsScoreSnapshots: 5,
+    portfolioRankerItems: 4,
+    reminders: 3,
+    thesisNotes: 2,
+    watchlistItems: 1
+  },
   storageAdapter: 'node:sqlite' as const,
   userDataPath: 'C:\\Users\\Test\\AppData\\Roaming\\Thesis Investing'
+};
+
+const zeroLocalDataInfo = {
+  ...localDataInfo,
+  databaseFileExists: false,
+  recordCounts: {
+    mbsScoreSnapshots: 0,
+    portfolioRankerItems: 0,
+    reminders: 0,
+    thesisNotes: 0,
+    watchlistItems: 0
+  }
 };
 
 describe('App onboarding', () => {
@@ -44,7 +63,7 @@ describe('SettingsAboutScreen', () => {
       />
     );
 
-    expect(html).toContain('Local data status');
+    expect(html).toContain('Local data management');
     expect(html).toContain(
       'Your saved Thesis Investing records are stored locally on this computer'
     );
@@ -60,6 +79,14 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('thesis-investing.sqlite');
     expect(html).toContain('Created on this device');
     expect(html).toContain('node:sqlite');
+    expect(html).toContain('Refresh status');
+    expect(html).toContain('Copy app data folder path');
+    expect(html).toContain('Copy SQLite database path');
+    expect(html).toContain('Open data folder');
+    expect(html).toContain('Persisted record counts');
+    expect(html).toContain('Watchlist items');
+    expect(html).toContain('Portfolio Ranker Inputs');
+    expect(html).toContain('Theme Library content and Thesis Board prototype data');
     expect(html).toContain('Export local data');
     expect(html).toContain('Create a JSON backup of persisted local records');
     expect(html).toContain('Import local data');
@@ -69,6 +96,21 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('Backup guidance');
     expect(html).toContain('does not upload them or provide cloud backup');
     expect(html).toContain('another computer or local profile');
+    expect(html).toContain('Local data troubleshooting');
+    expect(html).toContain('Avoid manually editing the database file');
+  });
+
+  it('renders zero local record counts clearly', () => {
+    const html = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataInfo={zeroLocalDataInfo}
+        onResetOnboarding={() => undefined}
+      />
+    );
+
+    expect(html).toContain('Not created yet');
+    expect(html).toContain('Persisted record counts');
+    expect(html).toContain('<dd>0</dd>');
   });
 
   it('renders a non-crashing local data status error', () => {
@@ -114,6 +156,59 @@ describe('SettingsAboutScreen', () => {
       'Your records in Thesis Investing were not changed.'
     );
     expect(html).toContain('Exported 1 watchlist items');
+  });
+
+  it('renders local data maintenance success states', () => {
+    const refreshedHtml = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataInfo={localDataInfo}
+        initialLocalDataMaintenanceState={{
+          generatedAt: '2026-06-10T12:30:00.000Z',
+          status: 'refreshed'
+        }}
+        onResetOnboarding={() => undefined}
+      />
+    );
+    const copiedHtml = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataInfo={localDataInfo}
+        initialLocalDataMaintenanceState={{
+          label: 'App data folder path',
+          status: 'copied'
+        }}
+        onResetOnboarding={() => undefined}
+      />
+    );
+    const folderOpenedHtml = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataInfo={localDataInfo}
+        initialLocalDataMaintenanceState={{
+          folderPath: 'C:\\Users\\Test\\AppData\\Roaming\\Thesis Investing',
+          status: 'folder-opened'
+        }}
+        onResetOnboarding={() => undefined}
+      />
+    );
+
+    expect(refreshedHtml).toContain('Status refreshed');
+    expect(copiedHtml).toContain('App data folder path copied.');
+    expect(folderOpenedHtml).toContain('Opened local data folder');
+  });
+
+  it('renders local data maintenance error states without crashing', () => {
+    const html = renderToStaticMarkup(
+      <SettingsAboutScreen
+        initialLocalDataInfo={localDataInfo}
+        initialLocalDataMaintenanceState={{
+          status: 'error',
+          errors: ['Clipboard access is unavailable in this window.']
+        }}
+        onResetOnboarding={() => undefined}
+      />
+    );
+
+    expect(html).toContain('Local data maintenance action failed.');
+    expect(html).toContain('Clipboard access is unavailable in this window.');
   });
 
   it('renders local data export cancel and error states without crashing', () => {

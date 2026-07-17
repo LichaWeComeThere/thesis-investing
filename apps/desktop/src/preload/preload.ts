@@ -20,6 +20,8 @@ const thesisInvestingApi: ThesisInvestingApi = {
     get: () => ipcRenderer.invoke(localDataStorageChannels.get),
     importFromJson: (previewId) =>
       ipcRenderer.invoke(localDataStorageChannels.importFromJson, previewId),
+    openDataFolder: () =>
+      ipcRenderer.invoke(localDataStorageChannels.openDataFolder),
     previewImportFromJson: () =>
       ipcRenderer.invoke(localDataStorageChannels.previewImportFromJson)
   },

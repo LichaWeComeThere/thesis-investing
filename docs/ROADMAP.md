@@ -35,21 +35,28 @@ Build a Windows-first desktop MVP that works offline with manual user input and 
 - Stage 23: Dashboard persisted local summary reads
 - Stage 24: Final QA, polish, and Phase 1 closeout
 
-## Phase 2: Local Data Management, Live Data, And Optional Sync
+## Phase 2: Local Data Foundation
 
-Start with local data management visibility and release hardening before adding live market data or optional sync. Live data should be isolated behind provider interfaces, and sync should remain optional.
+Build local data visibility, export/import, backup guidance, and maintenance
+tools before any live data or optional sync work. Live data should be isolated
+behind provider interfaces when explicitly staged later, and sync should remain
+optional.
 
 - Stage 1: Local Data Management View
 - Stage 2: Local Data Export
 - Stage 3: Local Data Import
 - Stage 4: Local Data Safety / Backup Hardening
+- Stage 5: Local Data Maintenance Tools
+- Stage 6: Phase 2 Closeout QA
 - Future: additional local data safeguards only after explicit staging
 - Future: optional live market data behind provider interfaces
 - Future: optional sync, auth, or cloud features only after explicit staging
 
-## Phase 3: Research/Intelligence Layer
+## Phase 3: Living Thesis OS
 
-Add research-oriented tools after the core workflow is proven. Intelligence features must remain educational, transparent, and non-advisory.
+Add Living Thesis model and review workflows after Phase 2 local data work is
+closed out. Intelligence features must remain educational, transparent, and
+non-advisory.
 
 ## Phase 4: Monetization, AI, Backtesting, And Future iOS/Web Expansion
 

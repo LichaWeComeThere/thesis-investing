@@ -459,6 +459,7 @@ function formatLocalDataDisplayLabel(label: string): string {
 type SettingsAboutScreenProps = AppShellProps & {
   initialLocalDataExportState?: LocalDataExportState;
   initialLocalDataImportState?: LocalDataImportState;
+  initialLocalDataMaintenanceState?: LocalDataMaintenanceState;
   initialLocalDataErrors?: string[];
   initialLocalDataInfo?: LocalDataInfo;
   localDataClient?: LocalDataStorageClient | null;
@@ -510,9 +511,37 @@ type LocalDataImportState =
       status: 'error';
     };
 
+type LocalDataMaintenanceState =
+  | {
+      status: 'idle';
+    }
+  | {
+      status: 'refreshing';
+    }
+  | {
+      status: 'opening-folder';
+    }
+  | {
+      generatedAt: string;
+      status: 'refreshed';
+    }
+  | {
+      label: string;
+      status: 'copied';
+    }
+  | {
+      folderPath: string;
+      status: 'folder-opened';
+    }
+  | {
+      errors: string[];
+      status: 'error';
+    };
+
 export function SettingsAboutScreen({
   initialLocalDataExportState,
   initialLocalDataImportState,
+  initialLocalDataMaintenanceState,
   initialLocalDataErrors,
   initialLocalDataInfo,
   localDataClient,
@@ -544,6 +573,10 @@ export function SettingsAboutScreen({
   const [localDataImportState, setLocalDataImportState] =
     useState<LocalDataImportState>(
       () => initialLocalDataImportState ?? { status: 'idle' }
+    );
+  const [localDataMaintenanceState, setLocalDataMaintenanceState] =
+    useState<LocalDataMaintenanceState>(
+      () => initialLocalDataMaintenanceState ?? { status: 'idle' }
     );
 
   useEffect(() => {
@@ -619,6 +652,131 @@ export function SettingsAboutScreen({
     localDataImportState.status === 'importing'
       ? localDataImportState.preview
       : null;
+  const isMaintenanceBusy =
+    localDataMaintenanceState.status === 'refreshing' ||
+    localDataMaintenanceState.status === 'opening-folder';
+  const isMaintenanceDisabled = isMaintenanceBusy || !resolvedLocalDataClient;
+  const recordCounts = localDataInfo?.recordCounts;
+
+  async function refreshLocalDataStatus(): Promise<void> {
+    if (!resolvedLocalDataClient) {
+      setLocalDataMaintenanceState({
+        status: 'error',
+        errors: ['Local data status is available only inside the desktop app.']
+      });
+      return;
+    }
+
+    setLocalDataMaintenanceState({ status: 'refreshing' });
+    setIsLocalDataLoading(true);
+    setLocalDataErrors([]);
+
+    try {
+      const result = await resolvedLocalDataClient.get();
+
+      if (!result.ok) {
+        setLocalDataErrors(result.errors);
+        setLocalDataMaintenanceState({
+          status: 'error',
+          errors: result.errors
+        });
+        return;
+      }
+
+      setLocalDataInfo(result.value);
+      setLocalDataErrors([]);
+      setLocalDataMaintenanceState({
+        status: 'refreshed',
+        generatedAt: result.value.generatedAt
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to refresh local data status.';
+      setLocalDataErrors([message]);
+      setLocalDataMaintenanceState({
+        status: 'error',
+        errors: [message]
+      });
+    } finally {
+      setIsLocalDataLoading(false);
+    }
+  }
+
+  async function copyLocalDataPath(
+    label: string,
+    value: string | undefined
+  ): Promise<void> {
+    if (!value) {
+      setLocalDataMaintenanceState({
+        status: 'error',
+        errors: [`${label} is not available yet.`]
+      });
+      return;
+    }
+
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard access is unavailable in this window.');
+      }
+
+      await navigator.clipboard.writeText(value);
+      setLocalDataMaintenanceState({
+        status: 'copied',
+        label
+      });
+    } catch (error) {
+      setLocalDataMaintenanceState({
+        status: 'error',
+        errors: [
+          error instanceof Error
+            ? error.message
+            : `Unable to copy ${label.toLowerCase()}.`
+        ]
+      });
+    }
+  }
+
+  async function openLocalDataFolder(): Promise<void> {
+    if (!resolvedLocalDataClient) {
+      setLocalDataMaintenanceState({
+        status: 'error',
+        errors: [
+          'Opening the local data folder is available only inside the desktop app.'
+        ]
+      });
+      return;
+    }
+
+    setLocalDataMaintenanceState({ status: 'opening-folder' });
+
+    try {
+      const result = await resolvedLocalDataClient.openDataFolder();
+
+      if (!result.ok) {
+        setLocalDataMaintenanceState({
+          status: 'error',
+          errors: result.errors
+        });
+        return;
+      }
+
+      setLocalDataMaintenanceState({
+        status: 'folder-opened',
+        folderPath: result.value.folderPath
+      });
+    } catch (error) {
+      setLocalDataMaintenanceState({
+        status: 'error',
+        errors: [
+          error instanceof Error
+            ? error.message
+            : 'Unable to open the local data folder.'
+        ]
+      });
+    }
+  }
 
   async function exportLocalData(): Promise<void> {
     if (!resolvedLocalDataClient) {
@@ -759,7 +917,7 @@ export function SettingsAboutScreen({
           </div>
         </Card>
 
-        <Card title="Local data status">
+        <Card title="Local data management">
           <div className="local-data-status-panel">
             <p>
               Your saved Thesis Investing records are stored locally on this
@@ -768,6 +926,93 @@ export function SettingsAboutScreen({
               records only after confirmation. Existing records are never
               overwritten or deleted.
             </p>
+
+            <div className="local-data-maintenance-actions">
+              <Button
+                disabled={isMaintenanceDisabled}
+                onClick={() => {
+                  void refreshLocalDataStatus();
+                }}
+                type="button"
+                variant="secondary"
+              >
+                {localDataMaintenanceState.status === 'refreshing'
+                  ? 'Refreshing status'
+                  : 'Refresh status'}
+              </Button>
+              <Button
+                disabled={isMaintenanceBusy || !localDataInfo?.userDataPath}
+                onClick={() => {
+                  void copyLocalDataPath(
+                    'App data folder path',
+                    localDataInfo?.userDataPath
+                  );
+                }}
+                type="button"
+                variant="secondary"
+              >
+                Copy app data folder path
+              </Button>
+              <Button
+                disabled={isMaintenanceBusy || !localDataInfo?.databasePath}
+                onClick={() => {
+                  void copyLocalDataPath(
+                    'SQLite database path',
+                    localDataInfo?.databasePath
+                  );
+                }}
+                type="button"
+                variant="secondary"
+              >
+                Copy SQLite database path
+              </Button>
+              <Button
+                disabled={isMaintenanceDisabled}
+                onClick={() => {
+                  void openLocalDataFolder();
+                }}
+                type="button"
+                variant="secondary"
+              >
+                {localDataMaintenanceState.status === 'opening-folder'
+                  ? 'Opening data folder'
+                  : 'Open data folder'}
+              </Button>
+            </div>
+
+            {localDataMaintenanceState.status === 'refreshed' ? (
+              <p className="local-data-status-message" role="status">
+                Status refreshed{' '}
+                {formatLocalDataTimestamp(
+                  localDataMaintenanceState.generatedAt
+                )}
+                .
+              </p>
+            ) : null}
+
+            {localDataMaintenanceState.status === 'copied' ? (
+              <p className="local-data-status-message" role="status">
+                {localDataMaintenanceState.label} copied.
+              </p>
+            ) : null}
+
+            {localDataMaintenanceState.status === 'folder-opened' ? (
+              <p className="local-data-status-message" role="status">
+                Opened local data folder:{' '}
+                <code>{localDataMaintenanceState.folderPath}</code>.
+              </p>
+            ) : null}
+
+            {localDataMaintenanceState.status === 'error' ? (
+              <div className="local-data-status-error" role="alert">
+                <strong>Local data maintenance action failed.</strong>
+                <ul>
+                  {localDataMaintenanceState.errors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
 
             <div className="local-data-status-grid">
               <section aria-label="Local storage location">
@@ -830,6 +1075,46 @@ export function SettingsAboutScreen({
                     <li key={workflow}>{workflow}</li>
                   ))}
                 </ul>
+              </section>
+
+              <section aria-label="Persisted record counts">
+                <h2>Persisted record counts</h2>
+                {recordCounts ? (
+                  <>
+                    <dl className="local-data-record-counts">
+                      <div>
+                        <dt>Watchlist items</dt>
+                        <dd>{recordCounts.watchlistItems}</dd>
+                      </div>
+                      <div>
+                        <dt>Thesis Notes</dt>
+                        <dd>{recordCounts.thesisNotes}</dd>
+                      </div>
+                      <div>
+                        <dt>Reminders</dt>
+                        <dd>{recordCounts.reminders}</dd>
+                      </div>
+                      <div>
+                        <dt>Portfolio Ranker Inputs</dt>
+                        <dd>{recordCounts.portfolioRankerItems}</dd>
+                      </div>
+                      <div>
+                        <dt>MBS Score Snapshots</dt>
+                        <dd>{recordCounts.mbsScoreSnapshots}</dd>
+                      </div>
+                    </dl>
+                    <p className="local-data-status-message">
+                      Counts reflect persisted local records only. Theme
+                      Library content and Thesis Board prototype data are not
+                      included.
+                    </p>
+                  </>
+                ) : (
+                  <p className="local-data-status-message">
+                    Persisted record counts are available after local data
+                    status loads.
+                  </p>
+                )}
               </section>
 
               <section aria-label="Local-only items">
@@ -1105,6 +1390,31 @@ export function SettingsAboutScreen({
                   <li>
                     On another computer or local profile, use Import local data
                     to preview and append records from a Thesis Investing backup.
+                  </li>
+                </ul>
+              </div>
+            </section>
+
+            <section
+              aria-label="Local data troubleshooting"
+              className="local-data-troubleshooting"
+            >
+              <div>
+                <h2>Local data troubleshooting</h2>
+                <ul>
+                  <li>
+                    Use Refresh status if counts or database status look stale.
+                  </li>
+                  <li>
+                    Export before moving computers, reinstalling Windows, or
+                    changing local profiles.
+                  </li>
+                  <li>
+                    Restarting the app can clear temporary display issues.
+                  </li>
+                  <li>
+                    Support usually needs export details, not the raw SQLite
+                    database. Avoid manually editing the database file.
                   </li>
                 </ul>
               </div>
