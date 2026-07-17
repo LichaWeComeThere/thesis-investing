@@ -10,7 +10,7 @@ deleted.
 
 ## Import A Backup
 
-1. Open **Settings/About** and find **Local data status**.
+1. Open **Settings/About** and find **Local data management**.
 2. Select **Import local data** and choose a Thesis Investing export JSON file.
 3. Review the file details, record counts, and any collision warnings. No
    workflow records have been written at this point.
@@ -54,6 +54,10 @@ The flow is intentionally two-step:
 
 Canceling the picker or the preview does not change local records. Validation
 and file errors are shown without crashing the app.
+
+Settings/About can also refresh local data status and show persisted record
+counts before or after import. These maintenance tools are read-only and do not
+change workflow records. See [Local Data Maintenance](LOCAL_DATA_MAINTENANCE.md).
 
 ## Append-Only Behavior
 

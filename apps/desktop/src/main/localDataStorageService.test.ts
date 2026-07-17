@@ -11,6 +11,7 @@ import {
 describe('localDataStorageService', () => {
   it('returns read-only local data status', async () => {
     const service = createLocalDataStorageService({
+      createStorage: () => createSqliteStorage(),
       databaseFileExists: () => true,
       getUserDataPath: () => '/tmp/thesis-user-data',
       now: () => new Date('2026-06-10T12:00:00.000Z')
@@ -38,10 +39,91 @@ describe('localDataStorageService', () => {
           'MBS Score Snapshots',
           'Dashboard summaries read persisted local data'
         ],
+        recordCounts: emptyCounts,
         storageAdapter: 'node:sqlite',
         userDataPath: '/tmp/thesis-user-data'
       }
     });
+
+    await service.close();
+  });
+
+  it('returns persisted record counts when the local database exists', async () => {
+    const storage = await createSqliteStorage();
+    const service = createLocalDataStorageService({
+      createStorage: () => Promise.resolve(storage),
+      databaseFileExists: () => true,
+      getUserDataPath: () => '/tmp/thesis-user-data',
+      now: () => new Date('2026-06-10T12:00:00.000Z')
+    });
+
+    storage.repositories.watchlistItems.create({
+      id: 'watchlist_msft',
+      ticker: 'msft'
+    });
+    storage.repositories.thesisNotes.create({
+      body: 'Local thesis body.',
+      id: 'thesis_msft',
+      status: 'active',
+      title: 'Microsoft thesis'
+    });
+    storage.repositories.reminders.create({
+      dueDate: '2026-06-30',
+      id: 'reminder_msft',
+      title: 'Review Microsoft thesis',
+      type: 'thesis-review'
+    });
+    storage.repositories.portfolioRankerItems.create({
+      id: 'ranker_msft',
+      ticker: 'msft'
+    });
+    storage.repositories.mbsScoreSnapshots.create({
+      completedCriteria: 7,
+      id: 'score_msft',
+      input: {
+        balanceSheet: 8,
+        businessQuality: 9,
+        growth: 7,
+        management: 8,
+        moat: 9,
+        risk: 7,
+        valuation: 6
+      },
+      maxScore: 100,
+      percentage: 77.1,
+      rating: 'strong',
+      score: 77.1
+    });
+
+    await expect(service.get()).resolves.toMatchObject({
+      ok: true,
+      value: {
+        recordCounts: populatedCounts
+      }
+    });
+
+    await service.close();
+  });
+
+  it('returns zero counts without opening storage when the database is missing', async () => {
+    let createStorageWasCalled = false;
+    const service = createLocalDataStorageService({
+      createStorage: async () => {
+        createStorageWasCalled = true;
+        return createSqliteStorage();
+      },
+      databaseFileExists: () => false,
+      getUserDataPath: () => '/tmp/thesis-user-data'
+    });
+
+    await expect(service.get()).resolves.toMatchObject({
+      ok: true,
+      value: {
+        databaseFileExists: false,
+        recordCounts: emptyCounts
+      }
+    });
+    expect(createStorageWasCalled).toBe(false);
   });
 
   it('returns storage errors without throwing', async () => {
@@ -54,6 +136,38 @@ describe('localDataStorageService', () => {
     await expect(service.get()).resolves.toEqual({
       ok: false,
       errors: ['Unable to read app data path.']
+    });
+  });
+
+  it('opens only the trusted local data folder path', async () => {
+    let openedPath = '';
+    const service = createLocalDataStorageService({
+      getUserDataPath: () => '/tmp/thesis-user-data',
+      openPath: async (path) => {
+        openedPath = path;
+        return '';
+      }
+    });
+
+    await expect(service.openDataFolder()).resolves.toEqual({
+      ok: true,
+      value: {
+        folderPath: '/tmp/thesis-user-data',
+        status: 'opened'
+      }
+    });
+    expect(openedPath).toBe('/tmp/thesis-user-data');
+  });
+
+  it('returns open folder errors without throwing', async () => {
+    const service = createLocalDataStorageService({
+      getUserDataPath: () => '/tmp/thesis-user-data',
+      openPath: async () => 'Access denied.'
+    });
+
+    await expect(service.openDataFolder()).resolves.toEqual({
+      ok: false,
+      errors: ['Unable to open the local data folder: Access denied.']
     });
   });
 

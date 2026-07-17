@@ -9,7 +9,7 @@ delete, or modify local records.
 
 ## Export A Backup
 
-1. Open **Settings/About** and find **Local data status**.
+1. Open **Settings/About** and find **Local data management**.
 2. Select **Export local data**.
 3. Choose a trusted location and file name for the `.json` backup.
 4. After the success message appears, confirm the saved path and record counts.
@@ -92,6 +92,11 @@ document creation, and file write.
 
 Canceling the save dialog returns a clean canceled result. File or storage
 errors are shown in Settings/About without crashing the app.
+
+Settings/About also includes local data maintenance tools. Users can refresh
+status, view persisted record counts, copy known local data paths, and open the
+trusted app data folder without changing workflow records. See
+[Local Data Maintenance](LOCAL_DATA_MAINTENANCE.md).
 
 ## Current Limitations
 

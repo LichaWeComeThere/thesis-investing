@@ -10,6 +10,7 @@ export const localDataStorageChannels = {
   exportToJson: 'local-data:export-to-json',
   get: 'local-data:get',
   importFromJson: 'local-data:import-from-json',
+  openDataFolder: 'local-data:open-data-folder',
   previewImportFromJson: 'local-data:preview-import-from-json'
 } as const;
 
@@ -17,22 +18,28 @@ export const LOCAL_DATA_EXPORT_FORMAT =
   'thesis-investing-local-data-export' as const;
 export const LOCAL_DATA_EXPORT_FORMAT_VERSION = 1 as const;
 
-export type LocalDataInfo = {
-  databaseFileExists: boolean;
-  databasePath: string;
-  generatedAt: string;
-  localOnlyItems: string[];
-  persistedWorkflows: string[];
-  storageAdapter: 'node:sqlite';
-  userDataPath: string;
-};
-
 export type LocalDataExportCounts = {
   watchlistItems: number;
   thesisNotes: number;
   reminders: number;
   portfolioRankerItems: number;
   mbsScoreSnapshots: number;
+};
+
+export type LocalDataInfo = {
+  databaseFileExists: boolean;
+  databasePath: string;
+  generatedAt: string;
+  localOnlyItems: string[];
+  persistedWorkflows: string[];
+  recordCounts: LocalDataExportCounts;
+  storageAdapter: 'node:sqlite';
+  userDataPath: string;
+};
+
+export type LocalDataOpenFolderOutcome = {
+  folderPath: string;
+  status: 'opened';
 };
 
 export type LocalDataExportDocument = {
@@ -103,6 +110,7 @@ export type LocalDataStorageApi = {
   importFromJson(
     previewId: string
   ): Promise<LocalDataStorageResult<LocalDataImportOutcome>>;
+  openDataFolder(): Promise<LocalDataStorageResult<LocalDataOpenFolderOutcome>>;
   previewImportFromJson(): Promise<
     LocalDataStorageResult<LocalDataImportPreviewOutcome>
   >;

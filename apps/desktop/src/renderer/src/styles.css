@@ -4386,7 +4386,8 @@ select:focus-visible {
 
 .local-data-export-panel,
 .local-data-import-panel,
-.local-data-backup-guidance {
+.local-data-backup-guidance,
+.local-data-troubleshooting {
   background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border-muted);
   border-radius: var(--ti-radius-md);
@@ -4398,7 +4399,8 @@ select:focus-visible {
 
 .local-data-export-panel h2,
 .local-data-import-panel h2,
-.local-data-backup-guidance h2 {
+.local-data-backup-guidance h2,
+.local-data-troubleshooting h2 {
   color: var(--ti-color-text);
   font-size: var(--ti-font-size-sm);
   letter-spacing: 0;
@@ -4406,11 +4408,18 @@ select:focus-visible {
   text-transform: uppercase;
 }
 
-.local-data-backup-guidance ul {
+.local-data-backup-guidance ul,
+.local-data-troubleshooting ul {
   display: grid;
   gap: 8px;
   margin: 0;
   padding-left: 20px;
+}
+
+.local-data-maintenance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .local-data-export-actions,
@@ -4449,7 +4458,8 @@ select:focus-visible {
   margin: 0;
 }
 
-.local-data-import-counts div {
+.local-data-import-counts div,
+.local-data-record-counts div {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid var(--ti-color-border-muted);
   border-radius: var(--ti-radius-sm);
@@ -4458,16 +4468,24 @@ select:focus-visible {
   padding: 10px;
 }
 
-.local-data-import-counts dt {
+.local-data-import-counts dt,
+.local-data-record-counts dt {
   color: var(--ti-color-text-muted);
   font-size: var(--ti-font-size-sm);
 }
 
-.local-data-import-counts dd {
+.local-data-import-counts dd,
+.local-data-record-counts dd {
   color: var(--ti-color-text);
   font-size: var(--ti-font-size-lg);
   font-weight: 700;
   margin: 0;
+}
+
+.local-data-record-counts {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
 }
 
 .local-data-import-warnings {
@@ -5389,7 +5407,8 @@ select:focus-visible {
 .local-data-status-grid section,
 .local-data-export-panel,
 .local-data-import-panel,
-.local-data-backup-guidance {
+.local-data-backup-guidance,
+.local-data-troubleshooting {
   border-radius: 16px;
   padding: 12px;
 }
@@ -5450,6 +5469,11 @@ select:focus-visible {
 
   .local-data-import-counts {
     grid-template-columns: 1fr;
+  }
+
+  .local-data-maintenance-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .mbs-guided-options {

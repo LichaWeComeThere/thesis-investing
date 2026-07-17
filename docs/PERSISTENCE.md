@@ -14,6 +14,12 @@ Phase 2, Stage 3 adds a validated local JSON import for Stage 2 export files. Fi
 
 Phase 2, Stage 4 hardens the user-facing safety guidance around local data transfer. Settings/About now explains that exports are manual JSON backups stored wherever the user chooses, import accepts Thesis Investing exports only, previews do not write workflow records, and confirmed imports append without overwriting or deleting existing records. This stage adds no new data actions, schema changes, or storage APIs.
 
+Phase 2, Stage 5 adds read-only local data maintenance tools in Settings/About.
+Users can refresh local data status, view persisted record counts, copy known
+local data paths, and open the trusted app data folder. These tools are
+non-destructive and do not add reset, delete, repair, overwrite, restore, or
+schema-changing behavior.
+
 ## Package Boundary
 
 Local persistence currently lives in `apps/desktop/src/storage`.
@@ -24,8 +30,10 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and MBS Scorer screens read and write through the local persistence boundary.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
+- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS Score Snapshots; static Theme Library content and Thesis Board prototype data are excluded.
 - The renderer can request a local JSON export through `window.thesisInvesting.localData.exportToJson()`, but the save dialog, SQLite reads, and file write happen in the Electron main process.
 - The renderer can request import preview and confirmation through `window.thesisInvesting.localData.previewImportFromJson()` and `window.thesisInvesting.localData.importFromJson(previewId)`. Electron main owns file reading, parsing, validation, pending preview data, and transactional repository writes.
+- The renderer can request `window.thesisInvesting.localData.openDataFolder()` without passing a path. Electron main opens only the trusted app data folder from `app.getPath('userData')`.
 - Settings/About provides backup guidance and status messaging without bypassing or widening these existing preload APIs.
 
 ## SQLite Choice
@@ -45,6 +53,8 @@ The repository interfaces are intentionally the stable boundary. Future work can
 For the Stage 17 Electron runtime check, see the [storage runtime verification guide](STORAGE_RUNTIME_VERIFICATION.md).
 
 For the staged plan to wire this boundary into visible screens, see the [persistence wiring plan](PERSISTENCE_WIRING_PLAN.md).
+
+For the Settings/About maintenance controls, see [Local Data Maintenance](LOCAL_DATA_MAINTENANCE.md).
 
 ## Schema And Migrations
 
@@ -91,6 +101,7 @@ This persistence layer does not add:
 - Named portfolio ranker snapshots or history
 - Local data delete/reset actions
 - Database restore/replacement, backup scheduling, or raw database export flows
+- Destructive local data maintenance actions, database reset, repair, vacuum, or SQL console tools
 - Semantic merge or duplicate detection beyond collision-safe ID remapping
 - SQLite-backed local preferences
 - Live stock APIs
