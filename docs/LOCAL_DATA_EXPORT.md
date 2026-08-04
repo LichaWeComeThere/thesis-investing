@@ -110,6 +110,9 @@ upload them, or manage backup retention. Export files can be used to move saved
 records to another computer or local profile through the preview-first import
 flow.
 
+For the Phase 2 export/import roundtrip QA record, see
+[Phase 2 Closeout](PHASE_2_CLOSEOUT.md).
+
 Thesis Investing remains educational software only. The export does not add live
 stock APIs, AI analyst behavior, brokerage or trading execution, cloud sync, or
 personalized financial advice.

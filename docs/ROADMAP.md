@@ -40,14 +40,14 @@ Build a Windows-first desktop MVP that works offline with manual user input and 
 Build local data visibility, export/import, backup guidance, and maintenance
 tools before any live data or optional sync work. Live data should be isolated
 behind provider interfaces when explicitly staged later, and sync should remain
-optional.
+optional. Phase 2 is complete through Stage 6 closeout QA.
 
-- Stage 1: Local Data Management View
-- Stage 2: Local Data Export
-- Stage 3: Local Data Import
-- Stage 4: Local Data Safety / Backup Hardening
-- Stage 5: Local Data Maintenance Tools
-- Stage 6: Phase 2 Closeout QA
+- Stage 1: Local Data Management View - complete
+- Stage 2: Local Data Export - complete
+- Stage 3: Local Data Import - complete
+- Stage 4: Local Data Safety / Backup Hardening - complete
+- Stage 5: Local Data Maintenance Tools - complete
+- Stage 6: Phase 2 Closeout QA - complete
 - Future: additional local data safeguards only after explicit staging
 - Future: optional live market data behind provider interfaces
 - Future: optional sync, auth, or cloud features only after explicit staging
@@ -58,6 +58,37 @@ Add Living Thesis model and review workflows after Phase 2 local data work is
 closed out. Intelligence features must remain educational, transparent, and
 non-advisory.
 
-## Phase 4: Monetization, AI, Backtesting, And Future iOS/Web Expansion
+Phase 3 is the next planned phase. No Phase 3 implementation is marked complete
+yet. Thesis Board is currently present on `main` only as an early renderer-only
+mock/in-memory prototype that is visibly labeled as unsaved.
 
-Explore premium packaging, AI-assisted workflows, backtesting, and additional platforms after the Windows MVP and supporting architecture are mature.
+- Stage 1: Living Thesis OS Architecture Plan
+- Stage 2: Shared Living Thesis Model
+- Stage 3: Thesis Board Foundation
+- Stage 4: Thesis Board adopts Living Thesis model
+- Stage 5: Review Workflow
+- Stage 6: Review Session
+- Stage 7: Decision Log
+- Stage 8: Score History / Thesis Timeline
+- Stage 9: Thesis Health Engine
+- Stage 10: Review Queue
+- Stage 11: Thesis Library
+- Stage 12: Living Thesis OS Closeout QA
+
+## Phase 4: Read-only APIs
+
+Read-only API work is deferred until after the local-first foundation and Living
+Thesis OS are reviewed. API stages must use explicit provider boundaries and
+must not add trading execution or personalized advice.
+
+- Stage 1: API Architecture Plan
+- Stage 2: Read-only Company Metadata
+- Stage 3: Read-only Market Data
+- Stage 4: Read-only Financial Statements
+- Stage 5: Earnings / Calendar Data
+- Stage 6: API Closeout QA
+
+## Phase 5: AI / Advanced Intelligence
+
+AI and advanced intelligence features are much later work and require a
+dedicated safety and product review before implementation.

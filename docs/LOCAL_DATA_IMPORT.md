@@ -111,5 +111,8 @@ detection, merge rules, or rollback history after a successful import. Supported
 timestamps already present in exported records are preserved; unsupported or
 transient UI state is not created.
 
+For the Phase 2 import and roundtrip QA record, see
+[Phase 2 Closeout](PHASE_2_CLOSEOUT.md).
+
 Thesis Investing remains educational software only. Importing records does not
 turn them into recommendations or personalized financial advice.

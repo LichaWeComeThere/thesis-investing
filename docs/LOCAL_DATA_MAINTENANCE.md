@@ -67,6 +67,9 @@ and avoid manually editing the database file.
 Local data stays on this computer unless the user chooses to export a JSON file.
 Thesis Investing does not upload the local database or export files.
 
+For the Phase 2 maintenance and local data lifecycle QA record, see
+[Phase 2 Closeout](PHASE_2_CLOSEOUT.md).
+
 This stage does not add:
 
 - delete-all-data or database reset
