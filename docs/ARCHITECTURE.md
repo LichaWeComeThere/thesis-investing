@@ -14,7 +14,20 @@ Scoring logic must remain deterministic and testable. Keep business rules and sc
 
 ## Persistence Boundary
 
-Future persistence should be isolated behind a storage or repository layer. The desktop app should call that layer rather than importing database details directly into screens or domain logic.
+Local persistence is isolated behind the Electron main/storage repository layer.
+The desktop app's React renderer calls narrow preload APIs under
+`window.thesisInvesting` rather than importing SQLite, `node:sqlite`,
+filesystem helpers, or storage repositories directly.
+
+Current Phase 2 persisted workflows are Watchlist items, Thesis Notes,
+Reminders, Portfolio Ranker Inputs, and MBS Score Snapshots. Dashboard summaries
+and Settings/About local data status read from persisted local records without
+writing them. Export/import file dialogs, file reads/writes, JSON validation,
+and SQLite writes stay in Electron main.
+
+Thesis Board is present as an early renderer-only prototype with mock/in-memory
+data. It is visibly labeled as unsaved and is not yet integrated with the future
+Living Thesis model or persistence.
 
 ## Data Provider Boundary
 

@@ -20,6 +20,11 @@ local data paths, and open the trusted app data folder. These tools are
 non-destructive and do not add reset, delete, repair, overwrite, restore, or
 schema-changing behavior.
 
+Phase 2, Stage 6 completes closeout QA for the local data lifecycle. Automated
+validation, route smoke testing, disposable SQLite lifecycle checks,
+export/import validation, and export/import roundtrip testing are documented in
+the [Phase 2 closeout](PHASE_2_CLOSEOUT.md).
+
 ## Package Boundary
 
 Local persistence currently lives in `apps/desktop/src/storage`.
@@ -55,6 +60,8 @@ For the Stage 17 Electron runtime check, see the [storage runtime verification g
 For the staged plan to wire this boundary into visible screens, see the [persistence wiring plan](PERSISTENCE_WIRING_PLAN.md).
 
 For the Settings/About maintenance controls, see [Local Data Maintenance](LOCAL_DATA_MAINTENANCE.md).
+
+For the Phase 2 closeout QA record, see [Phase 2 Closeout](PHASE_2_CLOSEOUT.md).
 
 ## Schema And Migrations
 

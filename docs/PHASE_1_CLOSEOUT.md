@@ -155,3 +155,7 @@ external data source:
 After those are stable, live market data or optional sync can be staged behind
 explicit provider interfaces while preserving the educational, non-advisory
 product boundary.
+
+Phase 2 has since completed through closeout QA. See
+[Phase 2 Closeout](PHASE_2_CLOSEOUT.md) for the current local data lifecycle
+status and the recommended Phase 3 starting point.
