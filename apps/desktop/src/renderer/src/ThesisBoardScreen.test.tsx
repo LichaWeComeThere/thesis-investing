@@ -10,13 +10,33 @@ describe('ThesisBoardScreen', () => {
     expect(html).toContain(
       'Review, rank, and update investment ideas from one focused workspace.'
     );
-    expect(html).toContain(
-      'Prototype workspace - this board currently uses local mock data.'
-    );
-    expect(html).toContain('Changes here are not saved yet.');
-    expect(html).toContain('Ranked theses');
+    expect(html).toContain('Local thesis workspace.');
+    expect(html).toContain('changes here are not saved yet.');
+    expect(html).toContain('Thesis Rankings');
+    expect(html).toContain('Compare Ideas');
     expect(html).toContain('NVDA');
     expect(html).toContain('NVIDIA');
+    expect(html).toContain('AI Infrastructure');
+    expect(html).toContain('+4');
+    expect(html).toContain('Strong');
+    expect(html).toContain('Active');
+    expect(html).toContain('Conviction High');
+    expect(html).toContain('Risk Medium');
+    expect(html).toContain('Reviewed 2026-05-20');
+    expect(html).toContain('Next 2026-06-12');
+    expect(html).toContain('All ideas');
+    expect(html).toContain('Watchlist');
+    expect(html).toContain('Researching');
+    expect(html).toContain('Needs Review');
+    expect(html).toContain('Caution');
+    expect(html).toContain('Archived');
+    expect(html).toContain('Sort');
+    expect(html).toContain('MBS score');
+    expect(html).toContain('Score change');
+    expect(html).toContain('Conviction');
+    expect(html).toContain('Risk');
+    expect(html).toContain('Next review date');
+    expect(html).toContain('Add idea');
     expect(html).toContain('MBS score breakdown');
     expect(html).toContain('Business quality');
     expect(html).toContain('Bull case');

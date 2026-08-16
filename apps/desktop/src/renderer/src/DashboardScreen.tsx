@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from 'react';
 import type { DashboardSummary } from '../../shared/dashboardSummariesStorage';
 import {
   formatScoreChange,
-  getLargestScoreDropThesis,
+  getBiggestScoreDrop,
   getNextReviewThesis,
+  getReviewDueSoon,
   getScoreChange,
+  getThesisHealthSummary,
   getTopImprovingThesis,
   getWeakestThesis,
   isNeedsReviewThesis,
@@ -48,7 +50,7 @@ type QuickAction = {
   description: string;
 };
 
-const quickActions: QuickAction[] = [
+const defaultQuickActions: QuickAction[] = [
   {
     label: 'Open MBS Scorer',
     workspaceId: 'mbs-scorer',
@@ -106,56 +108,43 @@ function isEmptyDashboardSummary(summary: DashboardSummary): boolean {
   );
 }
 
-function getDashboardSummaryItems(
-  summary: DashboardSummary
+function getDashboardThesisHealthItems(
+  theses: readonly MockThesis[]
 ): ThesisHealthItem[] {
+  const summary = getThesisHealthSummary(theses);
+
   return [
     {
-      detail: 'Local watchlist records.',
-      label: 'Saved watchlist items',
+      detail: 'Current thesis records.',
+      label: 'Theses tracked',
       tone: 'tracked',
-      value: summary.totalWatchlistItems
+      value: summary.trackedCount
     },
     {
-      detail: `${summary.activeThesisNotes} active / ${summary.draftThesisNotes} draft / ${summary.watchThesisNotes} watch`,
-      label: 'Thesis notes',
-      tone: 'strong',
-      value: summary.totalThesisNotes
+      detail: `${summary.reviewDueSoonCount} review due soon.`,
+      label: 'Needs review',
+      tone: summary.needsReviewCount > 0 ? 'review' : 'tracked',
+      value: summary.needsReviewCount
     },
     {
-      detail: `${summary.overdueReminders} overdue / ${summary.completedReminders} completed / ${summary.totalReminders} total`,
-      label: 'Open reminders',
-      tone: summary.overdueReminders > 0 ? 'review' : 'tracked',
-      value: summary.openReminders
+      detail: 'Ideas currently marked active.',
+      label: 'Active ideas',
+      tone: summary.activeCount > 0 ? 'strong' : 'tracked',
+      value: summary.activeCount
     },
     {
-      detail: 'Saved manual ranker rows.',
-      label: 'Ranker inputs',
-      tone: 'tracked',
-      value: summary.totalPortfolioRankerItems
+      detail: 'Thesis status is weakening or broken.',
+      label: 'Weakening theses',
+      tone: summary.weakeningCount > 0 ? 'weakening' : 'tracked',
+      value: summary.weakeningCount
     },
     {
-      detail: getMbsScoreSnapshotDetail(summary),
-      label: 'Saved scores',
-      tone: summary.latestMbsScoreSnapshot ? 'strong' : 'tracked',
-      value: summary.totalMbsScoreSnapshots
+      detail: 'High-conviction theses in the current set.',
+      label: 'Strong conviction',
+      tone: summary.highConvictionCount > 0 ? 'strong' : 'tracked',
+      value: summary.highConvictionCount
     }
   ];
-}
-
-function getMbsScoreSnapshotDetail(summary: DashboardSummary): string {
-  const latestSnapshot = summary.latestMbsScoreSnapshot;
-
-  if (!latestSnapshot) {
-    return 'No completed snapshots yet.';
-  }
-
-  const label =
-    latestSnapshot.ticker ??
-    latestSnapshot.companyName ??
-    'Latest completed score';
-
-  return `Latest ${label}: ${latestSnapshot.score} / ${latestSnapshot.maxScore}`;
 }
 
 function formatGeneratedAt(generatedAt: string): string {
@@ -196,14 +185,20 @@ function getReviewPriorityItems(theses: readonly MockThesis[]): ReviewPriorityIt
     return [];
   }
 
+  const dueSoonThesis = getReviewDueSoon(theses)[0] ?? getNextReviewThesis(theses);
   const weakestThesis = getWeakestThesis(theses);
-  const largestDropThesis = getLargestScoreDropThesis(theses);
+  const largestDropThesis = getBiggestScoreDrop(theses);
   const topImprovingThesis = getTopImprovingThesis(theses);
-  const nextReviewThesis = getNextReviewThesis(theses);
 
   return [
     {
-      label: 'Weakest Idea',
+      label: 'Needs Review Now',
+      ticker: dueSoonThesis.ticker,
+      detail: `${dueSoonThesis.companyName} is ${dueSoonThesis.ideaStatus.toLowerCase()} with next review ${dueSoonThesis.nextReviewDate}.`,
+      tone: 'review'
+    },
+    {
+      label: 'Weakest Thesis',
       ticker: weakestThesis.ticker,
       detail: `${weakestThesis.mbsScore} MBS. ${weakestThesis.thesisSummary}`,
       tone: 'weakening'
@@ -219,14 +214,25 @@ function getReviewPriorityItems(theses: readonly MockThesis[]): ReviewPriorityIt
       ticker: topImprovingThesis.ticker,
       detail: `${formatScoreChange(topImprovingThesis)} since last review.`,
       tone: 'strong'
-    },
-    {
-      label: 'Review Due Soon',
-      ticker: nextReviewThesis.ticker,
-      detail: `Next review ${nextReviewThesis.nextReviewDate}.`,
-      tone: 'tracked'
     }
   ];
+}
+
+function getOpenNextAction(theses: readonly MockThesis[]): QuickAction {
+  const reviewCandidate =
+    getReviewDueSoon(theses)[0] ??
+    theses.find((thesis) => thesis.ideaStatus === 'Needs Review') ??
+    getBiggestScoreDrop(theses);
+
+  if (!reviewCandidate) {
+    return defaultQuickActions[0];
+  }
+
+  return {
+    label: `Open ${reviewCandidate.ticker}`,
+    workspaceId: 'thesis-board',
+    description: `${reviewCandidate.companyName}: ${reviewCandidate.ideaStatus.toLowerCase()} thesis review.`
+  };
 }
 
 export function DashboardScreen({
@@ -250,21 +256,24 @@ export function DashboardScreen({
       initialSummary === undefined &&
       initialSummaryErrors.length === 0
   );
-  const summaryItems = useMemo(
-    () => getDashboardSummaryItems(dashboardSummary),
-    [dashboardSummary]
+  const thesisHealthItems = useMemo(
+    () => getDashboardThesisHealthItems(theses),
+    [theses]
   );
   const isSummaryEmpty = isEmptyDashboardSummary(dashboardSummary);
   const reviewPriorityItems = getReviewPriorityItems(theses);
+  const quickActions = [getOpenNextAction(theses), ...defaultQuickActions];
   const recentActivityItems: RecentActivityItem[] = theses
     .flatMap((thesis) =>
       thesis.decisionLog.map((entry) => ({
         ticker: thesis.ticker,
         action: entry.title,
         detail: entry.note,
-        tone: getDashboardTone(thesis)
+        tone: getDashboardTone(thesis),
+        createdAt: entry.createdAt
       }))
     )
+    .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
     .slice(0, 3);
 
   useEffect(() => {
@@ -330,14 +339,14 @@ export function DashboardScreen({
         <div className="dashboard-main-stack">
           <section
             className="dashboard-health-section"
-            aria-label="Local persisted summary"
+            aria-label="Shared thesis summary"
           >
             <div className="dashboard-section-heading">
-              <h2>Local Saved Summary</h2>
+              <h2>Shared Thesis Summary</h2>
               <p>
                 {isSummaryLoading
                   ? 'Loading saved local records.'
-                  : `Generated ${formatGeneratedAt(dashboardSummary.generatedAt)}`}
+                  : `Current thesis set. Local summary generated ${formatGeneratedAt(dashboardSummary.generatedAt)}`}
               </p>
             </div>
 
@@ -354,13 +363,13 @@ export function DashboardScreen({
 
             {!isSummaryLoading && summaryErrors.length === 0 && isSummaryEmpty ? (
               <p className="dashboard-summary-empty">
-                No saved theses yet. Start by scoring a business or creating a
-                thesis note.
+                No persisted local workflow records yet. The current thesis set
+                is still available for review.
               </p>
             ) : null}
 
             <div className="dashboard-health-grid">
-              {summaryItems.map((item) => (
+              {thesisHealthItems.map((item) => (
                 <Card
                   className={`dashboard-health-card dashboard-health-card--${item.tone}`}
                   key={item.label}
@@ -398,7 +407,10 @@ export function DashboardScreen({
                 <span>Regime</span>
                 <strong>Under Pressure</strong>
               </div>
-              <p>Growth stocks need caution.</p>
+              <p>
+                Sample regime: demand fresher reviews, size conviction
+                carefully, and treat high-risk growth theses as research-first.
+              </p>
               <div className="market-regime-tags">
                 <Badge variant="warning">Risk check</Badge>
                 <Badge variant="neutral">Research context</Badge>

@@ -401,10 +401,10 @@ export function ThesisMonitorScreen({
                 <div className="thesis-empty-state">
                   <h3>No local thesis notes yet</h3>
                   <p>
-                    Create a note or select a sample thesis to preview the
+                    Create a note or select a current thesis to review the
                     workflow.
                   </p>
-                  <Badge variant="neutral">Sample thesis preview</Badge>
+                  <Badge variant="neutral">Thesis preview</Badge>
                 </div>
                 {demoTheses.map((thesis) => {
                   const isSelected = thesis.id === selectedMockThesisId;
@@ -619,7 +619,7 @@ export function ThesisMonitorScreen({
             <p>
               {selectedNote
                 ? 'Review the selected thesis detail card below or update the manual checklist.'
-                : 'Select a sample thesis to populate the selected snapshot or save a new note.'}
+                : 'Select a current thesis to populate the selected snapshot or save a new note.'}
             </p>
           </div>
 

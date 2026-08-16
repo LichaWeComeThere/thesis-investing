@@ -385,7 +385,10 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
         ) : selectedView.id === 'theme-baskets' ? (
           <ThemeBasketsScreen />
         ) : selectedView.id === 'reminders' ? (
-          <RemindersScreen onOpenWorkspace={setSelectedViewId} />
+          <RemindersScreen
+            onOpenWorkspace={setSelectedViewId}
+            theses={theses}
+          />
         ) : selectedView.id === 'settings-about' ? (
           <SettingsAboutScreen onResetOnboarding={onResetOnboarding} />
         ) : (

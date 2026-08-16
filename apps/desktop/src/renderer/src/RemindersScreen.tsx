@@ -21,7 +21,12 @@ import {
   toPersistedReminder,
   type RemindersStorageClient
 } from './remindersStorageClient';
-import { getNextReviewThesis, mockTheses } from './data/mockTheses';
+import {
+  getNextReviewThesis,
+  getUpcomingReviewTheses,
+  mockTheses,
+  type MockThesis
+} from './data/mockTheses';
 import './reminders.css';
 
 type RemindersScreenProps = {
@@ -31,6 +36,7 @@ type RemindersScreenProps = {
   initialSelectedReminderId?: string;
   onOpenWorkspace?: (workspaceId: string) => void;
   storageClient?: RemindersStorageClient | null;
+  theses?: MockThesis[];
 };
 
 export function RemindersScreen({
@@ -39,7 +45,8 @@ export function RemindersScreen({
   initialStorageErrors = [],
   onOpenWorkspace,
   storageClient,
-  initialSelectedReminderId
+  initialSelectedReminderId,
+  theses = mockTheses
 }: RemindersScreenProps): JSX.Element {
   const resolvedStorageClient =
     storageClient === undefined
@@ -77,13 +84,13 @@ export function RemindersScreen({
     ? formResult.validation.errors
     : [];
   const upcomingReviewTheses = useMemo(
-    () =>
-      [...mockTheses].sort((first, second) =>
-        first.nextReviewDate.localeCompare(second.nextReviewDate)
-      ),
-    []
+    () => getUpcomingReviewTheses(theses),
+    [theses]
   );
-  const nextReviewThesis = getNextReviewThesis(mockTheses);
+  const nextReviewThesis =
+    upcomingReviewTheses.length > 0
+      ? getNextReviewThesis(upcomingReviewTheses)
+      : null;
 
   useEffect(() => {
     const client = resolvedStorageClient;
@@ -491,9 +498,9 @@ export function RemindersScreen({
                     <td>
                       <Badge
                         variant={
-                          thesis.id === nextReviewThesis.id
+                          thesis.id === nextReviewThesis?.id
                             ? 'warning'
-                            : 'neutral'
+                            : reminderThesisBadgeVariant(thesis)
                         }
                       >
                         {thesis.ideaStatus}
@@ -642,4 +649,22 @@ export function RemindersScreen({
 
 function formatReminderType(type: LocalReminder['type']): string {
   return REMINDER_TYPE_LABELS[type] ?? type;
+}
+
+function reminderThesisBadgeVariant(
+  thesis: MockThesis
+): 'accent' | 'neutral' | 'warning' | 'risk' {
+  if (thesis.ideaStatus === 'Caution') {
+    return 'risk';
+  }
+
+  if (thesis.ideaStatus === 'Researching') {
+    return 'accent';
+  }
+
+  if (thesis.ideaStatus === 'Needs Review') {
+    return 'warning';
+  }
+
+  return 'neutral';
 }

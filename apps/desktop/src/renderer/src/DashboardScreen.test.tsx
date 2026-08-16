@@ -54,38 +54,37 @@ describe('DashboardScreen', () => {
     );
 
     expect(html).toContain('Investor Command Center');
-    expect(html).toContain('Local Saved Summary');
+    expect(html).toContain('Shared Thesis Summary');
     expect(html).toContain('Review Priority');
     expect(html).toContain('Market Regime');
     expect(html).toContain('Recent Thesis Activity');
     expect(html).toContain('Continue Research');
   });
 
-  it('renders zero persisted summary state', () => {
+  it('renders shared thesis health state', () => {
     const html = renderToStaticMarkup(
       <DashboardScreen initialSummary={zeroSummary} />
     );
 
-    expect(html).toContain('Saved watchlist items');
-    expect(html).toContain('Thesis notes');
-    expect(html).toContain('Open reminders');
-    expect(html).toContain('Ranker inputs');
-    expect(html).toContain('Saved scores');
-    expect(html).toContain('No saved theses yet.');
-    expect(html).toContain('No completed snapshots yet.');
+    expect(html).toContain('Theses tracked');
+    expect(html).toContain('<strong>8</strong>');
+    expect(html).toContain('Current thesis records.');
+    expect(html).toContain('Needs review');
+    expect(html).toContain('4 review due soon.');
+    expect(html).toContain('Active ideas');
+    expect(html).toContain('Weakening theses');
+    expect(html).toContain('Strong conviction');
+    expect(html).toContain('No persisted local workflow records yet.');
   });
 
-  it('renders nonzero persisted summary state', () => {
+  it('renders nonzero persisted summary generated timestamp', () => {
     const html = renderToStaticMarkup(
       <DashboardScreen initialSummary={nonzeroSummary} />
     );
 
-    expect(html).toContain('Saved watchlist items');
-    expect(html).toContain('<strong>7</strong>');
-    expect(html).toContain('3 active / 1 draft / 4 watch');
-    expect(html).toContain('1 overdue / 2 completed / 6 total');
-    expect(html).toContain('Saved manual ranker rows.');
-    expect(html).toContain('Latest NVDA: 76.9 / 100');
+    expect(html).toContain('Current thesis set.');
+    expect(html).toContain('Local summary generated');
+    expect(html).not.toContain('No persisted local workflow records yet.');
   });
 
   it('renders loading state when a summary client is available', () => {
@@ -116,14 +115,14 @@ describe('DashboardScreen', () => {
       <DashboardScreen initialSummary={zeroSummary} />
     );
 
-    expect(html).toContain('Weakest Idea');
+    expect(html).toContain('Needs Review Now');
+    expect(html).toContain('SOFI');
+    expect(html).toContain('Weakest Thesis');
     expect(html).toContain('TSLA');
     expect(html).toContain('Biggest Score Drop');
     expect(html).toContain('TSLA');
     expect(html).toContain('Top Improving Idea');
     expect(html).toContain('NVDA');
-    expect(html).toContain('Review Due Soon');
-    expect(html).toContain('SOFI');
   });
 
   it('renders session thesis updates from props', () => {
@@ -152,7 +151,8 @@ describe('DashboardScreen', () => {
     );
 
     expect(html).toContain('Under Pressure');
-    expect(html).toContain('Growth stocks need caution.');
+    expect(html).toContain('Sample regime: demand fresher reviews');
+    expect(html).toContain('Open SOFI');
     expect(html).toContain('Open MBS Scorer');
     expect(html).toContain('Review Portfolio Ranker');
     expect(html).toContain('Open Thesis Monitor');

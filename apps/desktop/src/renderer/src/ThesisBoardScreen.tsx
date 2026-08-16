@@ -15,7 +15,14 @@ import {
 } from '@thesis-investing/ui';
 import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
-import { mockTheses, type MockThesis } from './data/mockTheses';
+import {
+  formatScoreChange,
+  getScoreChange,
+  isNeedsReviewThesis,
+  mockTheses,
+  type MockThesis,
+  type MockThesisIdeaStatus
+} from './data/mockTheses';
 
 type ThesisBoardScreenProps = {
   theses?: MockThesis[];
@@ -36,6 +43,8 @@ type ThesisBoardRow = {
   keyRisks: string;
   catalysts: string;
   lastReviewedDate: string;
+  mbsScore: number;
+  needsReview: boolean;
   nextReviewDate: string;
   previousMbsScore: number;
   categoryValues: Record<ManualBusinessScoreCategory, string>;
@@ -46,6 +55,33 @@ type ScoreDriver = {
   label: string;
   value: number;
 };
+
+type RankingsFilter = 'All ideas' | MockThesisIdeaStatus;
+
+type RankingsSort =
+  | 'MBS score'
+  | 'Score change'
+  | 'Conviction'
+  | 'Risk'
+  | 'Next review date';
+
+const rankingFilters: RankingsFilter[] = [
+  'All ideas',
+  'Watchlist',
+  'Researching',
+  'Active',
+  'Needs Review',
+  'Caution',
+  'Archived'
+];
+
+const rankingSorts: RankingsSort[] = [
+  'MBS score',
+  'Score change',
+  'Conviction',
+  'Risk',
+  'Next review date'
+];
 
 const categoryLabels: Record<ManualBusinessScoreCategory, string> = {
   businessQuality: 'Business quality',
@@ -76,6 +112,9 @@ export function ThesisBoardScreen({
   const [selectedRowId, setSelectedRowId] = useState(
     () => rows[0]?.id ?? ''
   );
+  const [rankingFilter, setRankingFilter] =
+    useState<RankingsFilter>('All ideas');
+  const [rankingSort, setRankingSort] = useState<RankingsSort>('MBS score');
 
   const scoredRows = useMemo(
     () =>
@@ -116,8 +155,15 @@ export function ThesisBoardScreen({
   const rankedRows = rankedItems
     .map((item) => rowsById.get(item.id))
     .filter((row): row is ThesisBoardRow => Boolean(row));
+  const visibleRankedRows = sortRankingRows(
+    filterRankingRows(rankedRows, rankingFilter),
+    rankingSort
+  );
   const selectedRow =
-    rows.find((row) => row.id === selectedRowId) ?? rankedRows[0] ?? rows[0];
+    rows.find((row) => row.id === selectedRowId) ??
+    visibleRankedRows[0] ??
+    rankedRows[0] ??
+    rows[0];
   const selectedScoreOutput = selectedRow
     ? scoreOutputsById.get(selectedRow.id)
     : undefined;
@@ -187,49 +233,115 @@ export function ThesisBoardScreen({
       />
 
       <p className="thesis-board-prototype-note" role="note">
-        Prototype workspace - this board currently uses local mock data. Changes
-        here are not saved yet.
+        Local thesis workspace. Review and compare the current thesis set;
+        changes here are not saved yet.
       </p>
 
       <div className="thesis-board-layout">
-        <Card className="thesis-board-rank-card" title="Ranked theses">
+        <Card className="thesis-board-rank-card" title="Thesis Rankings">
           <div className="thesis-board-panel-kicker">
-            <span>Rank Companies</span>
-            <strong>{rankedRows.length} ideas</strong>
+            <span>Compare Ideas</span>
+            <strong>
+              {visibleRankedRows.length} / {rankedRows.length} ideas
+            </strong>
           </div>
+
+          <div className="thesis-board-rank-toolbar">
+            <div className="thesis-board-filter-group" aria-label="Filter ideas">
+              {rankingFilters.map((filter) => (
+                <button
+                  aria-pressed={rankingFilter === filter}
+                  className={
+                    rankingFilter === filter
+                      ? 'thesis-board-filter-button thesis-board-filter-button--active'
+                      : 'thesis-board-filter-button'
+                  }
+                  key={filter}
+                  onClick={() => setRankingFilter(filter)}
+                  type="button"
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+            <div className="thesis-board-sort-row">
+              <label>
+                <span>Sort</span>
+                <select
+                  aria-label="Sort thesis rankings"
+                  onChange={(event) =>
+                    setRankingSort(event.currentTarget.value as RankingsSort)
+                  }
+                  value={rankingSort}
+                >
+                  {rankingSorts.map((sort) => (
+                    <option key={sort}>{sort}</option>
+                  ))}
+                </select>
+              </label>
+              <button className="thesis-board-add-idea-button" type="button">
+                Add idea
+              </button>
+            </div>
+          </div>
+
           <div className="thesis-board-list" role="list">
-            {rankedRows.map((row, index) => {
-              const scoreOutput = scoreOutputsById.get(row.id);
+            {visibleRankedRows.map((row, index) => {
               const rankedItem = rankedItemsById.get(row.id);
               const isSelected = row.id === selectedRow?.id;
 
               return (
                 <button
                   aria-pressed={isSelected}
-                  className={`thesis-board-list-item${
+                  className={`thesis-board-list-item thesis-rank-card${
                     isSelected ? ' thesis-board-list-item--selected' : ''
                   }`}
                   key={row.id}
                   onClick={() => setSelectedRowId(row.id)}
                   type="button"
                 >
-                  <span className="thesis-board-rank-number">
-                    {formatRank(rankedItem, index)}
-                  </span>
-                  <span className="thesis-board-list-copy">
-                    <strong>{row.ticker}</strong>
-                    <span>{row.companyName}</span>
-                    <small>{row.theme}</small>
-                  </span>
-                  <span className="thesis-board-list-score">
-                    <strong>
-                      {scoreOutput ? Math.round(scoreOutput.score) : '--'}
-                    </strong>
-                    <small>MBS</small>
-                  </span>
+                  <div className="thesis-rank-card-header">
+                    <span className="thesis-board-rank-number">
+                      {formatRank(rankedItem, index)}
+                    </span>
+                    <div className="thesis-rank-title-block">
+                      <strong>{row.ticker}</strong>
+                      <span>{row.companyName}</span>
+                      <small>{row.theme}</small>
+                    </div>
+                    <span className="thesis-board-list-score">
+                      <strong>{row.mbsScore}</strong>
+                      <small>MBS</small>
+                      <span
+                        className={`thesis-board-score-change thesis-board-score-change--${getScoreChangeTone(row)}`}
+                      >
+                        {formatBoardRowScoreChange(row)}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="thesis-rank-status-row">
+                      <Badge variant={getThesisStatusVariant(row.thesisStatus)}>
+                        {row.thesisStatus}
+                      </Badge>
+                      <Badge variant={getIdeaStatusVariant(row.ideaStatus)}>
+                        {row.ideaStatus}
+                      </Badge>
+                  </div>
+                  <div className="thesis-rank-meta-row">
+                    <span>Conviction {row.conviction}</span>
+                    <span>Risk {row.riskLevel}</span>
+                    <span>Reviewed {row.lastReviewedDate}</span>
+                    <span>Next {row.nextReviewDate || 'Unscheduled'}</span>
+                  </div>
                 </button>
               );
             })}
+
+            {visibleRankedRows.length === 0 ? (
+              <p className="thesis-board-empty-state">
+                No ideas match this filter.
+              </p>
+            ) : null}
           </div>
         </Card>
 
@@ -541,6 +653,8 @@ function thesisToBoardRow(thesis: MockThesis): ThesisBoardRow {
     keyRisks: thesis.keyRisks,
     catalysts: thesis.catalysts,
     lastReviewedDate: thesis.lastReviewedDate,
+    mbsScore: thesis.mbsScore,
+    needsReview: isNeedsReviewThesis(thesis),
     nextReviewDate: thesis.nextReviewDate,
     previousMbsScore: thesis.previousMbsScore,
     categoryValues: {
@@ -553,6 +667,114 @@ function thesisToBoardRow(thesis: MockThesis): ThesisBoardRow {
       valuation: baseScore
     }
   };
+}
+
+function filterRankingRows(
+  rows: readonly ThesisBoardRow[],
+  filter: RankingsFilter
+): ThesisBoardRow[] {
+  if (filter === 'All ideas') {
+    return [...rows];
+  }
+
+  if (filter === 'Needs Review') {
+    return rows.filter((row) => row.needsReview);
+  }
+
+  return rows.filter((row) => row.ideaStatus === filter);
+}
+
+function sortRankingRows(
+  rows: readonly ThesisBoardRow[],
+  sort: RankingsSort
+): ThesisBoardRow[] {
+  return [...rows].sort((first, second) => {
+    if (sort === 'Score change') {
+      return getBoardRowScoreChange(second) - getBoardRowScoreChange(first);
+    }
+
+    if (sort === 'Conviction') {
+      return (
+        getConvictionSortValue(second.conviction) -
+        getConvictionSortValue(first.conviction)
+      );
+    }
+
+    if (sort === 'Risk') {
+      return (
+        getRiskSortValue(second.riskLevel) - getRiskSortValue(first.riskLevel)
+      );
+    }
+
+    if (sort === 'Next review date') {
+      return (
+        getReviewDateSortValue(first.nextReviewDate) -
+        getReviewDateSortValue(second.nextReviewDate)
+      );
+    }
+
+    return second.mbsScore - first.mbsScore;
+  });
+}
+
+function getBoardRowScoreChange(row: ThesisBoardRow): number {
+  return getScoreChange(row);
+}
+
+function formatBoardRowScoreChange(row: ThesisBoardRow): string {
+  return formatScoreChange(row);
+}
+
+function getScoreChangeTone(row: ThesisBoardRow): 'down' | 'flat' | 'up' {
+  const change = getBoardRowScoreChange(row);
+
+  if (change > 0) {
+    return 'up';
+  }
+
+  if (change < 0) {
+    return 'down';
+  }
+
+  return 'flat';
+}
+
+function getConvictionSortValue(conviction: string): number {
+  if (conviction === 'High') {
+    return 3;
+  }
+
+  if (conviction === 'Medium') {
+    return 2;
+  }
+
+  if (conviction === 'Low') {
+    return 1;
+  }
+
+  return 0;
+}
+
+function getRiskSortValue(riskLevel: string): number {
+  if (riskLevel === 'High') {
+    return 3;
+  }
+
+  if (riskLevel === 'Medium') {
+    return 2;
+  }
+
+  return 1;
+}
+
+function getReviewDateSortValue(date: string): number {
+  if (!date) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const value = Date.parse(`${date}T00:00:00.000Z`);
+
+  return Number.isNaN(value) ? Number.MAX_SAFE_INTEGER : value;
 }
 
 function buildMbsInput(
@@ -630,6 +852,26 @@ function getThesisStatusVariant(status: string): BadgeVariant {
 
   if (status === 'Broken') {
     return 'risk';
+  }
+
+  return 'neutral';
+}
+
+function getIdeaStatusVariant(status: string): BadgeVariant {
+  if (status === 'Active') {
+    return 'accent';
+  }
+
+  if (status === 'Needs Review') {
+    return 'warning';
+  }
+
+  if (status === 'Caution') {
+    return 'risk';
+  }
+
+  if (status === 'Watchlist' || status === 'Researching') {
+    return 'neutral';
   }
 
   return 'neutral';

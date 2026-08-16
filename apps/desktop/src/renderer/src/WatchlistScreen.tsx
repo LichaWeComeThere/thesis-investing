@@ -417,7 +417,9 @@ export function WatchlistScreen({
             <p>
               {selectedItem
                 ? 'Review the selected idea detail card below or update its local note.'
-                : 'Save or select a watchlist item to populate the detail panel.'}
+                : selectedMockThesis
+                  ? 'Review the selected thesis context below or choose another idea from the queue.'
+                  : 'Save a watchlist item to populate the detail panel.'}
             </p>
           </div>
         </Card>
@@ -479,15 +481,6 @@ export function WatchlistScreen({
               </p>
             </div>
           )}
-
-          {!isLoading && watchlistTheses.length > 0 && items.length === 0 ? (
-            <div className="watchlist-empty-state">
-              <h3>No watchlist items yet</h3>
-              <p>
-                Add a ticker to start tracking a thesis candidate.
-              </p>
-            </div>
-          ) : null}
 
           {items.length > 0 ? (
             <div className="watchlist-table-wrap">
@@ -604,7 +597,7 @@ export function WatchlistScreen({
             <div className="watchlist-empty-state">
               <h3>No item selected</h3>
               <p>
-                Save a watchlist item or select a sample thesis to review the
+                Save a watchlist item or select a current thesis to review the
                 detail panel.
               </p>
             </div>
@@ -622,6 +615,14 @@ function formatTags(tags: string[] | undefined): string {
 function watchlistBadgeVariant(
   thesis: MockThesis
 ): 'accent' | 'neutral' | 'success' | 'warning' | 'risk' {
+  if (thesis.ideaStatus === 'Caution') {
+    return 'risk';
+  }
+
+  if (thesis.ideaStatus === 'Needs Review') {
+    return 'warning';
+  }
+
   if (thesis.ideaStatus === 'Researching') {
     return 'accent';
   }
