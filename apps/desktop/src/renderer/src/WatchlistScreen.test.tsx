@@ -37,12 +37,18 @@ describe('WatchlistScreen', () => {
     expect(html).toContain('Microsoft');
     expect(html).toContain('quality, software');
     expect(html).toContain('Durable software thesis');
+    expect(html).toContain('Local saved data');
+    expect(html).toContain('These watchlist items persist on this device.');
   });
 
   it('renders shared mock watchlist theses when no local items exist', () => {
     const html = renderToStaticMarkup(<WatchlistScreen />);
 
-    expect(html).toContain('Watchlist thesis queue');
+    expect(html).toContain('Watchlist thesis context');
+    expect(html).toContain('Demo thesis data');
+    expect(html).toContain(
+      'Example thesis context is not part of your saved watchlist.'
+    );
     expect(html).not.toContain('No watchlist items yet');
     expect(html).toContain('CRWD');
     expect(html).toContain('CrowdStrike');

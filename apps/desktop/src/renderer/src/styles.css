@@ -434,6 +434,21 @@
   padding: 10px 12px;
 }
 
+.data-provenance-note {
+  align-items: center;
+  color: var(--ti-color-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 8px;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+.data-provenance-note .ti-badge {
+  flex: 0 0 auto;
+}
+
 .thesis-board-layout {
   gap: 18px;
   grid-template-columns: minmax(208px, 0.54fr) minmax(620px, 1.9fr) minmax(

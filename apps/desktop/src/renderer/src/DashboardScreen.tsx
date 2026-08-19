@@ -108,6 +108,58 @@ function isEmptyDashboardSummary(summary: DashboardSummary): boolean {
   );
 }
 
+function getDashboardSummaryItems(
+  summary: DashboardSummary
+): ThesisHealthItem[] {
+  return [
+    {
+      detail: 'Local watchlist records.',
+      label: 'Saved watchlist items',
+      tone: 'tracked',
+      value: summary.totalWatchlistItems
+    },
+    {
+      detail: `${summary.activeThesisNotes} active / ${summary.draftThesisNotes} draft / ${summary.watchThesisNotes} watch`,
+      label: 'Thesis notes',
+      tone: 'strong',
+      value: summary.totalThesisNotes
+    },
+    {
+      detail: `${summary.overdueReminders} overdue / ${summary.completedReminders} completed / ${summary.totalReminders} total`,
+      label: 'Open reminders',
+      tone: summary.overdueReminders > 0 ? 'review' : 'tracked',
+      value: summary.openReminders
+    },
+    {
+      detail: 'Saved manual ranker rows.',
+      label: 'Ranker inputs',
+      tone: 'tracked',
+      value: summary.totalPortfolioRankerItems
+    },
+    {
+      detail: getMbsScoreSnapshotDetail(summary),
+      label: 'Saved scores',
+      tone: summary.latestMbsScoreSnapshot ? 'strong' : 'tracked',
+      value: summary.totalMbsScoreSnapshots
+    }
+  ];
+}
+
+function getMbsScoreSnapshotDetail(summary: DashboardSummary): string {
+  const latestSnapshot = summary.latestMbsScoreSnapshot;
+
+  if (!latestSnapshot) {
+    return 'No completed snapshots yet.';
+  }
+
+  const label =
+    latestSnapshot.ticker ??
+    latestSnapshot.companyName ??
+    'Latest completed score';
+
+  return `Latest ${label}: ${latestSnapshot.score} / ${latestSnapshot.maxScore}`;
+}
+
 function getDashboardThesisHealthItems(
   theses: readonly MockThesis[]
 ): ThesisHealthItem[] {
@@ -115,7 +167,7 @@ function getDashboardThesisHealthItems(
 
   return [
     {
-      detail: 'Current thesis records.',
+      detail: 'Shared demo thesis records.',
       label: 'Theses tracked',
       tone: 'tracked',
       value: summary.trackedCount
@@ -127,7 +179,7 @@ function getDashboardThesisHealthItems(
       value: summary.needsReviewCount
     },
     {
-      detail: 'Ideas currently marked active.',
+      detail: 'Example ideas currently marked active.',
       label: 'Active ideas',
       tone: summary.activeCount > 0 ? 'strong' : 'tracked',
       value: summary.activeCount
@@ -139,7 +191,7 @@ function getDashboardThesisHealthItems(
       value: summary.weakeningCount
     },
     {
-      detail: 'High-conviction theses in the current set.',
+      detail: 'High-conviction examples in the demo set.',
       label: 'Strong conviction',
       tone: summary.highConvictionCount > 0 ? 'strong' : 'tracked',
       value: summary.highConvictionCount
@@ -229,9 +281,9 @@ function getOpenNextAction(theses: readonly MockThesis[]): QuickAction {
   }
 
   return {
-    label: `Open ${reviewCandidate.ticker}`,
+    label: `Open demo ${reviewCandidate.ticker}`,
     workspaceId: 'thesis-board',
-    description: `${reviewCandidate.companyName}: ${reviewCandidate.ideaStatus.toLowerCase()} thesis review.`
+    description: `${reviewCandidate.companyName}: example ${reviewCandidate.ideaStatus.toLowerCase()} thesis review.`
   };
 }
 
@@ -255,6 +307,10 @@ export function DashboardScreen({
       Boolean(resolvedSummaryStorageClient) &&
       initialSummary === undefined &&
       initialSummaryErrors.length === 0
+  );
+  const summaryItems = useMemo(
+    () => getDashboardSummaryItems(dashboardSummary),
+    [dashboardSummary]
   );
   const thesisHealthItems = useMemo(
     () => getDashboardThesisHealthItems(theses),
@@ -339,14 +395,14 @@ export function DashboardScreen({
         <div className="dashboard-main-stack">
           <section
             className="dashboard-health-section"
-            aria-label="Shared thesis summary"
+            aria-label="Local persisted summary"
           >
             <div className="dashboard-section-heading">
-              <h2>Shared Thesis Summary</h2>
+              <h2>Local Saved Data</h2>
               <p>
                 {isSummaryLoading
                   ? 'Loading saved local records.'
-                  : `Current thesis set. Local summary generated ${formatGeneratedAt(dashboardSummary.generatedAt)}`}
+                  : `Updated ${formatGeneratedAt(dashboardSummary.generatedAt)}`}
               </p>
             </div>
 
@@ -363,10 +419,34 @@ export function DashboardScreen({
 
             {!isSummaryLoading && summaryErrors.length === 0 && isSummaryEmpty ? (
               <p className="dashboard-summary-empty">
-                No persisted local workflow records yet. The current thesis set
-                is still available for review.
+                No persisted local workflow records yet.
               </p>
             ) : null}
+
+            <div className="dashboard-health-grid">
+              {summaryItems.map((item) => (
+                <Card
+                  className={`dashboard-health-card dashboard-health-card--${item.tone}`}
+                  key={item.label}
+                >
+                  <div className="dashboard-health-card-content">
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                    <small>{item.detail}</small>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          <section
+            className="dashboard-health-section"
+            aria-label="Demo thesis analytics"
+          >
+            <div className="dashboard-section-heading">
+              <h2>Demo Thesis Analytics</h2>
+              <p>Example thesis health and score-change context.</p>
+            </div>
 
             <div className="dashboard-health-grid">
               {thesisHealthItems.map((item) => (
@@ -384,42 +464,53 @@ export function DashboardScreen({
             </div>
           </section>
 
-          <section className="dashboard-command-grid" aria-label="Review focus">
-            <Card className="review-priority-card" emphasis title="Review Priority">
-              <div className="review-priority-list">
-                {reviewPriorityItems.map((item) => (
-                  <article
-                    className={`review-priority-item review-priority-item--${item.tone}`}
-                    key={item.label}
-                  >
-                    <div>
-                      <span>{item.label}</span>
-                      <strong>{item.ticker}</strong>
-                    </div>
-                    <p>{item.detail}</p>
-                  </article>
-                ))}
-              </div>
-            </Card>
+          <section
+            className="dashboard-health-section"
+            aria-label="Demo thesis research context"
+          >
+            <div className="dashboard-section-heading">
+              <h2>Demo Research Context</h2>
+              <p>Example review signals from the shared demo thesis set.</p>
+            </div>
 
-            <Card className="market-regime-card" title="Market Regime">
-              <div className="market-regime-hero">
-                <span>Regime</span>
-                <strong>Under Pressure</strong>
-              </div>
-              <p>
-                Sample regime: demand fresher reviews, size conviction
-                carefully, and treat high-risk growth theses as research-first.
-              </p>
-              <div className="market-regime-tags">
-                <Badge variant="warning">Risk check</Badge>
-                <Badge variant="neutral">Research context</Badge>
-              </div>
-            </Card>
+            <div className="dashboard-command-grid">
+              <Card className="review-priority-card" emphasis title="Review Priority">
+                <div className="review-priority-list">
+                  {reviewPriorityItems.map((item) => (
+                    <article
+                      className={`review-priority-item review-priority-item--${item.tone}`}
+                      key={item.label}
+                    >
+                      <div>
+                        <span>{item.label}</span>
+                        <strong>{item.ticker}</strong>
+                      </div>
+                      <p>{item.detail}</p>
+                    </article>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="market-regime-card" title="Market Regime">
+                <div className="market-regime-hero">
+                  <span>Example context</span>
+                  <strong>Under Pressure</strong>
+                </div>
+                <p>
+                  Example context for organizing research: revisit stale
+                  assumptions and flag higher-risk growth theses for additional
+                  review.
+                </p>
+                <div className="market-regime-tags">
+                  <Badge variant="warning">Risk check</Badge>
+                  <Badge variant="neutral">Example market context</Badge>
+                </div>
+              </Card>
+            </div>
           </section>
 
           <section className="dashboard-lower-grid" aria-label="Activity and actions">
-            <Card title="Recent Thesis Activity">
+            <Card title="Demo Thesis Activity">
               <div className="recent-activity-list">
                 {recentActivityItems.map((item) => (
                   <article

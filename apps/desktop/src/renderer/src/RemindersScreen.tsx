@@ -478,6 +478,10 @@ export function RemindersScreen({
 
       <div className="reminders-layout">
         <Card title="Upcoming thesis reviews">
+          <p className="data-provenance-note" role="note">
+            <Badge variant="neutral">Demo thesis data</Badge>
+            <span>These example review dates are not saved reminders.</span>
+          </p>
           <div className="reminders-table-wrap">
             <table className="reminders-table">
               <thead>
@@ -524,6 +528,10 @@ export function RemindersScreen({
         </Card>
 
         <Card title="Local reminders">
+          <p className="data-provenance-note" role="note">
+            <Badge variant="accent">Local saved data</Badge>
+            <span>These reminders persist on this device.</span>
+          </p>
           {isLoading ? (
             <p>Loading persisted reminders...</p>
           ) : reminders.length > 0 ? (

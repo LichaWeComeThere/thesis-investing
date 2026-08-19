@@ -233,8 +233,8 @@ export function ThesisBoardScreen({
       />
 
       <p className="thesis-board-prototype-note" role="note">
-        Local thesis workspace. Review and compare the current thesis set;
-        changes here are not saved yet.
+        Demo thesis workspace - these example records and edits are not saved.
+        This is not yet the formal Living Thesis OS.
       </p>
 
       <div className="thesis-board-layout">

@@ -74,13 +74,16 @@ const marketPulseItems: MarketPulseItem[] = [
 
 export function MarketPulseFeed(): JSX.Element {
   return (
-    <aside className="market-pulse-feed" aria-label="Latest market pulse">
+    <aside className="market-pulse-feed" aria-label="Example market pulse">
       <div className="market-pulse-header">
         <div>
           <p>Market Pulse</p>
-          <h2>Latest</h2>
+          <h2>Example Feed</h2>
+          <small className="market-pulse-provenance">
+            Static example headlines and moves, not a live feed.
+          </small>
         </div>
-        <Badge variant="neutral">Market Pulse</Badge>
+        <Badge variant="neutral">Demo data</Badge>
       </div>
 
       <div className="market-pulse-list">

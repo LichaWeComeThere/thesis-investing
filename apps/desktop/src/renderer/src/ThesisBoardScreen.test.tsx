@@ -10,8 +10,9 @@ describe('ThesisBoardScreen', () => {
     expect(html).toContain(
       'Review, rank, and update investment ideas from one focused workspace.'
     );
-    expect(html).toContain('Local thesis workspace.');
-    expect(html).toContain('changes here are not saved yet.');
+    expect(html).toContain('Demo thesis workspace');
+    expect(html).toContain('example records and edits are not saved');
+    expect(html).toContain('not yet the formal Living Thesis OS');
     expect(html).toContain('Thesis Rankings');
     expect(html).toContain('Compare Ideas');
     expect(html).toContain('NVDA');

@@ -86,7 +86,7 @@ export function WatchlistScreen({
       null,
     [selectedMockThesisId, watchlistTheses]
   );
-  const researchingCount = watchlistTheses.filter(
+  const demoResearchingCount = watchlistTheses.filter(
     (thesis) => thesis.ideaStatus === 'Researching'
   ).length;
 
@@ -390,24 +390,26 @@ export function WatchlistScreen({
 
         <Card className="watchlist-summary-card" emphasis title="Watchlist pulse">
           <div className="watchlist-summary-hero">
-            <span>Tracked ideas</span>
-            <strong>{watchlistTheses.length}</strong>
-            <Badge variant={watchlistTheses.length > 0 ? 'accent' : 'neutral'}>
-              Local
+            <span>Saved watchlist items</span>
+            <strong>{items.length}</strong>
+            <Badge variant={items.length > 0 ? 'accent' : 'neutral'}>
+              Local saved data
             </Badge>
           </div>
 
           <div className="watchlist-summary-grid">
             <div>
-              <span>Researching</span>
-              <strong>{researchingCount}</strong>
+              <span>Demo researching</span>
+              <strong>{demoResearchingCount}</strong>
             </div>
             <div>
-              <span>Selected</span>
+              <span>Selected source</span>
               <strong>
                 {selectedItem
-                  ? selectedItem.ticker
-                  : selectedMockThesis?.ticker ?? 'None'}
+                  ? 'Local'
+                  : selectedMockThesis
+                    ? 'Demo'
+                    : 'None'}
               </strong>
             </div>
           </div>
@@ -418,7 +420,7 @@ export function WatchlistScreen({
               {selectedItem
                 ? 'Review the selected idea detail card below or update its local note.'
                 : selectedMockThesis
-                  ? 'Review the selected thesis context below or choose another idea from the queue.'
+                  ? 'Review the demo thesis context below or choose another example from the queue.'
                   : 'Save a watchlist item to populate the detail panel.'}
             </p>
           </div>
@@ -426,7 +428,11 @@ export function WatchlistScreen({
       </div>
 
       <div className="watchlist-layout">
-        <Card title="Watchlist thesis queue">
+        <Card title="Watchlist thesis context">
+          <p className="data-provenance-note" role="note">
+            <Badge variant="neutral">Demo thesis data</Badge>
+            <span>Example thesis context is not part of your saved watchlist.</span>
+          </p>
           {isLoading ? (
             <p>Loading persisted watchlist items...</p>
           ) : watchlistTheses.length > 0 ? (
@@ -483,49 +489,55 @@ export function WatchlistScreen({
           )}
 
           {items.length > 0 ? (
-            <div className="watchlist-table-wrap">
-              <table className="watchlist-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Ticker</th>
-                    <th scope="col">Company</th>
-                    <th scope="col">Tags</th>
-                    <th scope="col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.ticker}</td>
-                      <td>{item.companyName ?? 'Not provided'}</td>
-                      <td>{formatTags(item.tags)}</td>
-                      <td>
-                        <div className="watchlist-row-actions">
-                          <Button
-                            onClick={() => selectItem(item)}
-                            disabled={isWriting}
-                            size="sm"
-                            type="button"
-                            variant="secondary"
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={() => removeItem(item.id)}
-                            disabled={isWriting}
-                            size="sm"
-                            type="button"
-                            variant="secondary"
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </td>
+            <>
+              <p className="data-provenance-note" role="note">
+                <Badge variant="accent">Local saved data</Badge>
+                <span>These watchlist items persist on this device.</span>
+              </p>
+              <div className="watchlist-table-wrap">
+                <table className="watchlist-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Ticker</th>
+                      <th scope="col">Company</th>
+                      <th scope="col">Tags</th>
+                      <th scope="col">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.ticker}</td>
+                        <td>{item.companyName ?? 'Not provided'}</td>
+                        <td>{formatTags(item.tags)}</td>
+                        <td>
+                          <div className="watchlist-row-actions">
+                            <Button
+                              onClick={() => selectItem(item)}
+                              disabled={isWriting}
+                              size="sm"
+                              type="button"
+                              variant="secondary"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => removeItem(item.id)}
+                              disabled={isWriting}
+                              size="sm"
+                              type="button"
+                              variant="secondary"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : null}
         </Card>
 
@@ -560,6 +572,10 @@ export function WatchlistScreen({
             </article>
           ) : selectedMockThesis ? (
             <article className="watchlist-details">
+              <p className="data-provenance-note" role="note">
+                <Badge variant="neutral">Demo thesis data</Badge>
+                <span>This example thesis is not a saved watchlist record.</span>
+              </p>
               <div className="watchlist-details-header">
                 <div>
                   <p className="watchlist-details-eyebrow">
@@ -597,8 +613,8 @@ export function WatchlistScreen({
             <div className="watchlist-empty-state">
               <h3>No item selected</h3>
               <p>
-                Save a watchlist item or select a current thesis to review the
-                detail panel.
+                Save a watchlist item or select a demo thesis to review the detail
+                panel.
               </p>
             </div>
           )}

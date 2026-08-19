@@ -92,6 +92,8 @@ describe('RemindersScreen', () => {
     );
 
     expect(html).toContain('Upcoming thesis reviews');
+    expect(html).toContain('Demo thesis data');
+    expect(html).toContain('These example review dates are not saved reminders.');
     expect(html).toContain('MVP - MVP Session Co');
     expect(html).toContain('Researching');
   });
