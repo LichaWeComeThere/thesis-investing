@@ -28,6 +28,9 @@ research record while preserving the evidence of how it changed. It should:
 This plan does not add live data, cloud sync, authentication, AI, brokerage
 connectivity, trading execution, or a recommendation engine.
 
+The five logical decisions required before the shared model are locked in
+[Living Thesis Shared-Model Decisions](LIVING_THESIS_MODEL_DECISIONS.md).
+
 ## Current-State Audit
 
 ### Current thesis concepts
@@ -69,9 +72,12 @@ formal persisted Living Thesis intelligence.
 
 `MbsScoreSnapshot` already has an optional `thesisId`, but there is no persisted
 Living Thesis repository. The Phase 2 version 1 importer currently remaps that
-field through imported Thesis Note IDs. Stage 2 must define the field's formal
-meaning before Stage 3 adds storage. Future Living Thesis links must never be
-silently inferred from ticker or from a Thesis Note ID.
+field through imported Thesis Note IDs, while the MBS Scorer may write a
+renderer `MockThesis` ID. These are legacy references, not formal Living Thesis
+links. For formal code, the retained `thesisId` field has one future meaning: a
+stable `LivingThesis.id`. Legacy values must not be silently inferred into that
+relationship from ticker, a Thesis Note ID, or a coincidentally matching
+string.
 
 ## Preserved Branch Assessment
 
@@ -132,8 +138,8 @@ and Stage 0 provenance behavior.
 The architecture uses these terms consistently:
 
 - **Living Thesis**: the user's current, persisted thesis record.
-- **Lifecycle status**: a user-controlled state such as draft, active,
-  challenged, closed, or archived.
+- **Lifecycle status**: a user-controlled record state: `draft`, `active`,
+  `monitoring`, `paused`, or `archived`.
 - **Thesis health**: a deterministic assessment derived from local evidence,
   not a recommendation and not the lifecycle status.
 - **Review state**: a derived scheduling state such as current, due soon,
@@ -156,26 +162,25 @@ shape is:
 | Field | Requirement | Notes |
 | --- | --- | --- |
 | `id` | Required, immutable | Stable opaque ID; never derived from ticker. |
-| `ticker` | Required for the initial model | Normalized ticker, but not unique. |
-| `companyName` | Required | User-maintained identity label. |
+| `ticker` | Optional | Normalized metadata when present; never identity and not unique. |
+| `entityName` | Required | User-maintained company, fund, theme, or subject label independent of ticker. |
 | `title` | Required | Names the particular thesis, not merely the company. |
 | `theme` | Optional | User-assigned research grouping; not the static Theme Library object. |
 | `summary` | Required | Current thesis statement. |
 | `bullCase` | Optional | Current supporting case. |
 | `bearCase` | Optional | Current disconfirming case. |
-| `lifecycleStatus` | Required | Proposed values: `draft`, `active`, `watch`, `challenged`, `closed`, `archived`. |
+| `lifecycle` | Required | `draft`, `active`, `monitoring`, `paused`, or `archived`; separate from health and review state. |
 | `conviction` | Required | `unrated`, `low`, `medium`, or `high`; user-entered analytical context. |
 | `riskLevel` | Required | `unrated`, `low`, `medium`, or `high`; user-entered summary, not an automated recommendation. |
 | `reviewCadenceDays` | Optional | Positive integer used for deterministic scheduling. |
 | `nextReviewAt` | Optional | User-controlled or calculated when a review completes. |
-| `currentMbsSnapshotId` | Optional | References the selected current MBS snapshot; the numeric score is not duplicated. |
 | `version` | Required | Monotonic revision used to detect stale review completion or concurrent edits. |
 | `createdAt` / `updatedAt` | Required | ISO timestamps. |
 | `archivedAt` | Optional | Archival timestamp; archival is preferred to deletion. |
 
 Ticker changes must not change `id`. More than one thesis may use the same
-ticker, including a closed historical thesis and a later thesis with a
-different premise.
+ticker, and a thesis may have no ticker. Identity and relationships use the
+stable thesis ID.
 
 ### Current risk and catalyst items
 
@@ -186,9 +191,9 @@ user-entered severity. Catalyst status may distinguish open, observed, and
 retired.
 
 The Living Thesis aggregate presented to core/UI code may include these child
-arrays, while SQLite stores them in normalized tables. Removing an item from
-current state must create a revision and mark or retire the child item; history
-must not be erased.
+arrays. Stage 3 must decide whether SQLite begins with normalized child tables
+or validated JSON storage. Removing an item from current state must create a
+revision and mark or retire the child item; history must not be erased.
 
 ### Values that are derived, not authoritative fields
 
@@ -213,7 +218,7 @@ inject deterministic IDs.
 
 Identity rules:
 
-- ticker and company name are attributes, not keys;
+- ticker and entity name are attributes, not keys;
 - no unique constraint should prevent multiple theses for one ticker;
 - changing a ticker does not rewrite child or history IDs;
 - every child and history record has its own stable ID and `thesisId` foreign
@@ -235,11 +240,13 @@ React renderer
   -> SQLite adapter and migrations
 ```
 
-Potential storage entities are:
+Potential storage entities are listed below. The risk and catalyst rows show
+the normalized option; their physical representation remains a Stage 3
+decision.
 
 | Entity/table | Mutability | Purpose |
 | --- | --- | --- |
-| `living_theses` | Mutable current state | Current thesis fields, current snapshot pointer, lifecycle, scheduling, and version. |
+| `living_theses` | Mutable current state | Current thesis fields, lifecycle, scheduling, and version. |
 | `living_thesis_risks` | Mutable current state with retirement | Structured current risks. |
 | `living_thesis_catalysts` | Mutable current state with retirement | Structured current catalysts. |
 | `living_thesis_review_sessions` | Mutable only while in progress; immutable after completion | Review draft, baseline version, reason, notes, proposed changes, and completion metadata. |
@@ -250,9 +257,9 @@ Potential storage entities are:
 Conceptually, one Living Thesis owns many risk items, catalyst items, Review
 Sessions, decisions, revisions, and MBS snapshots. A Review Session belongs to
 one thesis and may be referenced by the revision, decision, and MBS snapshot
-created when it completes. `currentMbsSnapshotId` is a nullable pointer from the
-current thesis to one of its linked snapshots; the snapshot history remains the
-authoritative score source.
+created when it completes. Current and previous MBS values are derived from
+ordered linked snapshots; the Living Thesis row has no authoritative snapshot
+pointer or numeric score.
 
 Foreign keys should conceptually use `ON DELETE RESTRICT`. Phase 3 should not
 add hard-delete UI. Useful indexes include thesis ID plus timestamp on every
@@ -282,7 +289,7 @@ Each successful update should run in one transaction that:
 1. validates the expected thesis version;
 2. records an append-only revision containing the prior and resulting domain
    state or an equivalent validated delta;
-3. updates normalized current rows;
+3. updates the validated current-state storage;
 4. increments the thesis version and `updatedAt`.
 
 ### Historical records
@@ -301,26 +308,28 @@ be edited in place through ordinary product UI.
 
 ## MBS Integration
 
-`MbsScoreSnapshot` should remain the canonical historical score record. A
-Living Thesis should store only an optional `currentMbsSnapshotId`, while its
-current score, previous score, and change are derived from linked snapshots.
-This avoids separate mutable score fields disagreeing with history.
+`MbsScoreSnapshot` remains the canonical historical score record. A Living
+Thesis does not store `currentMbsSnapshotId` or duplicate numeric score fields.
+Its current score, previous score, and change are derived from eligible linked
+snapshots ordered by `createdAt` descending, then snapshot ID ascending as a
+deterministic tie-breaker.
 
 Future behavior should be explicit:
 
 - saving a score without a thesis continues to create an unlinked snapshot;
 - the user may select a Living Thesis before saving;
-- a linked snapshot receives that stable thesis ID;
-- setting a snapshot as current updates the thesis pointer in the same
-  transaction or explicit use case;
+- a formally linked snapshot receives that stable Living Thesis ID at creation;
+- the latest eligible linked completed snapshot is current by definition;
 - a Review Session may prepare MBS input, but only completion creates the
-  immutable snapshot and advances the current pointer;
+  immutable linked snapshot;
 - existing unlinked snapshots remain valid and are not inferred by ticker.
 
-Stage 2 must resolve whether the existing `MbsScoreSnapshot.thesisId` field can
-be safely formalized as a Living Thesis ID or whether a new unambiguous field is
-needed for export-version compatibility. Stage 1 changes no current MBS
-persistence.
+The existing field name `thesisId` is retained as the single formal
+relationship to `LivingThesis.id`; no competing `livingThesisId` field is
+introduced. Existing values from the current scorer or version 1 import are
+legacy references and must remain unlinked in formal Living Thesis queries
+unless a later explicit migration validates the relationship. Stage 1 and the
+decision pass change no current MBS persistence.
 
 ## Thesis Board Transition
 
@@ -435,7 +444,7 @@ Potential inputs are:
 - whether a review is overdue or due soon;
 - latest linked MBS score and change from the prior linked snapshot;
 - user-marked high-severity unresolved risks;
-- recent challenged/broken status changes;
+- recent lifecycle changes and worsening risk evidence;
 - stale review age;
 - incomplete Review Session age.
 
@@ -458,7 +467,7 @@ or recommendation list. Candidate reasons may include:
 - review due within a configured window;
 - unresolved high-severity risk;
 - material negative score change between linked snapshots;
-- challenged lifecycle state;
+- lifecycle eligibility, including exclusion of archived theses;
 - stale or abandoned in-progress review;
 - explicit user review flag.
 
@@ -527,9 +536,9 @@ snapshots. Import should:
 
 Backward-compatible import of version 1 should continue to import its five
 existing workflows. Because version 1 has no formal Living Thesis entity, its
-snapshot `thesisId` must not be guessed into a new Living Thesis relationship.
-The exact legacy-field treatment is an unresolved Stage 2/3 decision that needs
-fixture-based compatibility tests.
+snapshot `thesisId` is a legacy reference and must not be guessed into a new
+Living Thesis relationship. Stage 3 must implement an explicit compatibility
+boundary and fixture-based tests while preserving the frozen version 1 format.
 
 ## Architecture And Safety Boundaries
 
@@ -584,31 +593,23 @@ truth and gives every later workflow a stable repository contract.
 
 ## Unresolved Questions
 
-These decisions should be resolved during Stage 2 or before the Stage 3
-persistence migration is approved:
+The five shared-model decisions covering ticker optionality, lifecycle
+ownership, legacy `InvestmentIdea`, current MBS derivation, and snapshot
+`thesisId` semantics are resolved in
+[Living Thesis Shared-Model Decisions](LIVING_THESIS_MODEL_DECISIONS.md). The
+remaining persistence and feature-stage questions are:
 
-1. Should the initial model require a ticker, or allow thesis records for a
-   private company, fund, or theme without one?
-2. Should `ThesisStatus` be evolved into the Living Thesis lifecycle enum or
-   remain scoped to legacy Thesis Notes?
-3. How should the early `InvestmentIdea` type be deprecated or adapted without
-   creating a second formal aggregate?
-4. Should risks and catalysts use normalized child tables from the first
+1. Should risks and catalysts use normalized child tables from the first
    migration, or begin as validated JSON with a later normalization cost?
-5. Is `currentMbsSnapshotId` sufficient, or does selecting a current snapshot
-   need its own append-only link record?
-6. Can existing `MbsScoreSnapshot.thesisId` be formally repurposed, given the
-   version 1 importer's Thesis Note ID remapping, or is a new
-   `livingThesisId` field safer?
-7. Which edits may bypass a Review Session, and which material fields require
+2. Which edits may bypass a Review Session, and which material fields require
    review completion?
-8. What is the minimum durable Review Session draft format, and how should
+3. What is the minimum durable Review Session draft format, and how should
    draft schema versions be upgraded?
-9. Should abandoned Review Sessions appear in the normal timeline or only in
+4. Should abandoned Review Sessions appear in the normal timeline or only in
    an audit/details view?
-10. Which thesis-health thresholds and priority bands are understandable
+5. Which thesis-health thresholds and priority bands are understandable
     enough to ship without implying recommendations?
-11. Should a future explicit Create from demo action copy any example history,
+6. Should a future explicit Create from demo action copy any example history,
     or create only clean current state and one creation revision?
-12. When export format version 2 is introduced, should in-progress Review
+7. When export format version 2 is introduced, should in-progress Review
     Sessions be portable or imported as inactive drafts?

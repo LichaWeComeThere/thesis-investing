@@ -60,14 +60,20 @@ non-advisory.
 
 Phase 3 Stage 0 is complete. It reconciled the inherited UI prototype with the
 persisted, demo, and static data-provenance boundaries established in Phases 1
-and 2. Stage 1 is the current documentation and architecture-planning stage.
-Formal Living Thesis domain and persistence implementation remains pending.
+and 2. Stage 1 completed the Living Thesis architecture plan. Formal Living
+Thesis domain and persistence implementation remains pending.
 Thesis Board is currently present on `main` only as an early renderer-only
 mock/in-memory prototype that is visibly labeled as unsaved.
 
+The pre-Stage 2 shared-model decisions for optional ticker metadata, dedicated
+lifecycle vocabulary, legacy `InvestmentIdea` handling, derived current MBS,
+and snapshot `thesisId` semantics are locked in
+[Living Thesis Shared-Model Decisions](LIVING_THESIS_MODEL_DECISIONS.md).
+Stage 2 implementation has not started.
+
 - Stage 0: UI Prototype & Data Provenance Reconciliation - complete
-- Stage 1: [Living Thesis OS Architecture Plan](LIVING_THESIS_ARCHITECTURE.md) - current documentation stage
-- Stage 2: Shared Living Thesis Model
+- Stage 1: [Living Thesis OS Architecture Plan](LIVING_THESIS_ARCHITECTURE.md) - complete
+- Stage 2: Shared Living Thesis Model - next; not started
 - Stage 3: Living Thesis Persistence Foundation
 - Stage 4: Thesis Board adopts Living Thesis model
 - Stage 5: Review Workflow
