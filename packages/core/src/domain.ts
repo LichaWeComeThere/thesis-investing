@@ -1,5 +1,6 @@
 export type EntityId = string;
 export type IsoDateString = string;
+export type IsoTimestampString = string;
 export type CurrencyCode = string;
 export type TickerSymbol = string;
 

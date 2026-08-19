@@ -1,5 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import type { ThesisStatus } from './domain';
+import { isValidIsoTimestamp } from './validation';
 import {
   LIVING_THESIS_LIFECYCLES,
   normalizeLivingThesis,
@@ -24,8 +25,8 @@ function createRisk(
     detail: 'Monitor renewal concentration among the largest accounts.',
     status: 'open',
     severity: 'medium',
-    createdAt: '2026-08-19',
-    updatedAt: '2026-08-19',
+    createdAt: '2026-08-19T14:30:00.000Z',
+    updatedAt: '2026-08-19T14:30:00.000Z',
     ...overrides
   };
 }
@@ -39,8 +40,8 @@ function createCatalyst(
     title: 'New product adoption',
     detail: 'Track disclosed enterprise adoption milestones.',
     status: 'open',
-    createdAt: '2026-08-19',
-    updatedAt: '2026-08-19',
+    createdAt: '2026-08-19T14:30:00.000Z',
+    updatedAt: '2026-08-19T14:30:00.000Z',
     ...overrides
   };
 }
@@ -61,8 +62,8 @@ function createLivingThesis(
     catalysts: [createCatalyst()],
     reviewCadenceDays: 90,
     nextReviewAt: '2026-11-17',
-    createdAt: '2026-08-19',
-    updatedAt: '2026-08-19',
+    createdAt: '2026-08-19T14:30:00.000Z',
+    updatedAt: '2026-08-19T14:30:00.000Z',
     ...overrides
   };
 }
@@ -167,6 +168,7 @@ describe('Living Thesis shared model', () => {
         title: ' ',
         status: 'unknown' as LivingThesisRisk['status'],
         severity: 'critical' as LivingThesisRisk['severity'],
+        createdAt: '2026-08-19',
         updatedAt: 'not-a-date'
       })
     );
@@ -177,7 +179,8 @@ describe('Living Thesis shared model', () => {
       'title is required.',
       'status is not supported.',
       'severity is not supported.',
-      'updated date must use YYYY-MM-DD format.'
+      'created timestamp must use YYYY-MM-DDTHH:mm:ss.sssZ format.',
+      'updated timestamp must use YYYY-MM-DDTHH:mm:ss.sssZ format.'
     ]);
   });
 
@@ -192,7 +195,8 @@ describe('Living Thesis shared model', () => {
         thesisId: '',
         detail: ' ',
         status: 'completed' as LivingThesisCatalyst['status'],
-        createdAt: '2026-02-30'
+        createdAt: '2026-08-19',
+        updatedAt: '2026-02-30T14:30:00.000Z'
       })
     );
 
@@ -201,7 +205,8 @@ describe('Living Thesis shared model', () => {
       'thesis id is required.',
       'detail cannot be blank when provided.',
       'status is not supported.',
-      'created date must use YYYY-MM-DD format.'
+      'created timestamp must use YYYY-MM-DDTHH:mm:ss.sssZ format.',
+      'updated timestamp must use YYYY-MM-DDTHH:mm:ss.sssZ format.'
     ]);
   });
 
@@ -221,6 +226,49 @@ describe('Living Thesis shared model', () => {
     );
   });
 
+  it('requires catalyst records to reference their parent thesis', () => {
+    const result = validateLivingThesis(
+      createLivingThesis({
+        catalysts: [createCatalyst({ thesisId: 'another_thesis' })]
+      })
+    );
+
+    expect(result.errors).toContain(
+      'Living Thesis child catalyst_primary must reference its parent thesis id.'
+    );
+  });
+
+  it('separates event timestamps from the review calendar date', () => {
+    const validTimestamp = '2026-08-19T14:30:00.000Z';
+    const validThesis = createLivingThesis({
+      createdAt: validTimestamp,
+      updatedAt: validTimestamp,
+      archivedAt: validTimestamp,
+      nextReviewAt: '2026-11-17'
+    });
+
+    expect(isValidIsoTimestamp(validTimestamp)).toBe(true);
+    expect(isValidIsoTimestamp('2026-08-19')).toBe(false);
+    expect(isValidIsoTimestamp('2026-08-19T14:30:00Z')).toBe(false);
+    expect(isValidIsoTimestamp('2026-08-19T14:30:00.000+00:00')).toBe(false);
+    expect(validateLivingThesis(validThesis).valid).toBe(true);
+
+    const invalidResult = validateLivingThesis(
+      createLivingThesis({
+        createdAt: '2026-08-19',
+        updatedAt: 'not-a-timestamp',
+        archivedAt: '2026-02-30T14:30:00.000Z',
+        nextReviewAt: '2026-11-17'
+      })
+    );
+
+    expect(invalidResult.errors).toEqual([
+      'Living Thesis created timestamp must use YYYY-MM-DDTHH:mm:ss.sssZ format.',
+      'Living Thesis updated timestamp must use YYYY-MM-DDTHH:mm:ss.sssZ format.',
+      'Living Thesis archived timestamp must use YYYY-MM-DDTHH:mm:ss.sssZ format.'
+    ]);
+  });
+
   it('validates review scheduling and current-state timestamps', () => {
     const result = validateLivingThesis(
       createLivingThesis({
@@ -233,7 +281,7 @@ describe('Living Thesis shared model', () => {
     expect(result.errors).toEqual([
       'Living Thesis review cadence must be a positive whole number of days.',
       'Living Thesis next review date must use YYYY-MM-DD format.',
-      'Living Thesis archived date must use YYYY-MM-DD format.'
+      'Living Thesis archived timestamp must use YYYY-MM-DDTHH:mm:ss.sssZ format.'
     ]);
   });
 
@@ -259,6 +307,8 @@ describe('Living Thesis shared model', () => {
     expect(normalized.risks[0]?.title).toBe('Risk title');
     expect(normalized.catalysts[0]?.detail).toBe('Catalyst detail');
     expect(source.ticker).toBe(' msft ');
+    expect(normalized.createdAt).toBe(source.createdAt);
+    expect(normalized.updatedAt).toBe(source.updatedAt);
   });
 
   it('does not embed authoritative MBS, history, health, or queue state', () => {

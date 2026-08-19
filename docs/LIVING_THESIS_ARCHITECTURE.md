@@ -175,10 +175,10 @@ and pure validators in `packages/core`. Physical persistence remains Stage 3.
 | `conviction` | Required | `unrated`, `low`, `medium`, or `high`; user-entered analytical context. |
 | `riskLevel` | Required | `unrated`, `low`, `medium`, or `high`; user-entered summary, not an automated recommendation. |
 | `reviewCadenceDays` | Optional | Positive integer used for deterministic scheduling. |
-| `nextReviewAt` | Optional | User-controlled or calculated when a review completes. |
+| `nextReviewAt` | Optional | Calendar date in `YYYY-MM-DD` format; user-controlled or calculated when a review completes. |
 | `version` | Required | Monotonic revision used to detect stale review completion or concurrent edits. |
-| `createdAt` / `updatedAt` | Required | ISO timestamps. |
-| `archivedAt` | Optional | Archival timestamp; archival is preferred to deletion. |
+| `createdAt` / `updatedAt` | Required | Canonical UTC ISO timestamps in `YYYY-MM-DDTHH:mm:ss.sssZ` format. |
+| `archivedAt` | Optional | Canonical UTC ISO timestamp; archival is preferred to deletion. |
 
 Ticker changes must not change `id`. More than one thesis may use the same
 ticker, and a thesis may have no ticker. Identity and relationships use the
@@ -201,6 +201,10 @@ The Stage 2 shared types use `open`, `resolved`, and `retired` for risk status;
 `open`, `observed`, and `retired` for catalyst status; and `unrated`, `low`,
 `medium`, and `high` for user-entered risk severity. These logical values do
 not select a Stage 3 storage representation.
+
+Risk and catalyst `createdAt` and `updatedAt` fields use the same canonical UTC
+ISO timestamp format as the parent thesis. This is distinct from the
+date-only `nextReviewAt` scheduling field.
 
 ### Values that are derived, not authoritative fields
 

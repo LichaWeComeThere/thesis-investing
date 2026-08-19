@@ -1,10 +1,12 @@
 import type {
   EntityId,
   IsoDateString,
+  IsoTimestampString,
   TickerSymbol
 } from './domain';
 import {
   isValidIsoDate,
+  isValidIsoTimestamp,
   isValidTickerSymbol,
   normalizeTickerSymbol
 } from './validation';
@@ -62,8 +64,8 @@ export type LivingThesisRisk = {
   readonly detail?: string;
   readonly status: LivingThesisRiskStatus;
   readonly severity: LivingThesisRiskLevel;
-  readonly createdAt: IsoDateString;
-  readonly updatedAt: IsoDateString;
+  readonly createdAt: IsoTimestampString;
+  readonly updatedAt: IsoTimestampString;
 };
 
 export type LivingThesisCatalyst = {
@@ -72,8 +74,8 @@ export type LivingThesisCatalyst = {
   readonly title: string;
   readonly detail?: string;
   readonly status: LivingThesisCatalystStatus;
-  readonly createdAt: IsoDateString;
-  readonly updatedAt: IsoDateString;
+  readonly createdAt: IsoTimestampString;
+  readonly updatedAt: IsoTimestampString;
 };
 
 export type LivingThesis = {
@@ -93,9 +95,9 @@ export type LivingThesis = {
   readonly catalysts: readonly LivingThesisCatalyst[];
   readonly reviewCadenceDays?: number;
   readonly nextReviewAt?: IsoDateString;
-  readonly createdAt: IsoDateString;
-  readonly updatedAt: IsoDateString;
-  readonly archivedAt?: IsoDateString;
+  readonly createdAt: IsoTimestampString;
+  readonly updatedAt: IsoTimestampString;
+  readonly archivedAt?: IsoTimestampString;
 };
 
 const LIFECYCLES = new Set<LivingThesisLifecycle>(
@@ -182,16 +184,24 @@ export function validateLivingThesis(thesis: LivingThesis): ValidationResult {
     );
   }
 
-  validateDate(thesis.createdAt, 'Living Thesis created date', errors);
-  validateDate(thesis.updatedAt, 'Living Thesis updated date', errors);
+  validateTimestamp(
+    thesis.createdAt,
+    'Living Thesis created timestamp',
+    errors
+  );
+  validateTimestamp(
+    thesis.updatedAt,
+    'Living Thesis updated timestamp',
+    errors
+  );
   validateOptionalDate(
     thesis.nextReviewAt,
     'Living Thesis next review date',
     errors
   );
-  validateOptionalDate(
+  validateOptionalTimestamp(
     thesis.archivedAt,
-    'Living Thesis archived date',
+    'Living Thesis archived timestamp',
     errors
   );
 
@@ -252,8 +262,8 @@ export function validateLivingThesisRisk(
     errors.push('severity is not supported.');
   }
 
-  validateDate(risk.createdAt, 'created date', errors);
-  validateDate(risk.updatedAt, 'updated date', errors);
+  validateTimestamp(risk.createdAt, 'created timestamp', errors);
+  validateTimestamp(risk.updatedAt, 'updated timestamp', errors);
 
   return toValidationResult(errors);
 }
@@ -272,8 +282,8 @@ export function validateLivingThesisCatalyst(
     errors.push('status is not supported.');
   }
 
-  validateDate(catalyst.createdAt, 'created date', errors);
-  validateDate(catalyst.updatedAt, 'updated date', errors);
+  validateTimestamp(catalyst.createdAt, 'created timestamp', errors);
+  validateTimestamp(catalyst.updatedAt, 'updated timestamp', errors);
 
   return toValidationResult(errors);
 }
@@ -359,6 +369,26 @@ function validateOptionalDate(
 ): void {
   if (value !== undefined) {
     validateDate(value, label, errors);
+  }
+}
+
+function validateTimestamp(
+  value: string,
+  label: string,
+  errors: string[]
+): void {
+  if (!isValidIsoTimestamp(value)) {
+    errors.push(`${label} must use YYYY-MM-DDTHH:mm:ss.sssZ format.`);
+  }
+}
+
+function validateOptionalTimestamp(
+  value: string | undefined,
+  label: string,
+  errors: string[]
+): void {
+  if (value !== undefined) {
+    validateTimestamp(value, label, errors);
   }
 }
 

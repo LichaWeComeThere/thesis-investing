@@ -6,6 +6,7 @@ export type {
   InvestmentIdeaDecisionLogEntry,
   InvestmentIdeaWatchlistStatus,
   IsoDateString,
+  IsoTimestampString,
   ManualBusinessScoreCategory,
   ManualBusinessScoreCategoryWeights,
   ManualBusinessScoreInput,
@@ -80,6 +81,7 @@ export {
 } from './scoring';
 export {
   isValidIsoDate,
+  isValidIsoTimestamp,
   isValidTickerSymbol,
   normalizeTickerSymbol,
   validateHolding,
