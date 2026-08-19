@@ -32,6 +32,27 @@ export type {
 export { createId } from './ids';
 export type { IdPrefix } from './ids';
 export {
+  LIVING_THESIS_CATALYST_STATUSES,
+  LIVING_THESIS_CONVICTIONS,
+  LIVING_THESIS_LIFECYCLES,
+  LIVING_THESIS_RISK_LEVELS,
+  LIVING_THESIS_RISK_STATUSES,
+  normalizeLivingThesis,
+  validateLivingThesis,
+  validateLivingThesisCatalyst,
+  validateLivingThesisRisk
+} from './livingThesis';
+export type {
+  LivingThesis,
+  LivingThesisCatalyst,
+  LivingThesisCatalystStatus,
+  LivingThesisConviction,
+  LivingThesisLifecycle,
+  LivingThesisRisk,
+  LivingThesisRiskLevel,
+  LivingThesisRiskStatus
+} from './livingThesis';
+export {
   createBlankInvestmentIdea,
   mapMbsScoreToInvestmentIdea,
   mapPortfolioRankerItemToInvestmentIdea,
