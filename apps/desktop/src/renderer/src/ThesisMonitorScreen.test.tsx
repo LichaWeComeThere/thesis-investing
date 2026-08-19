@@ -40,12 +40,15 @@ describe('ThesisMonitorScreen', () => {
     expect(html).toContain('Review customer retention');
   });
 
-  it('renders sample thesis queue cards when no local notes exist', () => {
+  it('renders thesis queue cards when no local notes exist', () => {
     const html = renderToStaticMarkup(<ThesisMonitorScreen />);
 
     expect(html).toContain('Review and update saved thesis notes');
     expect(html).toContain('No local thesis notes yet');
-    expect(html).toContain('Sample thesis preview');
+    expect(html).toContain('Demo thesis preview');
+    expect(html).toContain('Demo thesis data');
+    expect(html).toContain('This example is separate from your saved thesis notes.');
+    expect(html).toContain('Local notes');
     expect(html).toContain('+ New Thesis');
     expect(html).toContain('NVDA');
     expect(html).toContain('NVIDIA');

@@ -434,6 +434,21 @@
   padding: 10px 12px;
 }
 
+.data-provenance-note {
+  align-items: center;
+  color: var(--ti-color-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 8px;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+.data-provenance-note .ti-badge {
+  flex: 0 0 auto;
+}
+
 .thesis-board-layout {
   gap: 18px;
   grid-template-columns: minmax(208px, 0.54fr) minmax(620px, 1.9fr) minmax(
@@ -893,6 +908,144 @@
   .thesis-board-edit-grid,
   .thesis-board-metric-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Thesis Board Phase 3B: comparison-focused rankings controls and cards. */
+.thesis-board-rank-toolbar {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.thesis-board-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.thesis-board-filter-button,
+.thesis-board-add-idea-button {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
+  color: var(--ti-color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  min-height: 30px;
+  padding: 6px 8px;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.thesis-board-filter-button:hover,
+.thesis-board-filter-button--active,
+.thesis-board-add-idea-button:hover {
+  background: rgba(72, 224, 204, 0.1);
+  border-color: rgba(72, 224, 204, 0.3);
+  color: var(--ti-color-primary);
+}
+
+.thesis-board-sort-row {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.thesis-board-sort-row label {
+  display: grid;
+  gap: 6px;
+}
+
+.thesis-board-sort-row label > span {
+  color: var(--ti-color-text-subtle);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.thesis-board-sort-row select {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
+  color: var(--ti-color-text);
+  font: inherit;
+  min-height: 34px;
+  padding: 6px 8px;
+}
+
+.thesis-board-list-item {
+  align-items: start;
+  grid-template-columns: 30px minmax(0, 1fr) 64px;
+  min-height: 136px;
+}
+
+.thesis-board-card-badges,
+.thesis-board-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.thesis-board-card-meta small {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 8px;
+  color: var(--ti-color-text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 4px 6px;
+  white-space: normal;
+}
+
+.thesis-board-score-change {
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  margin-top: 5px;
+  padding: 3px 5px;
+}
+
+.thesis-board-score-change--up {
+  background: rgba(53, 208, 127, 0.12);
+  color: var(--ti-color-growth);
+}
+
+.thesis-board-score-change--down {
+  background: rgba(239, 95, 87, 0.12);
+  color: var(--ti-color-risk);
+}
+
+.thesis-board-score-change--flat {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ti-color-text-subtle);
+}
+
+.thesis-board-empty-state {
+  color: var(--ti-color-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+@media (max-width: 680px) {
+  .thesis-board-sort-row,
+  .thesis-board-list-item {
+    grid-template-columns: 1fr;
+  }
+
+  .thesis-board-list-score {
+    justify-items: start;
+    width: 100%;
   }
 }
 
@@ -1651,6 +1804,206 @@ select {
   .content-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+/* Thesis Rankings card readability fix. */
+.thesis-board-layout {
+  grid-template-columns:
+    minmax(320px, 360px)
+    minmax(520px, 1fr)
+    minmax(300px, 360px);
+}
+
+.thesis-board-list-item {
+  align-items: start;
+  gap: 10px;
+  grid-template-columns: 30px minmax(0, 1fr) 64px;
+  height: auto;
+  min-height: 0;
+  padding: 12px;
+}
+
+.thesis-board-list-copy {
+  align-content: start;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  overflow: visible;
+}
+
+.thesis-board-list-copy > strong,
+.thesis-board-list-copy > span:not(.thesis-board-card-badges):not(.thesis-board-card-meta),
+.thesis-board-list-copy > small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.thesis-board-list-copy > small {
+  line-height: 1.25;
+}
+
+.thesis-board-card-badges,
+.thesis-board-card-meta {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 0;
+  min-width: 0;
+  overflow: visible;
+  white-space: normal;
+}
+
+.thesis-board-card-badges .ti-badge {
+  max-width: 100%;
+  min-height: 24px;
+  overflow-wrap: anywhere;
+  padding: 3px 8px !important;
+  white-space: normal;
+}
+
+.thesis-board-card-meta small {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.thesis-board-list-score {
+  align-self: start;
+  min-width: 58px;
+}
+
+@media (max-width: 1280px) {
+  .thesis-board-layout {
+    grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  }
+
+  .thesis-board-rank-card > div {
+    display: block;
+  }
+
+  .thesis-board-list {
+    flex: none;
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 920px) {
+  .thesis-board-layout,
+  .thesis-board-list-item {
+    grid-template-columns: 1fr;
+  }
+
+  .thesis-board-list-score {
+    justify-items: start;
+    width: fit-content;
+  }
+}
+
+/* Thesis Board workspace layout fix: internal rankings scroll. */
+.thesis-board-screen {
+  height: calc(100vh - clamp(28px, 2.9vw, 48px));
+  margin-inline: 0;
+  max-width: none;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.thesis-board-layout {
+  align-items: stretch;
+  flex: 1 1 auto;
+  gap: 20px;
+  grid-template-columns:
+    minmax(280px, 340px)
+    minmax(520px, 1fr)
+    minmax(300px, 360px);
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.thesis-board-layout > .ti-card {
+  min-height: 0;
+}
+
+.thesis-board-rank-card,
+.thesis-board-detail-card,
+.thesis-board-score-card {
+  align-self: stretch;
+  max-height: 100%;
+  position: static;
+}
+
+.thesis-board-rank-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.thesis-board-rank-card > div {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.thesis-board-rank-card .thesis-board-panel-kicker,
+.thesis-board-rank-toolbar {
+  flex: 0 0 auto;
+}
+
+.thesis-board-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.thesis-board-detail-card,
+.thesis-board-score-card {
+  overflow-y: auto;
+}
+
+@media (min-width: 1281px) {
+  .thesis-board-score-card {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 1280px) {
+  .thesis-board-screen {
+    height: auto;
+    overflow: visible;
+  }
+
+  .thesis-board-layout {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    overflow: visible;
+  }
+
+  .thesis-board-score-card {
+    grid-column: 1 / -1;
+  }
+
+  .thesis-board-list {
+    max-height: min(560px, 62vh);
+  }
+
+  .thesis-board-detail-card,
+  .thesis-board-score-card {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 920px) {
+  .thesis-board-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .thesis-board-list {
+    max-height: min(520px, 60vh);
   }
 }
 
@@ -5528,5 +5881,140 @@ select:focus-visible {
   .reminders-table-wrap {
     max-width: 100%;
     min-width: 0;
+  }
+}
+
+/* Final Thesis Rankings card flow: keep chips out of the title grid. */
+.thesis-board-layout {
+  grid-template-columns:
+    minmax(340px, 380px)
+    minmax(520px, 1fr)
+    minmax(300px, 360px);
+}
+
+.thesis-rank-card {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: auto;
+  min-height: unset;
+  overflow: visible;
+  padding: 12px;
+  white-space: normal;
+}
+
+.thesis-rank-card-header {
+  align-items: start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.thesis-rank-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.thesis-rank-title-block strong,
+.thesis-rank-title-block span,
+.thesis-rank-title-block small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.thesis-rank-title-block strong {
+  color: var(--ti-color-text-section);
+  font-size: 16px;
+  line-height: 1.15;
+}
+
+.thesis-rank-title-block span {
+  color: var(--ti-color-text-muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.thesis-rank-title-block small {
+  color: var(--ti-color-text-subtle);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.thesis-rank-status-row,
+.thesis-rank-meta-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.thesis-rank-status-row .ti-badge {
+  max-width: 100%;
+  min-height: 24px;
+  overflow-wrap: anywhere;
+  padding: 3px 8px !important;
+  position: static;
+  white-space: normal;
+}
+
+.thesis-rank-meta-row span {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 8px;
+  color: var(--ti-color-text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 4px 6px;
+  white-space: normal;
+}
+
+.thesis-rank-card .thesis-board-list-score {
+  align-self: start;
+  flex-shrink: 0;
+  justify-self: end;
+  min-width: 58px;
+  position: static;
+  white-space: nowrap;
+}
+
+@media (max-width: 1280px) {
+  .thesis-board-layout {
+    grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  }
+
+  .thesis-board-rank-card > div {
+    display: block;
+  }
+
+  .thesis-board-list {
+    flex: none;
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 920px) {
+  .thesis-board-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .thesis-rank-card-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .thesis-rank-card .thesis-board-list-score {
+    grid-column: 2;
+    justify-self: start;
   }
 }

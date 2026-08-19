@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from 'react';
 import type { DashboardSummary } from '../../shared/dashboardSummariesStorage';
 import {
   formatScoreChange,
-  getLargestScoreDropThesis,
+  getBiggestScoreDrop,
   getNextReviewThesis,
+  getReviewDueSoon,
   getScoreChange,
+  getThesisHealthSummary,
   getTopImprovingThesis,
   getWeakestThesis,
   isNeedsReviewThesis,
@@ -48,7 +50,7 @@ type QuickAction = {
   description: string;
 };
 
-const quickActions: QuickAction[] = [
+const defaultQuickActions: QuickAction[] = [
   {
     label: 'Open MBS Scorer',
     workspaceId: 'mbs-scorer',
@@ -158,6 +160,45 @@ function getMbsScoreSnapshotDetail(summary: DashboardSummary): string {
   return `Latest ${label}: ${latestSnapshot.score} / ${latestSnapshot.maxScore}`;
 }
 
+function getDashboardThesisHealthItems(
+  theses: readonly MockThesis[]
+): ThesisHealthItem[] {
+  const summary = getThesisHealthSummary(theses);
+
+  return [
+    {
+      detail: 'Shared demo thesis records.',
+      label: 'Theses tracked',
+      tone: 'tracked',
+      value: summary.trackedCount
+    },
+    {
+      detail: `${summary.reviewDueSoonCount} review due soon.`,
+      label: 'Needs review',
+      tone: summary.needsReviewCount > 0 ? 'review' : 'tracked',
+      value: summary.needsReviewCount
+    },
+    {
+      detail: 'Example ideas currently marked active.',
+      label: 'Active ideas',
+      tone: summary.activeCount > 0 ? 'strong' : 'tracked',
+      value: summary.activeCount
+    },
+    {
+      detail: 'Thesis status is weakening or broken.',
+      label: 'Weakening theses',
+      tone: summary.weakeningCount > 0 ? 'weakening' : 'tracked',
+      value: summary.weakeningCount
+    },
+    {
+      detail: 'High-conviction examples in the demo set.',
+      label: 'Strong conviction',
+      tone: summary.highConvictionCount > 0 ? 'strong' : 'tracked',
+      value: summary.highConvictionCount
+    }
+  ];
+}
+
 function formatGeneratedAt(generatedAt: string): string {
   if (!generatedAt) {
     return 'Waiting for local data.';
@@ -196,14 +237,20 @@ function getReviewPriorityItems(theses: readonly MockThesis[]): ReviewPriorityIt
     return [];
   }
 
+  const dueSoonThesis = getReviewDueSoon(theses)[0] ?? getNextReviewThesis(theses);
   const weakestThesis = getWeakestThesis(theses);
-  const largestDropThesis = getLargestScoreDropThesis(theses);
+  const largestDropThesis = getBiggestScoreDrop(theses);
   const topImprovingThesis = getTopImprovingThesis(theses);
-  const nextReviewThesis = getNextReviewThesis(theses);
 
   return [
     {
-      label: 'Weakest Idea',
+      label: 'Needs Review Now',
+      ticker: dueSoonThesis.ticker,
+      detail: `${dueSoonThesis.companyName} is ${dueSoonThesis.ideaStatus.toLowerCase()} with next review ${dueSoonThesis.nextReviewDate}.`,
+      tone: 'review'
+    },
+    {
+      label: 'Weakest Thesis',
       ticker: weakestThesis.ticker,
       detail: `${weakestThesis.mbsScore} MBS. ${weakestThesis.thesisSummary}`,
       tone: 'weakening'
@@ -219,14 +266,25 @@ function getReviewPriorityItems(theses: readonly MockThesis[]): ReviewPriorityIt
       ticker: topImprovingThesis.ticker,
       detail: `${formatScoreChange(topImprovingThesis)} since last review.`,
       tone: 'strong'
-    },
-    {
-      label: 'Review Due Soon',
-      ticker: nextReviewThesis.ticker,
-      detail: `Next review ${nextReviewThesis.nextReviewDate}.`,
-      tone: 'tracked'
     }
   ];
+}
+
+function getOpenNextAction(theses: readonly MockThesis[]): QuickAction {
+  const reviewCandidate =
+    getReviewDueSoon(theses)[0] ??
+    theses.find((thesis) => thesis.ideaStatus === 'Needs Review') ??
+    getBiggestScoreDrop(theses);
+
+  if (!reviewCandidate) {
+    return defaultQuickActions[0];
+  }
+
+  return {
+    label: `Open demo ${reviewCandidate.ticker}`,
+    workspaceId: 'thesis-board',
+    description: `${reviewCandidate.companyName}: example ${reviewCandidate.ideaStatus.toLowerCase()} thesis review.`
+  };
 }
 
 export function DashboardScreen({
@@ -254,17 +312,24 @@ export function DashboardScreen({
     () => getDashboardSummaryItems(dashboardSummary),
     [dashboardSummary]
   );
+  const thesisHealthItems = useMemo(
+    () => getDashboardThesisHealthItems(theses),
+    [theses]
+  );
   const isSummaryEmpty = isEmptyDashboardSummary(dashboardSummary);
   const reviewPriorityItems = getReviewPriorityItems(theses);
+  const quickActions = [getOpenNextAction(theses), ...defaultQuickActions];
   const recentActivityItems: RecentActivityItem[] = theses
     .flatMap((thesis) =>
       thesis.decisionLog.map((entry) => ({
         ticker: thesis.ticker,
         action: entry.title,
         detail: entry.note,
-        tone: getDashboardTone(thesis)
+        tone: getDashboardTone(thesis),
+        createdAt: entry.createdAt
       }))
     )
+    .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
     .slice(0, 3);
 
   useEffect(() => {
@@ -333,11 +398,11 @@ export function DashboardScreen({
             aria-label="Local persisted summary"
           >
             <div className="dashboard-section-heading">
-              <h2>Local Saved Summary</h2>
+              <h2>Local Saved Data</h2>
               <p>
                 {isSummaryLoading
                   ? 'Loading saved local records.'
-                  : `Generated ${formatGeneratedAt(dashboardSummary.generatedAt)}`}
+                  : `Updated ${formatGeneratedAt(dashboardSummary.generatedAt)}`}
               </p>
             </div>
 
@@ -354,8 +419,7 @@ export function DashboardScreen({
 
             {!isSummaryLoading && summaryErrors.length === 0 && isSummaryEmpty ? (
               <p className="dashboard-summary-empty">
-                No saved theses yet. Start by scoring a business or creating a
-                thesis note.
+                No persisted local workflow records yet.
               </p>
             ) : null}
 
@@ -375,39 +439,78 @@ export function DashboardScreen({
             </div>
           </section>
 
-          <section className="dashboard-command-grid" aria-label="Review focus">
-            <Card className="review-priority-card" emphasis title="Review Priority">
-              <div className="review-priority-list">
-                {reviewPriorityItems.map((item) => (
-                  <article
-                    className={`review-priority-item review-priority-item--${item.tone}`}
-                    key={item.label}
-                  >
-                    <div>
-                      <span>{item.label}</span>
-                      <strong>{item.ticker}</strong>
-                    </div>
-                    <p>{item.detail}</p>
-                  </article>
-                ))}
-              </div>
-            </Card>
+          <section
+            className="dashboard-health-section"
+            aria-label="Demo thesis analytics"
+          >
+            <div className="dashboard-section-heading">
+              <h2>Demo Thesis Analytics</h2>
+              <p>Example thesis health and score-change context.</p>
+            </div>
 
-            <Card className="market-regime-card" title="Market Regime">
-              <div className="market-regime-hero">
-                <span>Regime</span>
-                <strong>Under Pressure</strong>
-              </div>
-              <p>Growth stocks need caution.</p>
-              <div className="market-regime-tags">
-                <Badge variant="warning">Risk check</Badge>
-                <Badge variant="neutral">Research context</Badge>
-              </div>
-            </Card>
+            <div className="dashboard-health-grid">
+              {thesisHealthItems.map((item) => (
+                <Card
+                  className={`dashboard-health-card dashboard-health-card--${item.tone}`}
+                  key={item.label}
+                >
+                  <div className="dashboard-health-card-content">
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                    <small>{item.detail}</small>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          <section
+            className="dashboard-health-section"
+            aria-label="Demo thesis research context"
+          >
+            <div className="dashboard-section-heading">
+              <h2>Demo Research Context</h2>
+              <p>Example review signals from the shared demo thesis set.</p>
+            </div>
+
+            <div className="dashboard-command-grid">
+              <Card className="review-priority-card" emphasis title="Review Priority">
+                <div className="review-priority-list">
+                  {reviewPriorityItems.map((item) => (
+                    <article
+                      className={`review-priority-item review-priority-item--${item.tone}`}
+                      key={item.label}
+                    >
+                      <div>
+                        <span>{item.label}</span>
+                        <strong>{item.ticker}</strong>
+                      </div>
+                      <p>{item.detail}</p>
+                    </article>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="market-regime-card" title="Market Regime">
+                <div className="market-regime-hero">
+                  <span>Example context</span>
+                  <strong>Under Pressure</strong>
+                </div>
+                <p>
+                  Example context for organizing research: revisit stale
+                  assumptions and flag higher-risk growth theses for additional
+                  review.
+                </p>
+                <div className="market-regime-tags">
+                  <Badge variant="warning">Risk check</Badge>
+                  <Badge variant="neutral">Example market context</Badge>
+                </div>
+              </Card>
+            </div>
           </section>
 
           <section className="dashboard-lower-grid" aria-label="Activity and actions">
-            <Card title="Recent Thesis Activity">
+            <Card title="Demo Thesis Activity">
               <div className="recent-activity-list">
                 {recentActivityItems.map((item) => (
                   <article

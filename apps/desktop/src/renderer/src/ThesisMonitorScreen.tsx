@@ -168,16 +168,9 @@ export function ThesisMonitorScreen({
     demoTheses.find((thesis) => thesis.id === selectedMockThesisId) ??
     demoTheses[0];
   const selectedNoteScore = selectedNote ? scoreForNote(selectedNote) : null;
-  const thesisCount = hasLocalNotes ? notes.length : demoTheses.length;
-  const activeThesisCount = hasLocalNotes
-    ? activeNoteCount
-    : demoTheses.filter(
-        (thesis) =>
-          thesis.ideaStatus === 'Active' || thesis.ideaStatus === 'Watchlist'
-      ).length;
-  const reviewDateCount = hasLocalNotes
-    ? notesWithReviewDates
-    : demoTheses.filter((thesis) => thesis.nextReviewDate).length;
+  const thesisCount = notes.length;
+  const activeThesisCount = activeNoteCount;
+  const reviewDateCount = notesWithReviewDates;
   const shouldShowValidation =
     saveAttempted || (hasThesisFormContent(form) && !formResult.validation.valid);
   const visibleValidationErrors = shouldShowValidation
@@ -401,10 +394,10 @@ export function ThesisMonitorScreen({
                 <div className="thesis-empty-state">
                   <h3>No local thesis notes yet</h3>
                   <p>
-                    Create a note or select a sample thesis to preview the
+                    Create a note or select a demo thesis to review the
                     workflow.
                   </p>
-                  <Badge variant="neutral">Sample thesis preview</Badge>
+                  <Badge variant="neutral">Demo thesis preview</Badge>
                 </div>
                 {demoTheses.map((thesis) => {
                   const isSelected = thesis.id === selectedMockThesisId;
@@ -619,7 +612,7 @@ export function ThesisMonitorScreen({
             <p>
               {selectedNote
                 ? 'Review the selected thesis detail card below or update the manual checklist.'
-                : 'Select a sample thesis to populate the selected snapshot or save a new note.'}
+                : 'Select a demo thesis to preview example context or save a new note.'}
             </p>
           </div>
 
@@ -664,6 +657,10 @@ export function ThesisMonitorScreen({
               </article>
             ) : (
               <article className="thesis-details thesis-details--compact">
+                <p className="data-provenance-note" role="note">
+                  <Badge variant="neutral">Demo thesis data</Badge>
+                  <span>This example is separate from your saved thesis notes.</span>
+                </p>
                 <div className="thesis-details-header">
                   <div>
                     <p className="thesis-details-eyebrow">

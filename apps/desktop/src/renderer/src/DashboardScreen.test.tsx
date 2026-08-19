@@ -54,38 +54,44 @@ describe('DashboardScreen', () => {
     );
 
     expect(html).toContain('Investor Command Center');
-    expect(html).toContain('Local Saved Summary');
+    expect(html).toContain('Local Saved Data');
+    expect(html).toContain('Demo Thesis Analytics');
+    expect(html).toContain('Demo Research Context');
     expect(html).toContain('Review Priority');
     expect(html).toContain('Market Regime');
-    expect(html).toContain('Recent Thesis Activity');
+    expect(html).toContain('Demo Thesis Activity');
     expect(html).toContain('Continue Research');
   });
 
-  it('renders zero persisted summary state', () => {
+  it('renders shared thesis health state', () => {
     const html = renderToStaticMarkup(
       <DashboardScreen initialSummary={zeroSummary} />
     );
 
-    expect(html).toContain('Saved watchlist items');
-    expect(html).toContain('Thesis notes');
-    expect(html).toContain('Open reminders');
-    expect(html).toContain('Ranker inputs');
-    expect(html).toContain('Saved scores');
-    expect(html).toContain('No saved theses yet.');
-    expect(html).toContain('No completed snapshots yet.');
+    expect(html).toContain('Theses tracked');
+    expect(html).toContain('<strong>8</strong>');
+    expect(html).toContain('Shared demo thesis records.');
+    expect(html).toContain('Needs review');
+    expect(html).toContain('4 review due soon.');
+    expect(html).toContain('Active ideas');
+    expect(html).toContain('Weakening theses');
+    expect(html).toContain('Strong conviction');
+    expect(html).toContain('No persisted local workflow records yet.');
   });
 
-  it('renders nonzero persisted summary state', () => {
+  it('keeps nonzero persisted workflow totals visible beside demo analytics', () => {
     const html = renderToStaticMarkup(
       <DashboardScreen initialSummary={nonzeroSummary} />
     );
 
     expect(html).toContain('Saved watchlist items');
-    expect(html).toContain('<strong>7</strong>');
+    expect(html).toContain('Local watchlist records.');
     expect(html).toContain('3 active / 1 draft / 4 watch');
     expect(html).toContain('1 overdue / 2 completed / 6 total');
-    expect(html).toContain('Saved manual ranker rows.');
+    expect(html).toContain('Ranker inputs');
     expect(html).toContain('Latest NVDA: 76.9 / 100');
+    expect(html).toContain('Demo Thesis Analytics');
+    expect(html).not.toContain('No persisted local workflow records yet.');
   });
 
   it('renders loading state when a summary client is available', () => {
@@ -116,14 +122,15 @@ describe('DashboardScreen', () => {
       <DashboardScreen initialSummary={zeroSummary} />
     );
 
-    expect(html).toContain('Weakest Idea');
+    expect(html).toContain('Needs Review Now');
+    expect(html).toContain('SOFI');
+    expect(html).toContain('Weakest Thesis');
     expect(html).toContain('TSLA');
     expect(html).toContain('Biggest Score Drop');
     expect(html).toContain('TSLA');
     expect(html).toContain('Top Improving Idea');
     expect(html).toContain('NVDA');
-    expect(html).toContain('Review Due Soon');
-    expect(html).toContain('SOFI');
+    expect(html).toContain('Example review signals from the shared demo thesis set.');
   });
 
   it('renders session thesis updates from props', () => {
@@ -143,7 +150,7 @@ describe('DashboardScreen', () => {
 
     expect(html).toContain('MVP');
     expect(html).toContain('12 MBS. Created from MBS Scorer.');
-    expect(html).toContain('Review Priority');
+    expect(html).toContain('Demo Research Context');
   });
 
   it('renders market regime and quick actions', () => {
@@ -152,20 +159,25 @@ describe('DashboardScreen', () => {
     );
 
     expect(html).toContain('Under Pressure');
-    expect(html).toContain('Growth stocks need caution.');
+    expect(html).toContain('Example context for organizing research');
+    expect(html).toContain('Example market context');
+    expect(html).not.toContain('size conviction carefully');
+    expect(html).toContain('Open demo SOFI');
     expect(html).toContain('Open MBS Scorer');
     expect(html).toContain('Review Portfolio Ranker');
     expect(html).toContain('Open Thesis Monitor');
     expect(html).toContain('Check Watchlist');
   });
 
-  it('renders the latest market pulse feed', () => {
+  it('labels the hard-coded market pulse as static demo data', () => {
     const html = renderToStaticMarkup(
       <DashboardScreen initialSummary={zeroSummary} />
     );
 
-    expect(html).toContain('Latest');
+    expect(html).toContain('Example Feed');
     expect(html).toContain('Market Pulse');
+    expect(html).toContain('Demo data');
+    expect(html).toContain('Static example headlines and moves, not a live feed.');
     expect(html).toContain(
       'Google, Blackstone to create new AI cloud company, WSJ reports'
     );

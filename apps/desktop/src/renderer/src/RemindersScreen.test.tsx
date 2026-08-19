@@ -11,6 +11,10 @@ import {
   upsertLocalReminder,
   type LocalReminder
 } from './reminderInput';
+import {
+  cloneMockTheses,
+  createMockThesisFromMbsScore
+} from './data/mockTheses';
 
 const sampleReminder: LocalReminder = {
   completed: false,
@@ -70,6 +74,28 @@ describe('RemindersScreen', () => {
 
     expect(html).toContain('No review reminders yet');
     expect(html).toContain('Add a review date to keep thesis checks on schedule.');
+  });
+
+  it('renders upcoming thesis reviews from shared thesis props', () => {
+    const sessionThesis = {
+      ...createMockThesisFromMbsScore(cloneMockTheses(), {
+        companyName: 'MVP Session Co',
+        createdAt: '2026-05-24T12:00:00.000Z',
+        mbsScore: 74,
+        ticker: 'mvp'
+      }),
+      nextReviewDate: '2026-06-01'
+    };
+
+    const html = renderToStaticMarkup(
+      <RemindersScreen storageClient={null} theses={[sessionThesis]} />
+    );
+
+    expect(html).toContain('Upcoming thesis reviews');
+    expect(html).toContain('Demo thesis data');
+    expect(html).toContain('These example review dates are not saved reminders.');
+    expect(html).toContain('MVP - MVP Session Co');
+    expect(html).toContain('Researching');
   });
 
   it('converts populated form input into a validated reminder', () => {

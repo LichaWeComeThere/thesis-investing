@@ -46,6 +46,17 @@ export type MockThesis = {
   reviewTriggers: string[];
 };
 
+export type MockThesisHealthSummary = {
+  activeCount: number;
+  archivedCount: number;
+  cautionCount: number;
+  highConvictionCount: number;
+  needsReviewCount: number;
+  reviewDueSoonCount: number;
+  trackedCount: number;
+  weakeningCount: number;
+};
+
 export type CreateMockThesisInput = {
   ticker?: string;
   companyName?: string;
@@ -354,11 +365,15 @@ export function cloneMockThesis(thesis: MockThesis): MockThesis {
   };
 }
 
-export function getScoreChange(thesis: MockThesis): number {
+export function getScoreChange(
+  thesis: Pick<MockThesis, 'mbsScore' | 'previousMbsScore'>
+): number {
   return thesis.mbsScore - thesis.previousMbsScore;
 }
 
-export function formatScoreChange(thesis: MockThesis): string {
+export function formatScoreChange(
+  thesis: Pick<MockThesis, 'mbsScore' | 'previousMbsScore'>
+): string {
   const change = getScoreChange(thesis);
 
   if (change > 0) {
@@ -384,6 +399,22 @@ export function isNeedsReviewThesis(thesis: MockThesis): boolean {
   return thesis.ideaStatus === 'Needs Review' || isReviewDueSoon(thesis);
 }
 
+export function getReviewDueSoonTheses(
+  theses: readonly MockThesis[] = mockTheses
+): MockThesis[] {
+  return theses
+    .filter((thesis) => isReviewDueSoon(thesis))
+    .sort((first, second) =>
+      first.nextReviewDate.localeCompare(second.nextReviewDate)
+    );
+}
+
+export function getReviewDueSoon(
+  theses: readonly MockThesis[] = mockTheses
+): MockThesis[] {
+  return getReviewDueSoonTheses(theses);
+}
+
 export function getWeakestThesis(theses: readonly MockThesis[]): MockThesis {
   return [...theses].sort(
     (first, second) => first.mbsScore - second.mbsScore
@@ -398,6 +429,12 @@ export function getLargestScoreDropThesis(
   )[0];
 }
 
+export function getBiggestScoreDrop(
+  theses: readonly MockThesis[]
+): MockThesis {
+  return getLargestScoreDropThesis(theses);
+}
+
 export function getTopImprovingThesis(theses: readonly MockThesis[]): MockThesis {
   return [...theses].sort(
     (first, second) => getScoreChange(second) - getScoreChange(first)
@@ -405,9 +442,23 @@ export function getTopImprovingThesis(theses: readonly MockThesis[]): MockThesis
 }
 
 export function getNextReviewThesis(theses: readonly MockThesis[]): MockThesis {
-  return [...theses].sort((first, second) =>
+  const thesesWithReviewDates = theses.filter((thesis) => thesis.nextReviewDate);
+  const candidates =
+    thesesWithReviewDates.length > 0 ? thesesWithReviewDates : theses;
+
+  return [...candidates].sort((first, second) =>
     first.nextReviewDate.localeCompare(second.nextReviewDate)
   )[0];
+}
+
+export function getUpcomingReviewTheses(
+  theses: readonly MockThesis[] = mockTheses
+): MockThesis[] {
+  return theses
+    .filter((thesis) => thesis.nextReviewDate)
+    .sort((first, second) =>
+      first.nextReviewDate.localeCompare(second.nextReviewDate)
+    );
 }
 
 export function getWatchlistTheses(
@@ -417,6 +468,27 @@ export function getWatchlistTheses(
     (thesis) =>
       thesis.ideaStatus === 'Watchlist' || thesis.ideaStatus === 'Researching'
   );
+}
+
+export function getThesisHealthSummary(
+  theses: readonly MockThesis[] = mockTheses
+): MockThesisHealthSummary {
+  return {
+    activeCount: theses.filter((thesis) => thesis.ideaStatus === 'Active').length,
+    archivedCount: theses.filter((thesis) => thesis.ideaStatus === 'Archived')
+      .length,
+    cautionCount: theses.filter((thesis) => thesis.ideaStatus === 'Caution')
+      .length,
+    highConvictionCount: theses.filter((thesis) => thesis.conviction === 'High')
+      .length,
+    needsReviewCount: theses.filter(isNeedsReviewThesis).length,
+    reviewDueSoonCount: getReviewDueSoonTheses(theses).length,
+    trackedCount: theses.length,
+    weakeningCount: theses.filter(
+      (thesis) =>
+        thesis.thesisStatus === 'Weakening' || thesis.thesisStatus === 'Broken'
+    ).length
+  };
 }
 
 export function saveMockMbsScoreToThesis(
