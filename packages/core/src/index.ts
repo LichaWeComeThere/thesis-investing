@@ -6,6 +6,7 @@ export type {
   InvestmentIdeaDecisionLogEntry,
   InvestmentIdeaWatchlistStatus,
   IsoDateString,
+  IsoTimestampString,
   ManualBusinessScoreCategory,
   ManualBusinessScoreCategoryWeights,
   ManualBusinessScoreInput,
@@ -31,6 +32,27 @@ export type {
 } from './domain';
 export { createId } from './ids';
 export type { IdPrefix } from './ids';
+export {
+  LIVING_THESIS_CATALYST_STATUSES,
+  LIVING_THESIS_CONVICTIONS,
+  LIVING_THESIS_LIFECYCLES,
+  LIVING_THESIS_RISK_LEVELS,
+  LIVING_THESIS_RISK_STATUSES,
+  normalizeLivingThesis,
+  validateLivingThesis,
+  validateLivingThesisCatalyst,
+  validateLivingThesisRisk
+} from './livingThesis';
+export type {
+  LivingThesis,
+  LivingThesisCatalyst,
+  LivingThesisCatalystStatus,
+  LivingThesisConviction,
+  LivingThesisLifecycle,
+  LivingThesisRisk,
+  LivingThesisRiskLevel,
+  LivingThesisRiskStatus
+} from './livingThesis';
 export {
   createBlankInvestmentIdea,
   mapMbsScoreToInvestmentIdea,
@@ -59,6 +81,7 @@ export {
 } from './scoring';
 export {
   isValidIsoDate,
+  isValidIsoTimestamp,
   isValidTickerSymbol,
   normalizeTickerSymbol,
   validateHolding,

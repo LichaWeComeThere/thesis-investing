@@ -314,6 +314,17 @@ export function isValidIsoDate(value: string): boolean {
   return day >= 1 && day <= daysInMonth(year, month);
 }
 
+/** Validates the canonical UTC format produced by Date#toISOString. */
+export function isValidIsoTimestamp(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
+    return false;
+  }
+
+  const timestamp = new Date(value);
+
+  return !Number.isNaN(timestamp.getTime()) && timestamp.toISOString() === value;
+}
+
 function daysInMonth(year: number, month: number): number {
   if (month === 2) {
     return isLeapYear(year) ? 29 : 28;

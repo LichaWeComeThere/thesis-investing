@@ -1,5 +1,6 @@
 export type EntityId = string;
 export type IsoDateString = string;
+export type IsoTimestampString = string;
 export type CurrencyCode = string;
 export type TickerSymbol = string;
 
@@ -150,6 +151,7 @@ export type PortfolioRankerItem = {
 
 export type MbsScoreSnapshot = {
   id: EntityId;
+  /** Formal future links use LivingThesis.id; legacy values remain unresolved. */
   thesisId?: EntityId;
   ticker?: TickerSymbol;
   companyName?: string;

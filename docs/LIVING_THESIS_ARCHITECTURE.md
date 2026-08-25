@@ -2,10 +2,12 @@
 
 ## Status
 
-This document is the Phase 3 Stage 1 architecture plan. Phase 3 Stage 0
-reconciled the renderer prototype and its data-provenance labels. Formal Living
-Thesis domain types, repositories, migrations, IPC APIs, and persistence are not
-implemented by this stage.
+This document began as the Phase 3 Stage 1 architecture plan. Phase 3 Stage 0
+reconciled the renderer prototype and its data-provenance labels. Phase 3 Stage
+2 now implements the framework-independent `LivingThesis` current-state model,
+structured risk and catalyst types, and validation in `packages/core`.
+Repositories, migrations, IPC APIs, persistence, and renderer adoption remain
+future stages.
 
 The plan is based on `main` at
 `46fe0b65a248b449f5246f266ea96e4758af94b7` and on a read-only review of the
@@ -154,8 +156,8 @@ The architecture uses these terms consistently:
 
 ## Proposed Domain Model
 
-The exact TypeScript names and validators belong to Stage 2. The conceptual
-shape is:
+Stage 2 implements the following conceptual shape as shared TypeScript types
+and pure validators in `packages/core`. Physical persistence remains Stage 3.
 
 ### Living Thesis current state
 
@@ -173,10 +175,10 @@ shape is:
 | `conviction` | Required | `unrated`, `low`, `medium`, or `high`; user-entered analytical context. |
 | `riskLevel` | Required | `unrated`, `low`, `medium`, or `high`; user-entered summary, not an automated recommendation. |
 | `reviewCadenceDays` | Optional | Positive integer used for deterministic scheduling. |
-| `nextReviewAt` | Optional | User-controlled or calculated when a review completes. |
+| `nextReviewAt` | Optional | Calendar date in `YYYY-MM-DD` format; user-controlled or calculated when a review completes. |
 | `version` | Required | Monotonic revision used to detect stale review completion or concurrent edits. |
-| `createdAt` / `updatedAt` | Required | ISO timestamps. |
-| `archivedAt` | Optional | Archival timestamp; archival is preferred to deletion. |
+| `createdAt` / `updatedAt` | Required | Canonical UTC ISO timestamps in `YYYY-MM-DDTHH:mm:ss.sssZ` format. |
+| `archivedAt` | Optional | Canonical UTC ISO timestamp; archival is preferred to deletion. |
 
 Ticker changes must not change `id`. More than one thesis may use the same
 ticker, and a thesis may have no ticker. Identity and relationships use the
@@ -194,6 +196,15 @@ The Living Thesis aggregate presented to core/UI code may include these child
 arrays. Stage 3 must decide whether SQLite begins with normalized child tables
 or validated JSON storage. Removing an item from current state must create a
 revision and mark or retire the child item; history must not be erased.
+
+The Stage 2 shared types use `open`, `resolved`, and `retired` for risk status;
+`open`, `observed`, and `retired` for catalyst status; and `unrated`, `low`,
+`medium`, and `high` for user-entered risk severity. These logical values do
+not select a Stage 3 storage representation.
+
+Risk and catalyst `createdAt` and `updatedAt` fields use the same canonical UTC
+ISO timestamp format as the parent thesis. This is distinct from the
+date-only `nextReviewAt` scheduling field.
 
 ### Values that are derived, not authoritative fields
 
