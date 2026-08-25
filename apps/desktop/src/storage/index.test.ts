@@ -10,6 +10,7 @@ describe("SQLite local storage", () => {
 
     expect(Object.keys(storage.repositories).sort()).toEqual([
       "holdings",
+      "livingTheses",
       "mbsScoreSnapshots",
       "portfolioRankerItems",
       "reminders",
@@ -44,6 +45,9 @@ describe("SQLite local storage", () => {
 
     expect(readTableNames(database)).toEqual([
       "holdings",
+      "living_theses",
+      "living_thesis_catalysts",
+      "living_thesis_risks",
       "mbs_score_snapshots",
       "portfolio_ranker_items",
       "reminders",
@@ -51,7 +55,16 @@ describe("SQLite local storage", () => {
       "thesis_notes",
       "watchlist_items"
     ]);
-    expect(readAppliedMigrationVersions(database)).toEqual([1, 2, 3]);
+    expect(readAppliedMigrationVersions(database)).toEqual([1, 2, 3, 4]);
+    expect(
+      Number(
+        (
+          database.prepare("PRAGMA foreign_keys;").get() as {
+            foreign_keys: number;
+          }
+        ).foreign_keys
+      )
+    ).toBe(1);
 
     database.close();
   });

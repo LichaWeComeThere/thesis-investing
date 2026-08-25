@@ -6,8 +6,8 @@ This document began as the Phase 3 Stage 1 architecture plan. Phase 3 Stage 0
 reconciled the renderer prototype and its data-provenance labels. Phase 3 Stage
 2 now implements the framework-independent `LivingThesis` current-state model,
 structured risk and catalyst types, and validation in `packages/core`.
-Repositories, migrations, IPC APIs, persistence, and renderer adoption remain
-future stages.
+Phase 3 Stage 3 adds the SQLite persistence foundation for that current-state
+aggregate. IPC APIs and renderer adoption remain future stages.
 
 The plan is based on `main` at
 `46fe0b65a248b449f5246f266ea96e4758af94b7` and on a read-only review of the
@@ -251,9 +251,9 @@ React renderer
   -> SQLite adapter and migrations
 ```
 
-Potential storage entities are listed below. The risk and catalyst rows show
-the normalized option; their physical representation remains a Stage 3
-decision.
+Stage 3 uses normalized child tables for current risks and catalysts. Their
+stable identities, statuses, and timestamps remain independently addressable
+without making opaque JSON mutation a persistence contract.
 
 | Entity/table | Mutability | Purpose |
 | --- | --- | --- |
@@ -277,9 +277,22 @@ add hard-delete UI. Useful indexes include thesis ID plus timestamp on every
 history table, lifecycle/next-review indexes on `living_theses`, and a unique
 constraint allowing at most one in-progress Review Session per thesis.
 
-The current SQLite adapter does not yet rely on these foreign keys. The
-persistence stage must explicitly enable and test SQLite foreign-key behavior
-before depending on it. Stage 1 creates no migrations.
+Migration 4 adds the three current-state tables and enables SQLite foreign-key
+enforcement for storage connections. Risk and catalyst relationships use
+`ON UPDATE RESTRICT` and `ON DELETE RESTRICT`. The repository offers no Living
+Thesis hard-delete operation.
+
+The Stage 3 repository supports transactional aggregate creation, read by ID,
+deterministic list order (`updated_at DESC, id ASC`), and transactional
+expected-version updates. Child reads use `created_at ASC, id ASC`. New
+aggregates begin at version 1; successful updates increment the stored version
+once. Stale versions fail without partial writes. Existing children must remain
+in the submitted aggregate and use `retired` when they leave active research;
+omission never deletes stored rows. Parent and child creation timestamps are
+immutable through repository updates.
+
+Stage 3 intentionally ends at repository/storage. Narrow main, IPC, preload,
+and renderer use cases remain future integration work.
 
 The preload API should expose use-case methods, not repository or SQL access.
 Likely read methods include `list`, `get`, and `getTimeline`. Likely write
@@ -302,6 +315,11 @@ Each successful update should run in one transaction that:
    state or an equivalent validated delta;
 3. updates the validated current-state storage;
 4. increments the thesis version and `updatedAt`.
+
+Stage 3 implements current-state version checking and transactional aggregate
+writes before the revision table exists. Appending the revision in that same
+transaction becomes mandatory when revision persistence is introduced; Stage
+3 does not fabricate historical records.
 
 ### Historical records
 
@@ -338,9 +356,10 @@ Future behavior should be explicit:
 The existing field name `thesisId` is retained as the single formal
 relationship to `LivingThesis.id`; no competing `livingThesisId` field is
 introduced. Existing values from the current scorer or version 1 import are
-legacy references and must remain unlinked in formal Living Thesis queries
-unless a later explicit migration validates the relationship. Stage 1 and the
-decision pass change no current MBS persistence.
+legacy references and remain untouched and unlinked in formal Living Thesis
+queries unless a later explicit migration validates the relationship.
+Migration 4 does not add an MBS foreign key, reinterpret existing values, or
+change current MBS persistence.
 
 ## Thesis Board Transition
 
@@ -574,10 +593,10 @@ boundary and fixture-based tests while preserving the frozen version 1 format.
 2. **Stage 2 - Shared Living Thesis model.** Add pure types, validators,
    constructors, current/history separation, and explicit demo fixtures in
    `packages/core`. Do not add persistence yet.
-3. **Stage 3 - Persistence foundation.** Add additive migrations,
-   repositories, service tests, typed shared contracts, main IPC, preload, and
-   renderer client. Include Living Thesis CRUD/archive and read models, but no
-   broad UI conversion.
+3. **Stage 3 - Persistence foundation.** Add normalized current-state tables,
+   repository transactions, optimistic version enforcement, storage tests, and
+   runtime verification. Keep main IPC, preload, renderer adoption, and export
+   format changes out of this stage.
 4. **Stage 4 - Thesis Board adoption.** Replace the Board's in-memory source
    with the repository client while retaining demo empty states and Stage 0 UI.
 5. **Stage 5 - Review Workflow.** Implement and test the pure workflow state
@@ -610,17 +629,15 @@ ownership, legacy `InvestmentIdea`, current MBS derivation, and snapshot
 [Living Thesis Shared-Model Decisions](LIVING_THESIS_MODEL_DECISIONS.md). The
 remaining persistence and feature-stage questions are:
 
-1. Should risks and catalysts use normalized child tables from the first
-   migration, or begin as validated JSON with a later normalization cost?
-2. Which edits may bypass a Review Session, and which material fields require
+1. Which edits may bypass a Review Session, and which material fields require
    review completion?
-3. What is the minimum durable Review Session draft format, and how should
+2. What is the minimum durable Review Session draft format, and how should
    draft schema versions be upgraded?
-4. Should abandoned Review Sessions appear in the normal timeline or only in
+3. Should abandoned Review Sessions appear in the normal timeline or only in
    an audit/details view?
-5. Which thesis-health thresholds and priority bands are understandable
+4. Which thesis-health thresholds and priority bands are understandable
     enough to ship without implying recommendations?
-6. Should a future explicit Create from demo action copy any example history,
+5. Should a future explicit Create from demo action copy any example history,
     or create only clean current state and one creation revision?
-7. When export format version 2 is introduced, should in-progress Review
+6. When export format version 2 is introduced, should in-progress Review
     Sessions be portable or imported as inactive drafts?

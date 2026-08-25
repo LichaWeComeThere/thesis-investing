@@ -27,6 +27,7 @@ import type {
   ThesisNoteRepository,
   WatchlistItemRepository
 } from "./repositories";
+import { createSqliteLivingThesisRepository } from "./sqliteLivingThesisRepository";
 
 type SqlParam = string | number | null;
 type SqlRow = Record<string, unknown>;
@@ -40,7 +41,8 @@ export function createSqliteRepositories(
     thesisNotes: createThesisNoteRepository(database),
     reminders: createReminderRepository(database),
     portfolioRankerItems: createPortfolioRankerItemRepository(database),
-    mbsScoreSnapshots: createMbsScoreSnapshotRepository(database)
+    mbsScoreSnapshots: createMbsScoreSnapshotRepository(database),
+    livingTheses: createSqliteLivingThesisRepository(database)
   };
 }
 
