@@ -1,6 +1,7 @@
 import type {
   EntityId,
   Holding,
+  LivingThesis,
   MbsScoreSnapshot,
   PortfolioRankerItem,
   Reminder,
@@ -64,6 +65,16 @@ export interface MbsScoreSnapshotRepository {
   list(): MbsScoreSnapshot[];
 }
 
+export interface LivingThesisRepository {
+  create(thesis: LivingThesis): RepositoryResult<LivingThesis>;
+  getById(id: EntityId): LivingThesis | undefined;
+  list(): LivingThesis[];
+  update(
+    thesis: LivingThesis,
+    expectedVersion: number
+  ): RepositoryResult<LivingThesis>;
+}
+
 export interface LocalStorageRepositories {
   holdings: HoldingRepository;
   watchlistItems: WatchlistItemRepository;
@@ -71,4 +82,5 @@ export interface LocalStorageRepositories {
   reminders: ReminderRepository;
   portfolioRankerItems: PortfolioRankerItemRepository;
   mbsScoreSnapshots: MbsScoreSnapshotRepository;
+  livingTheses: LivingThesisRepository;
 }

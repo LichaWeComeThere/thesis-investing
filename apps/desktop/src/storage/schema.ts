@@ -96,6 +96,69 @@ export const migrations: readonly Migration[] = [
         created_at TEXT
       );
     `
+  },
+  {
+    version: 4,
+    name: "add_living_thesis_persistence",
+    sql: `
+      CREATE TABLE IF NOT EXISTS living_theses (
+        id TEXT PRIMARY KEY,
+        version INTEGER NOT NULL CHECK (version > 0),
+        ticker TEXT,
+        entity_name TEXT NOT NULL,
+        title TEXT NOT NULL,
+        theme TEXT,
+        summary TEXT NOT NULL,
+        bull_case TEXT,
+        bear_case TEXT,
+        lifecycle TEXT NOT NULL,
+        conviction TEXT NOT NULL,
+        risk_level TEXT NOT NULL,
+        review_cadence_days INTEGER CHECK (
+          review_cadence_days IS NULL OR review_cadence_days > 0
+        ),
+        next_review_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        archived_at TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS living_thesis_risks (
+        id TEXT PRIMARY KEY,
+        thesis_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        detail TEXT,
+        status TEXT NOT NULL,
+        severity TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (thesis_id) REFERENCES living_theses(id)
+          ON UPDATE RESTRICT
+          ON DELETE RESTRICT
+      );
+
+      CREATE TABLE IF NOT EXISTS living_thesis_catalysts (
+        id TEXT PRIMARY KEY,
+        thesis_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        detail TEXT,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (thesis_id) REFERENCES living_theses(id)
+          ON UPDATE RESTRICT
+          ON DELETE RESTRICT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_living_theses_updated
+        ON living_theses(updated_at DESC, id ASC);
+
+      CREATE INDEX IF NOT EXISTS idx_living_thesis_risks_parent
+        ON living_thesis_risks(thesis_id, created_at ASC, id ASC);
+
+      CREATE INDEX IF NOT EXISTS idx_living_thesis_catalysts_parent
+        ON living_thesis_catalysts(thesis_id, created_at ASC, id ASC);
+    `
   }
 ];
 

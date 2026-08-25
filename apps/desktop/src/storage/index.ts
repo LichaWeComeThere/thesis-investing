@@ -1,5 +1,6 @@
 export type {
   HoldingRepository,
+  LivingThesisRepository,
   LocalStorageRepositories,
   PortfolioRankerItemRepository,
   ReminderRepository,

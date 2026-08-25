@@ -18,6 +18,8 @@ describe("verifyStorageRuntime", () => {
       "read the watchlist item through the repository boundary",
       "updated the watchlist item through the repository boundary",
       "deleted the watchlist item through the repository boundary",
+      "created and read tickerless, shared-ticker Living Thesis aggregates",
+      "verified Living Thesis versioning and stale-write protection",
       "closed the in-memory storage connection"
     ]);
   });

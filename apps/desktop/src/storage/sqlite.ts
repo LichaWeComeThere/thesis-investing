@@ -43,7 +43,9 @@ export async function createSqliteDatabase(
   options: SqliteStorageOptions = {}
 ): Promise<DatabaseSync> {
   const { DatabaseSync } = loadNodeSqlite();
-  return new DatabaseSync(options.filename ?? ":memory:");
+  const database = new DatabaseSync(options.filename ?? ":memory:");
+  database.exec("PRAGMA foreign_keys = ON;");
+  return database;
 }
 
 const require = createRequire(import.meta.url);

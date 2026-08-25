@@ -25,6 +25,12 @@ validation, route smoke testing, disposable SQLite lifecycle checks,
 export/import validation, and export/import roundtrip testing are documented in
 the [Phase 2 closeout](PHASE_2_CLOSEOUT.md).
 
+Phase 3, Stage 3 adds the formal Living Thesis SQLite persistence foundation.
+It stores current Living Thesis state plus normalized risk and catalyst
+children behind a transactional repository. There is no renderer, preload, or
+IPC workflow for these records yet; the existing Thesis Board remains a
+clearly labeled in-memory prototype.
+
 ## Package Boundary
 
 Local persistence currently lives in `apps/desktop/src/storage`.
@@ -36,6 +42,8 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
 - The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS Score Snapshots; static Theme Library content and Thesis Board prototype data are excluded.
+- The Living Thesis repository remains storage-only in Stage 3. It is not part
+  of Settings/About counts, Dashboard summaries, or any renderer client yet.
 - The renderer can request a local JSON export through `window.thesisInvesting.localData.exportToJson()`, but the save dialog, SQLite reads, and file write happen in the Electron main process.
 - The renderer can request import preview and confirmation through `window.thesisInvesting.localData.previewImportFromJson()` and `window.thesisInvesting.localData.importFromJson(previewId)`. Electron main owns file reading, parsing, validation, pending preview data, and transactional repository writes.
 - The renderer can request `window.thesisInvesting.localData.openDataFolder()` without passing a path. Electron main opens only the trusted app data folder from `app.getPath('userData')`.
@@ -83,6 +91,17 @@ Migration v3 (Phase 1 Stage 22) adds:
 
 - `mbs_score_snapshots`
 
+Migration v4 (Phase 3 Stage 3) adds:
+
+- `living_theses`
+- `living_thesis_risks`
+- `living_thesis_catalysts`
+
+Risks and catalysts use stable IDs and restrictive foreign keys to their
+parent thesis. Storage connections explicitly enable SQLite foreign-key
+enforcement. The parent table stores no MBS value, snapshot pointer, health,
+review priority, or historical workflow arrays.
+
 The domain tables include local created/updated date columns where appropriate, but repositories do not generate timestamps as side effects. Dates are accepted as inputs from future application workflows.
 
 ## Repositories
@@ -95,8 +114,26 @@ The storage module defines repository interfaces for:
 - reminders
 - portfolio ranker items
 - MBS score snapshots
+- Living Theses with normalized current risk and catalyst children
 
 Repository implementations validate core domain data before writing to SQLite and normalize ticker symbols consistently with `packages/core`.
+
+Living Thesis creation and updates are aggregate transactions. New records
+start at version 1. Updates require the stored expected version, increment it
+once, and reject stale writes without partial parent or child changes. Reads
+order children by creation timestamp then ID; lists order theses by updated
+timestamp descending then ID. Existing children cannot be omitted from an
+update and are retired by status rather than deleted. No Living Thesis
+hard-delete API exists.
+
+The existing `mbs_score_snapshots.thesis_id` column is unchanged. Legacy values
+are not inferred, migrated, or automatically reinterpreted. A future explicit
+relationship stage will apply the formal `thesisId -> LivingThesis.id`
+semantics without duplicating score history in `living_theses`.
+
+Phase 2 export/import format version 1 remains unchanged and does not include
+Living Thesis records. Relationship-aware export/import belongs to a later,
+explicitly versioned integration stage.
 
 ## Out Of Scope
 
