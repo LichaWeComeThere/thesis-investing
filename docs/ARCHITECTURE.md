@@ -25,9 +25,12 @@ and Settings/About local data status read from persisted local records without
 writing them. Export/import file dialogs, file reads/writes, JSON validation,
 and SQLite writes stay in Electron main.
 
-Thesis Board is present as an early renderer-only prototype with mock/in-memory
-data. It is visibly labeled as unsaved and is not yet integrated with the future
-Living Thesis model or persistence.
+Phase 3 Stage 4 connects Thesis Board to the formal Living Thesis repository
+through narrow typed renderer, preload, IPC, and Electron main boundaries. The
+Board creates and updates current Living Thesis state with optimistic version
+checks; IDs and canonical timestamps are generated in Electron main. It does
+not expose SQLite or filesystem access to the renderer, auto-seed demo records,
+or implement review history, health, queue, or MBS history behavior.
 
 ## Data Provider Boundary
 

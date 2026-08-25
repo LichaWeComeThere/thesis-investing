@@ -79,7 +79,7 @@ const navigationViews: NavigationView[] = [
     navLabel: 'Thesis Board',
     icon: 'thesis-board',
     description:
-      'Combine ranked investment ideas, thesis details, and MBS scoring context in one workspace.'
+      'Create, organize, and update formal Living Thesis records saved in local SQLite.'
   },
   {
     id: 'portfolio-ranker',
@@ -372,7 +372,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
             theses={theses}
           />
         ) : selectedView.id === 'thesis-board' ? (
-          <ThesisBoardScreen theses={theses} />
+          <ThesisBoardScreen />
         ) : selectedView.id === 'portfolio-ranker' ? (
           <PortfolioRankerScreen
             onOpenWorkspace={setSelectedViewId}
@@ -438,6 +438,7 @@ const persistedWorkflowFallback = [
   'Reminders',
   'Portfolio Ranker Inputs',
   'MBS Score Snapshots',
+  'Living Thesis records',
   'Dashboard summaries read persisted local data'
 ];
 
@@ -1107,9 +1108,10 @@ export function SettingsAboutScreen({
                       </div>
                     </dl>
                     <p className="local-data-status-message">
-                      Counts reflect persisted local records only. Theme
-                      Library content and Thesis Board prototype data are not
-                      included.
+                      Counts reflect the five Phase 2 workflows above. Living
+                      Thesis records are saved locally but are not yet included
+                      in this maintenance count summary. Theme Library content
+                      remains bundled reference material.
                     </p>
                   </>
                 ) : (

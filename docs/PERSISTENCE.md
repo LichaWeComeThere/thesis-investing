@@ -27,9 +27,14 @@ the [Phase 2 closeout](PHASE_2_CLOSEOUT.md).
 
 Phase 3, Stage 3 adds the formal Living Thesis SQLite persistence foundation.
 It stores current Living Thesis state plus normalized risk and catalyst
-children behind a transactional repository. There is no renderer, preload, or
-IPC workflow for these records yet; the existing Thesis Board remains a
-clearly labeled in-memory prototype.
+children behind a transactional repository.
+
+Phase 3, Stage 4 adopts that repository in Thesis Board through narrow typed
+renderer, preload, IPC, and Electron main APIs. Electron main generates opaque
+UUIDs and canonical timestamps, creates version 1 aggregates, and submits
+updates with the renderer's expected version. A successful save returns the
+repository-incremented version; a stale save returns an explicit conflict and
+the renderer retains its draft until the user chooses to reload saved state.
 
 ## Package Boundary
 
@@ -41,9 +46,10 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and MBS Scorer screens read and write through the local persistence boundary.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
-- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS Score Snapshots; static Theme Library content and Thesis Board prototype data are excluded.
-- The Living Thesis repository remains storage-only in Stage 3. It is not part
-  of Settings/About counts, Dashboard summaries, or any renderer client yet.
+- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS Score Snapshots. Living Thesis records persist locally but are intentionally not yet part of that Phase 2 count summary; static Theme Library content is also excluded.
+- Thesis Board uses `window.thesisInvesting.livingTheses` for only `list`,
+  `getById`, `create`, and expected-version `update`. No repository, raw SQL,
+  database handle, filesystem method, or arbitrary path crosses preload.
 - The renderer can request a local JSON export through `window.thesisInvesting.localData.exportToJson()`, but the save dialog, SQLite reads, and file write happen in the Electron main process.
 - The renderer can request import preview and confirmation through `window.thesisInvesting.localData.previewImportFromJson()` and `window.thesisInvesting.localData.importFromJson(previewId)`. Electron main owns file reading, parsing, validation, pending preview data, and transactional repository writes.
 - The renderer can request `window.thesisInvesting.localData.openDataFolder()` without passing a path. Electron main opens only the trusted app data folder from `app.getPath('userData')`.

@@ -1,570 +1,428 @@
 import {
-  calculateMbsScore,
-  MBS_CATEGORIES,
-  MBS_CATEGORY_MAX_SCORE,
-  MBS_CATEGORY_MIN_SCORE,
-  rankManualPortfolioItems,
-  type ManualBusinessScoreCategory,
-  type ManualPortfolioRankedItem
+  LIVING_THESIS_CATALYST_STATUSES,
+  LIVING_THESIS_CONVICTIONS,
+  LIVING_THESIS_LIFECYCLES,
+  LIVING_THESIS_RISK_LEVELS,
+  LIVING_THESIS_RISK_STATUSES,
+  type LivingThesis,
+  type LivingThesisCatalystStatus,
+  type LivingThesisConviction,
+  type LivingThesisLifecycle,
+  type LivingThesisRiskLevel,
+  type LivingThesisRiskStatus
 } from '@thesis-investing/core';
+import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
+import type { FormEvent, ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import type {
+  LivingThesisCatalystWriteInput,
+  LivingThesisRiskWriteInput
+} from '../../shared/livingThesesStorage';
 import {
-  Badge,
-  type BadgeVariant,
-  Card,
-  PageHeader
-} from '@thesis-investing/ui';
-import type { CSSProperties } from 'react';
-import { useMemo, useState } from 'react';
+  saveLivingThesisDraft,
+  thesisToDraft,
+  type LivingThesisBoardDraft
+} from './livingThesisBoardModel';
 import {
-  formatScoreChange,
-  getScoreChange,
-  isNeedsReviewThesis,
-  mockTheses,
-  type MockThesis,
-  type MockThesisIdeaStatus
-} from './data/mockTheses';
+  getDefaultLivingThesesStorageClient,
+  type LivingThesesStorageClient
+} from './livingThesesStorageClient';
 
 type ThesisBoardScreenProps = {
-  theses?: MockThesis[];
+  client?: LivingThesesStorageClient | null;
+  initialFeedback?: BoardFeedback | null;
+  initialLoadState?: BoardLoadState;
+  initialTheses?: LivingThesis[];
 };
 
-type ThesisBoardRow = {
-  id: string;
-  ticker: string;
-  companyName: string;
-  theme: string;
-  ideaStatus: string;
-  thesisStatus: string;
-  conviction: string;
-  riskLevel: string;
-  thesisSummary: string;
-  bullCase: string;
-  bearCase: string;
-  keyRisks: string;
-  catalysts: string;
-  lastReviewedDate: string;
-  mbsScore: number;
-  needsReview: boolean;
-  nextReviewDate: string;
-  previousMbsScore: number;
-  categoryValues: Record<ManualBusinessScoreCategory, string>;
+type BoardLoadState = 'error' | 'loaded' | 'loading';
+
+type BoardFeedback =
+  | { type: 'conflict'; messages: readonly string[] }
+  | { type: 'error'; messages: readonly string[] }
+  | { type: 'saved'; message: string }
+  | { type: 'warning'; message: string };
+
+type BoardDraft = LivingThesisBoardDraft;
+
+type BoardFilter = 'all' | LivingThesisLifecycle;
+type BoardSort = 'entity' | 'next-review' | 'recently-updated';
+
+const lifecycleLabels: Record<LivingThesisLifecycle, string> = {
+  active: 'Active',
+  archived: 'Archived',
+  draft: 'Draft',
+  monitoring: 'Monitoring',
+  paused: 'Paused'
 };
 
-type ScoreDriver = {
-  category: ManualBusinessScoreCategory;
-  label: string;
-  value: number;
+const convictionLabels: Record<LivingThesisConviction, string> = {
+  high: 'High',
+  low: 'Low',
+  medium: 'Medium',
+  unrated: 'Unrated'
 };
 
-type RankingsFilter = 'All ideas' | MockThesisIdeaStatus;
-
-type RankingsSort =
-  | 'MBS score'
-  | 'Score change'
-  | 'Conviction'
-  | 'Risk'
-  | 'Next review date';
-
-const rankingFilters: RankingsFilter[] = [
-  'All ideas',
-  'Watchlist',
-  'Researching',
-  'Active',
-  'Needs Review',
-  'Caution',
-  'Archived'
-];
-
-const rankingSorts: RankingsSort[] = [
-  'MBS score',
-  'Score change',
-  'Conviction',
-  'Risk',
-  'Next review date'
-];
-
-const categoryLabels: Record<ManualBusinessScoreCategory, string> = {
-  businessQuality: 'Business quality',
-  moat: 'Moat',
-  management: 'Management',
-  balanceSheet: 'Balance sheet',
-  growth: 'Growth',
-  valuation: 'Valuation',
-  risk: 'Risk'
+const riskLevelLabels: Record<LivingThesisRiskLevel, string> = {
+  high: 'High',
+  low: 'Low',
+  medium: 'Medium',
+  unrated: 'Unrated'
 };
 
-const categoryHelpers: Record<ManualBusinessScoreCategory, string> = {
-  businessQuality: 'Operating quality and repeatability.',
-  moat: 'Durability of competitive advantage.',
-  management: 'Execution, incentives, and capital allocation.',
-  balanceSheet: 'Financial resilience and flexibility.',
-  growth: 'Durability of future expansion.',
-  valuation: 'Reasonableness of price versus quality.',
-  risk: 'Higher score means lower thesis risk.'
+const riskStatusLabels: Record<LivingThesisRiskStatus, string> = {
+  open: 'Open',
+  resolved: 'Resolved',
+  retired: 'Retired'
+};
+
+const catalystStatusLabels: Record<LivingThesisCatalystStatus, string> = {
+  observed: 'Observed',
+  open: 'Open',
+  retired: 'Retired'
+};
+
+const emptyDraft: BoardDraft = {
+  bearCase: '',
+  bullCase: '',
+  catalysts: [],
+  conviction: 'unrated',
+  entityName: '',
+  lifecycle: 'draft',
+  nextReviewAt: '',
+  reviewCadenceDays: '',
+  riskLevel: 'unrated',
+  risks: [],
+  summary: '',
+  theme: '',
+  ticker: '',
+  title: ''
 };
 
 export function ThesisBoardScreen({
-  theses = mockTheses
+  client = getDefaultLivingThesesStorageClient(),
+  initialFeedback = null,
+  initialLoadState,
+  initialTheses
 }: ThesisBoardScreenProps): JSX.Element {
-  const [rows, setRows] = useState<ThesisBoardRow[]>(() =>
-    theses.map(thesisToBoardRow)
+  const [theses, setTheses] = useState<LivingThesis[]>(initialTheses ?? []);
+  const [loadState, setLoadState] = useState<BoardLoadState>(
+    initialLoadState ?? (initialTheses ? 'loaded' : 'loading')
   );
-  const [selectedRowId, setSelectedRowId] = useState(
-    () => rows[0]?.id ?? ''
+  const [selectedId, setSelectedId] = useState(initialTheses?.[0]?.id ?? '');
+  const [draft, setDraft] = useState<BoardDraft>(() =>
+    initialTheses?.[0] ? thesisToDraft(initialTheses[0]) : emptyDraft
   );
-  const [rankingFilter, setRankingFilter] =
-    useState<RankingsFilter>('All ideas');
-  const [rankingSort, setRankingSort] = useState<RankingsSort>('MBS score');
+  const [isCreating, setIsCreating] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<BoardFeedback | null>(initialFeedback);
+  const [filter, setFilter] = useState<BoardFilter>('all');
+  const [sort, setSort] = useState<BoardSort>('recently-updated');
 
-  const scoredRows = useMemo(
-    () =>
-      rows.map((row) => ({
-        row,
-        scoreOutput: calculateMbsScore(buildMbsInput(row.categoryValues))
-      })),
-    [rows]
-  );
-  const rankedItems = useMemo(
-    () =>
-      rankManualPortfolioItems(
-        scoredRows.map(({ row, scoreOutput }) => ({
-          companyName: row.companyName,
-          id: row.id,
-          manualScore:
-            scoreOutput.rating === 'incomplete' || scoreOutput.errors.length > 0
-              ? undefined
-              : scoreOutput.score,
-          notes: row.thesisSummary,
-          ticker: row.ticker
-        }))
-      ),
-    [scoredRows]
-  );
-  const rankedItemsById = useMemo(
-    () => new Map(rankedItems.map((item) => [item.id, item])),
-    [rankedItems]
-  );
-  const rowsById = useMemo(
-    () => new Map(rows.map((row) => [row.id, row])),
-    [rows]
-  );
-  const scoreOutputsById = useMemo(
-    () => new Map(scoredRows.map((item) => [item.row.id, item.scoreOutput])),
-    [scoredRows]
-  );
-  const rankedRows = rankedItems
-    .map((item) => rowsById.get(item.id))
-    .filter((row): row is ThesisBoardRow => Boolean(row));
-  const visibleRankedRows = sortRankingRows(
-    filterRankingRows(rankedRows, rankingFilter),
-    rankingSort
-  );
-  const selectedRow =
-    rows.find((row) => row.id === selectedRowId) ??
-    visibleRankedRows[0] ??
-    rankedRows[0] ??
-    rows[0];
-  const selectedScoreOutput = selectedRow
-    ? scoreOutputsById.get(selectedRow.id)
-    : undefined;
-  const selectedRankedItem = selectedRow
-    ? rankedItemsById.get(selectedRow.id)
-    : undefined;
-  const strongestDrivers = selectedScoreOutput
-    ? getScoreDrivers(selectedScoreOutput.input, 'strongest')
-    : [];
-  const weakestDrivers = selectedScoreOutput
-    ? getScoreDrivers(selectedScoreOutput.input, 'weakest')
-    : [];
-  const selectedScoreChange = selectedRow
-    ? formatBoardScoreChange(selectedRow)
-    : '0';
-
-  function updateSelectedField(
-    field: keyof Omit<ThesisBoardRow, 'id' | 'categoryValues'>,
-    value: string
-  ): void {
-    if (!selectedRow) {
+  const loadTheses = useCallback(async (preferredId = ''): Promise<void> => {
+    if (!client) {
+      setLoadState('error');
+      setFeedback({
+        messages: ['Living Thesis storage is unavailable in this window.'],
+        type: 'error'
+      });
       return;
     }
 
-    setRows((currentRows) =>
-      currentRows.map((row) =>
-        row.id === selectedRow.id
-          ? {
-              ...row,
-              [field]: value
-            }
-          : row
-      )
-    );
+    setLoadState('loading');
+    const result = await client.list();
+
+    if (!result.ok) {
+      setLoadState('error');
+      setFeedback({ messages: result.errors, type: 'error' });
+      return;
+    }
+
+    setTheses(result.value);
+    setLoadState('loaded');
+    setFeedback(null);
+
+    const nextSelected =
+      result.value.find((thesis) => thesis.id === preferredId) ?? result.value[0];
+
+    if (nextSelected) {
+      setSelectedId(nextSelected.id);
+      setDraft(thesisToDraft(nextSelected));
+    } else {
+      setSelectedId('');
+      setDraft(emptyDraft);
+    }
+  }, [client]);
+
+  useEffect(() => {
+    if (initialTheses !== undefined || initialLoadState !== undefined) {
+      return;
+    }
+
+    void loadTheses();
+  }, [initialLoadState, initialTheses, loadTheses]);
+
+  const visibleTheses = useMemo(
+    () => sortTheses(filterTheses(theses, filter), sort),
+    [filter, sort, theses]
+  );
+  const selectedThesis = theses.find((thesis) => thesis.id === selectedId);
+
+  function selectThesis(thesis: LivingThesis): void {
+    if (isDirty) {
+      setFeedback({
+        message: 'Save or cancel the current changes before opening another thesis.',
+        type: 'warning'
+      });
+      return;
+    }
+
+    setSelectedId(thesis.id);
+    setDraft(thesisToDraft(thesis));
+    setIsCreating(false);
+    setFeedback(null);
   }
 
-  function updateSelectedCategory(
-    category: ManualBusinessScoreCategory,
-    value: string
-  ): void {
-    if (!selectedRow) {
+  function beginCreate(): void {
+    if (isDirty) {
+      setFeedback({
+        message: 'Save or cancel the current changes before creating a thesis.',
+        type: 'warning'
+      });
       return;
     }
 
-    setRows((currentRows) =>
-      currentRows.map((row) =>
-        row.id === selectedRow.id
-          ? {
-              ...row,
-              categoryValues: {
-                ...row.categoryValues,
-                [category]: value
-              }
-            }
-          : row
-      )
-    );
+    setDraft(emptyDraft);
+    setIsCreating(true);
+    setSelectedId('');
+    setFeedback(null);
+  }
+
+  function updateDraft<K extends keyof BoardDraft>(
+    field: K,
+    value: BoardDraft[K]
+  ): void {
+    setDraft((current) => ({ ...current, [field]: value }));
+    setIsDirty(true);
+    setFeedback(null);
+  }
+
+  function cancelEditing(): void {
+    if (isCreating) {
+      const firstThesis = theses[0];
+      setIsCreating(false);
+      setIsDirty(false);
+      setFeedback(null);
+
+      if (firstThesis) {
+        setSelectedId(firstThesis.id);
+        setDraft(thesisToDraft(firstThesis));
+      } else {
+        setSelectedId('');
+        setDraft(emptyDraft);
+      }
+      return;
+    }
+
+    if (selectedThesis) {
+      setDraft(thesisToDraft(selectedThesis));
+    }
+    setIsDirty(false);
+    setFeedback(null);
+  }
+
+  async function saveDraft(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+
+    if (!client) {
+      setFeedback({
+        messages: ['Living Thesis storage is unavailable in this window.'],
+        type: 'error'
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    setFeedback(null);
+    const result = await saveLivingThesisDraft(client, draft, isCreating);
+    setIsSaving(false);
+
+    if (!result.ok) {
+      setFeedback({
+        messages: result.errors,
+        type: result.code === 'conflict' ? 'conflict' : 'error'
+      });
+      return;
+    }
+
+    setTheses((current) => upsertThesis(current, result.value));
+    setSelectedId(result.value.id);
+    setDraft(thesisToDraft(result.value));
+    setIsCreating(false);
+    setIsDirty(false);
+    setFeedback({
+      message: isCreating
+        ? 'Living Thesis created and saved locally.'
+        : `Changes saved locally. Version ${result.value.version} is current.`,
+      type: 'saved'
+    });
+  }
+
+  async function reloadAfterConflict(): Promise<void> {
+    if (!client || !draft.id) {
+      return;
+    }
+
+    const result = await client.getById(draft.id);
+
+    if (!result.ok) {
+      setFeedback({ messages: result.errors, type: 'error' });
+      return;
+    }
+
+    setTheses((current) => upsertThesis(current, result.value));
+    setDraft(thesisToDraft(result.value));
+    setSelectedId(result.value.id);
+    setIsDirty(false);
+    setFeedback({
+      message: `Reloaded saved version ${result.value.version}.`,
+      type: 'saved'
+    });
   }
 
   return (
-    <div className="thesis-board-screen">
+    <div className="thesis-board-screen living-thesis-board">
       <PageHeader
-        badge={<Badge variant="accent">Thesis workflow</Badge>}
-        description="Review, rank, and update investment ideas from one focused workspace."
-        eyebrow="Investment workspace"
+        badge={<Badge variant="accent">Saved locally</Badge>}
+        description="Create and maintain durable Living Thesis records in one focused workspace."
+        eyebrow="Living Thesis workspace"
         title="Thesis Board"
       />
 
-      <p className="thesis-board-prototype-note" role="note">
-        Demo thesis workspace - these example records and edits are not saved.
-        This is not yet the formal Living Thesis OS.
+      <p className="living-thesis-provenance" role="note">
+        This Board reads and writes formal Living Thesis records in local SQLite.
+        MBS history, review workflows, health, and review priority are separate future stages.
       </p>
 
-      <div className="thesis-board-layout">
-        <Card className="thesis-board-rank-card" title="Thesis Rankings">
-          <div className="thesis-board-panel-kicker">
-            <span>Compare Ideas</span>
-            <strong>
-              {visibleRankedRows.length} / {rankedRows.length} ideas
-            </strong>
+      {feedback ? (
+        <BoardFeedbackPanel
+          feedback={feedback}
+          onReload={feedback.type === 'conflict' ? reloadAfterConflict : undefined}
+        />
+      ) : null}
+
+      <div className="living-thesis-board-layout">
+        <Card className="living-thesis-list-card" title="Living Thesis records">
+          <div className="living-thesis-list-toolbar">
+            <label>
+              <span>Lifecycle</span>
+              <select
+                aria-label="Filter by lifecycle"
+                onChange={(event) => setFilter(event.currentTarget.value as BoardFilter)}
+                value={filter}
+              >
+                <option value="all">All records</option>
+                {LIVING_THESIS_LIFECYCLES.map((lifecycle) => (
+                  <option key={lifecycle} value={lifecycle}>
+                    {lifecycleLabels[lifecycle]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Sort</span>
+              <select
+                aria-label="Sort Living Thesis records"
+                onChange={(event) => setSort(event.currentTarget.value as BoardSort)}
+                value={sort}
+              >
+                <option value="recently-updated">Recently updated</option>
+                <option value="entity">Entity name</option>
+                <option value="next-review">Next review</option>
+              </select>
+            </label>
+            <Button onClick={beginCreate} size="sm" type="button">
+              New thesis
+            </Button>
           </div>
 
-          <div className="thesis-board-rank-toolbar">
-            <div className="thesis-board-filter-group" aria-label="Filter ideas">
-              {rankingFilters.map((filter) => (
+          {loadState === 'loading' ? (
+            <BoardState title="Loading saved theses...">
+              Reading local Living Thesis records.
+            </BoardState>
+          ) : null}
+
+          {loadState === 'error' ? (
+            <BoardState alert title="Living Thesis records could not be loaded.">
+              <span>Your saved data was not changed.</span>
+              <Button onClick={() => void loadTheses(selectedId)} size="sm" type="button" variant="secondary">
+                Try again
+              </Button>
+            </BoardState>
+          ) : null}
+
+          {loadState === 'loaded' && theses.length === 0 ? (
+            <BoardState empty title="No Living Thesis records yet">
+              <span>Create a thesis when you are ready to save your research locally.</span>
+              <Button onClick={beginCreate} size="sm" type="button">
+                Create first thesis
+              </Button>
+            </BoardState>
+          ) : null}
+
+          {loadState === 'loaded' && theses.length > 0 ? (
+            <div className="living-thesis-list" role="list">
+              {visibleTheses.map((thesis) => (
                 <button
-                  aria-pressed={rankingFilter === filter}
-                  className={
-                    rankingFilter === filter
-                      ? 'thesis-board-filter-button thesis-board-filter-button--active'
-                      : 'thesis-board-filter-button'
-                  }
-                  key={filter}
-                  onClick={() => setRankingFilter(filter)}
+                  aria-pressed={thesis.id === selectedId}
+                  className={`living-thesis-list-item${thesis.id === selectedId ? ' living-thesis-list-item--selected' : ''}`}
+                  key={thesis.id}
+                  onClick={() => selectThesis(thesis)}
                   type="button"
                 >
-                  {filter}
+                  <span className="living-thesis-list-heading">
+                    <strong>{thesis.entityName}</strong>
+                    <Badge variant={getLifecycleBadge(thesis.lifecycle)}>
+                      {lifecycleLabels[thesis.lifecycle]}
+                    </Badge>
+                  </span>
+                  <span>{thesis.title}</span>
+                  <small>
+                    {thesis.ticker ?? 'No ticker'}{thesis.theme ? ` / ${thesis.theme}` : ''}
+                  </small>
+                  <span className="living-thesis-list-meta">
+                    <small>Version {thesis.version}</small>
+                    <small>Next review {thesis.nextReviewAt ?? 'not scheduled'}</small>
+                  </span>
                 </button>
               ))}
+
+              {visibleTheses.length === 0 ? (
+                <BoardState title="No records match this lifecycle.">
+                  Choose another lifecycle filter.
+                </BoardState>
+              ) : null}
             </div>
-            <div className="thesis-board-sort-row">
-              <label>
-                <span>Sort</span>
-                <select
-                  aria-label="Sort thesis rankings"
-                  onChange={(event) =>
-                    setRankingSort(event.currentTarget.value as RankingsSort)
-                  }
-                  value={rankingSort}
-                >
-                  {rankingSorts.map((sort) => (
-                    <option key={sort}>{sort}</option>
-                  ))}
-                </select>
-              </label>
-              <button className="thesis-board-add-idea-button" type="button">
-                Add idea
-              </button>
-            </div>
-          </div>
-
-          <div className="thesis-board-list" role="list">
-            {visibleRankedRows.map((row, index) => {
-              const rankedItem = rankedItemsById.get(row.id);
-              const isSelected = row.id === selectedRow?.id;
-
-              return (
-                <button
-                  aria-pressed={isSelected}
-                  className={`thesis-board-list-item thesis-rank-card${
-                    isSelected ? ' thesis-board-list-item--selected' : ''
-                  }`}
-                  key={row.id}
-                  onClick={() => setSelectedRowId(row.id)}
-                  type="button"
-                >
-                  <div className="thesis-rank-card-header">
-                    <span className="thesis-board-rank-number">
-                      {formatRank(rankedItem, index)}
-                    </span>
-                    <div className="thesis-rank-title-block">
-                      <strong>{row.ticker}</strong>
-                      <span>{row.companyName}</span>
-                      <small>{row.theme}</small>
-                    </div>
-                    <span className="thesis-board-list-score">
-                      <strong>{row.mbsScore}</strong>
-                      <small>MBS</small>
-                      <span
-                        className={`thesis-board-score-change thesis-board-score-change--${getScoreChangeTone(row)}`}
-                      >
-                        {formatBoardRowScoreChange(row)}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="thesis-rank-status-row">
-                      <Badge variant={getThesisStatusVariant(row.thesisStatus)}>
-                        {row.thesisStatus}
-                      </Badge>
-                      <Badge variant={getIdeaStatusVariant(row.ideaStatus)}>
-                        {row.ideaStatus}
-                      </Badge>
-                  </div>
-                  <div className="thesis-rank-meta-row">
-                    <span>Conviction {row.conviction}</span>
-                    <span>Risk {row.riskLevel}</span>
-                    <span>Reviewed {row.lastReviewedDate}</span>
-                    <span>Next {row.nextReviewDate || 'Unscheduled'}</span>
-                  </div>
-                </button>
-              );
-            })}
-
-            {visibleRankedRows.length === 0 ? (
-              <p className="thesis-board-empty-state">
-                No ideas match this filter.
-              </p>
-            ) : null}
-          </div>
+          ) : null}
         </Card>
 
-        {selectedRow && selectedScoreOutput ? (
-          <>
-            <Card className="thesis-board-detail-card" title="Thesis details">
-              <div className="thesis-board-detail-header">
-                <div>
-                  <span>{selectedRow.theme}</span>
-                  <h2>{selectedRow.companyName}</h2>
-                  <p>{selectedRow.ticker}</p>
-                </div>
-                <div className="thesis-board-status-stack">
-                  <Badge variant={getThesisStatusVariant(selectedRow.thesisStatus)}>
-                    {selectedRow.thesisStatus}
-                  </Badge>
-                  <span>Review Thesis</span>
-                </div>
-              </div>
-
-              <div className="thesis-board-metric-grid">
-                <Metric label="MBS score" value={`${selectedScoreOutput.score}`} />
-                <Metric label="Conviction" value={selectedRow.conviction} />
-                <Metric label="Risk" value={selectedRow.riskLevel} />
-                <Metric label="Rank" value={formatRank(selectedRankedItem, 0)} />
-              </div>
-
-              <div className="thesis-board-edit-grid">
-                <label>
-                  <span>Conviction</span>
-                  <select
-                    aria-label="Conviction"
-                    onChange={(event) =>
-                      updateSelectedField('conviction', event.currentTarget.value)
-                    }
-                    value={selectedRow.conviction}
-                  >
-                    <option>High</option>
-                    <option>Medium</option>
-                    <option>Low</option>
-                    <option>Unrated</option>
-                  </select>
-                </label>
-                <label>
-                  <span>Risk</span>
-                  <select
-                    aria-label="Risk"
-                    onChange={(event) =>
-                      updateSelectedField('riskLevel', event.currentTarget.value)
-                    }
-                    value={selectedRow.riskLevel}
-                  >
-                    <option>Low</option>
-                    <option>Medium</option>
-                    <option>High</option>
-                  </select>
-                </label>
-                <label>
-                  <span>Thesis status</span>
-                  <select
-                    aria-label="Thesis status"
-                    onChange={(event) =>
-                      updateSelectedField(
-                        'thesisStatus',
-                        event.currentTarget.value
-                      )
-                    }
-                    value={selectedRow.thesisStatus}
-                  >
-                    <option>Strong</option>
-                    <option>Stable</option>
-                    <option>Improving</option>
-                    <option>Weakening</option>
-                    <option>Broken</option>
-                  </select>
-                </label>
-                <label>
-                  <span>Next review</span>
-                  <input
-                    aria-label="Next review date"
-                    onChange={(event) =>
-                      updateSelectedField(
-                        'nextReviewDate',
-                        event.currentTarget.value
-                      )
-                    }
-                    type="date"
-                    value={selectedRow.nextReviewDate}
-                  />
-                </label>
-              </div>
-
-              <section className="thesis-board-summary-card">
-                <div>
-                  <span>Thesis summary</span>
-                  <strong>{selectedRow.thesisStatus} thesis</strong>
-                </div>
-                <textarea
-                  aria-label="Thesis summary"
-                  onChange={(event) =>
-                    updateSelectedField('thesisSummary', event.currentTarget.value)
-                  }
-                  rows={3}
-                  value={selectedRow.thesisSummary}
-                />
-              </section>
-
-              <div className="thesis-board-case-grid">
-                <ResearchNoteCard
-                  label="Bull case"
-                  onChange={(value) => updateSelectedField('bullCase', value)}
-                  tone="growth"
-                  value={selectedRow.bullCase}
-                />
-                <ResearchNoteCard
-                  label="Bear case"
-                  onChange={(value) => updateSelectedField('bearCase', value)}
-                  tone="risk"
-                  value={selectedRow.bearCase}
-                />
-                <ResearchNoteCard
-                  label="Key risks"
-                  onChange={(value) => updateSelectedField('keyRisks', value)}
-                  tone="warning"
-                  value={selectedRow.keyRisks}
-                />
-                <ResearchNoteCard
-                  label="Catalysts"
-                  onChange={(value) => updateSelectedField('catalysts', value)}
-                  tone="data"
-                  value={selectedRow.catalysts}
-                />
-              </div>
-            </Card>
-
-            <Card
-              className="thesis-board-score-card"
-              emphasis
-              title="MBS score breakdown"
-            >
-              <div className="thesis-board-panel-kicker">
-                <span>Evaluate Score</span>
-                <strong>{selectedScoreOutput.completedCriteria} / 7 complete</strong>
-              </div>
-              <div
-                className={`thesis-board-score-hero thesis-board-score-hero--${selectedScoreOutput.rating}`}
-              >
-                <span>Current MBS</span>
-                <strong>{selectedScoreOutput.score}</strong>
-                <small>/ 100</small>
-                <Badge variant={getScoreVariant(selectedScoreOutput.rating)}>
-                  {selectedScoreOutput.rating}
-                </Badge>
-              </div>
-
-              <div className="thesis-board-score-context">
-                <Metric label="Previous" value={`${selectedRow.previousMbsScore}`} />
-                <Metric label="Change" value={selectedScoreChange} />
-                <Metric label="Reviewed" value={selectedRow.lastReviewedDate} />
-              </div>
-
-              <div className="thesis-board-category-list">
-                {MBS_CATEGORIES.map((category) => {
-                  const categoryValue = selectedRow.categoryValues[category];
-
-                  return (
-                    <label className="thesis-board-category-row" key={category}>
-                      <span>
-                        <strong>{categoryLabels[category]}</strong>
-                        <small>{categoryHelpers[category]}</small>
-                        <span className="thesis-board-category-meter">
-                          <span
-                            style={
-                              {
-                                width: getCategoryScorePercent(categoryValue)
-                              } as CSSProperties
-                            }
-                          />
-                        </span>
-                      </span>
-                      <input
-                        aria-label={`${categoryLabels[category]} score`}
-                        inputMode="decimal"
-                        max={MBS_CATEGORY_MAX_SCORE}
-                        min={MBS_CATEGORY_MIN_SCORE}
-                        onChange={(event) =>
-                          updateSelectedCategory(
-                            category,
-                            event.currentTarget.value
-                          )
-                        }
-                        type="number"
-                        value={categoryValue}
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-
-              <div className="thesis-board-driver-grid">
-                <DriverList
-                  drivers={strongestDrivers}
-                  title="Strongest drivers"
-                  tone="strong"
-                />
-                <DriverList
-                  drivers={weakestDrivers}
-                  title="Weakest drivers"
-                  tone="weak"
-                />
-              </div>
-
-              {selectedScoreOutput.missingCriteria.length > 0 ||
-              selectedScoreOutput.errors.length > 0 ? (
-                <div className="thesis-board-score-warning" role="alert">
-                  Complete each 0-10 category score to rank this thesis.
-                </div>
-              ) : null}
-            </Card>
-          </>
+        {(isCreating || selectedThesis) && loadState !== 'error' ? (
+          <LivingThesisEditor
+            draft={draft}
+            isCreating={isCreating}
+            isDirty={isDirty}
+            isSaving={isSaving}
+            onCancel={cancelEditing}
+            onChange={updateDraft}
+            onSubmit={saveDraft}
+          />
         ) : (
-          <Card className="thesis-board-detail-card" title="No theses available">
-            <p>Add thesis ideas in the existing scorer or ranker workflows.</p>
+          <Card className="living-thesis-editor-card" title="Thesis details">
+            <BoardState title="Select or create a Living Thesis.">
+              Saved research details will appear here.
+            </BoardState>
           </Card>
         )}
       </div>
@@ -572,344 +430,157 @@ export function ThesisBoardScreen({
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }): JSX.Element {
+function LivingThesisEditor({ draft, isCreating, isDirty, isSaving, onCancel, onChange, onSubmit }: {
+  draft: BoardDraft;
+  isCreating: boolean;
+  isDirty: boolean;
+  isSaving: boolean;
+  onCancel: () => void;
+  onChange: <K extends keyof BoardDraft>(field: K, value: BoardDraft[K]) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+}): JSX.Element {
   return (
-    <div className="thesis-board-metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
+    <Card className="living-thesis-editor-card" title={isCreating ? 'Create Living Thesis' : 'Thesis details'}>
+      <form className="living-thesis-form" onSubmit={(event) => void onSubmit(event)}>
+        <div className="living-thesis-form-heading">
+          <div>
+            <span>{isCreating ? 'New local record' : `Version ${draft.version}`}</span>
+            <strong>{draft.entityName || 'Untitled entity'}</strong>
+          </div>
+          {isDirty ? <Badge variant="warning">Unsaved changes</Badge> : null}
+        </div>
+
+        <div className="living-thesis-field-grid">
+          <TextField label="Entity name" onChange={(value) => onChange('entityName', value)} required value={draft.entityName} />
+          <TextField label="Ticker (optional)" onChange={(value) => onChange('ticker', value)} value={draft.ticker} />
+          <TextField label="Thesis title" onChange={(value) => onChange('title', value)} required value={draft.title} />
+          <TextField label="Theme (optional)" onChange={(value) => onChange('theme', value)} value={draft.theme} />
+          <SelectField label="Lifecycle" onChange={(value) => onChange('lifecycle', value as LivingThesisLifecycle)} options={LIVING_THESIS_LIFECYCLES.map((value) => ({ label: lifecycleLabels[value], value }))} value={draft.lifecycle} />
+          <SelectField label="Conviction" onChange={(value) => onChange('conviction', value as LivingThesisConviction)} options={LIVING_THESIS_CONVICTIONS.map((value) => ({ label: convictionLabels[value], value }))} value={draft.conviction} />
+          <SelectField label="Risk level" onChange={(value) => onChange('riskLevel', value as LivingThesisRiskLevel)} options={LIVING_THESIS_RISK_LEVELS.map((value) => ({ label: riskLevelLabels[value], value }))} value={draft.riskLevel} />
+          <TextField label="Review cadence (days)" min="1" onChange={(value) => onChange('reviewCadenceDays', value)} type="number" value={draft.reviewCadenceDays} />
+          <TextField label="Next review" onChange={(value) => onChange('nextReviewAt', value)} type="date" value={draft.nextReviewAt} />
+        </div>
+
+        <TextAreaField label="Thesis summary" onChange={(value) => onChange('summary', value)} required value={draft.summary} />
+        <div className="living-thesis-case-grid">
+          <TextAreaField label="Bull case (optional)" onChange={(value) => onChange('bullCase', value)} value={draft.bullCase} />
+          <TextAreaField label="Bear case (optional)" onChange={(value) => onChange('bearCase', value)} value={draft.bearCase} />
+        </div>
+
+        <RiskEditor onChange={(risks) => onChange('risks', risks)} risks={draft.risks} />
+        <CatalystEditor catalysts={draft.catalysts} onChange={(catalysts) => onChange('catalysts', catalysts)} />
+
+        <div className="living-thesis-form-actions">
+          <Button disabled={isSaving} type="submit">
+            {isSaving ? 'Saving...' : isCreating ? 'Create thesis' : 'Save changes'}
+          </Button>
+          <Button onClick={onCancel} type="button" variant="secondary">Cancel</Button>
+        </div>
+      </form>
+    </Card>
   );
 }
 
-function ResearchNoteCard({
-  label,
-  onChange,
-  tone,
-  value
-}: {
-  label: string;
-  onChange: (value: string) => void;
-  tone: 'data' | 'growth' | 'risk' | 'warning';
-  value: string;
+function RiskEditor({ onChange, risks }: {
+  onChange: (risks: LivingThesisRiskWriteInput[]) => void;
+  risks: LivingThesisRiskWriteInput[];
 }): JSX.Element {
   return (
-    <label className={`thesis-board-note-card thesis-board-note-card--${tone}`}>
-      <span>{label}</span>
-      <textarea
-        aria-label={label}
-        onChange={(event) => onChange(event.currentTarget.value)}
-        rows={4}
-        value={value}
-      />
-    </label>
-  );
-}
-
-function DriverList({
-  drivers,
-  title,
-  tone
-}: {
-  drivers: ScoreDriver[];
-  title: string;
-  tone: 'strong' | 'weak';
-}): JSX.Element {
-  return (
-    <section
-      className={`thesis-board-driver-card thesis-board-driver-card--${tone}`}
-    >
-      <h3>{title}</h3>
-      {drivers.length > 0 ? (
-        <ul>
-          {drivers.map((driver) => (
-            <li key={driver.category}>
-              <span>{driver.label}</span>
-              <strong>{driver.value}</strong>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No completed scores yet.</p>
-      )}
+    <section className="living-thesis-children">
+      <SectionHeading label="Risks" onAdd={() => onChange([...risks, { severity: 'unrated', status: 'open', title: '' }])} />
+      {risks.length === 0 ? <p className="living-thesis-child-empty">No structured risks recorded.</p> : risks.map((risk, index) => (
+        <div className="living-thesis-child-row" key={risk.id ?? `new-risk-${index}`}>
+          <TextField label={`Risk ${index + 1}`} onChange={(value) => onChange(updateAt(risks, index, { ...risk, title: value }))} required value={risk.title} />
+          <TextField label="Detail (optional)" onChange={(value) => onChange(updateAt(risks, index, { ...risk, detail: value }))} value={risk.detail ?? ''} />
+          <SelectField label="Severity" onChange={(value) => onChange(updateAt(risks, index, { ...risk, severity: value as LivingThesisRiskLevel }))} options={LIVING_THESIS_RISK_LEVELS.map((value) => ({ label: riskLevelLabels[value], value }))} value={risk.severity} />
+          <SelectField label="Status" onChange={(value) => onChange(updateAt(risks, index, { ...risk, status: value as LivingThesisRiskStatus }))} options={LIVING_THESIS_RISK_STATUSES.map((value) => ({ label: riskStatusLabels[value], value }))} value={risk.status} />
+          {risk.status !== 'retired' ? <Button onClick={() => onChange(updateAt(risks, index, { ...risk, status: 'retired' }))} size="sm" type="button" variant="ghost">Retire</Button> : null}
+        </div>
+      ))}
     </section>
   );
 }
 
-function thesisToBoardRow(thesis: MockThesis): ThesisBoardRow {
-  const baseScore = String(thesis.mbsScore / 10);
-
-  return {
-    id: thesis.id,
-    ticker: thesis.ticker,
-    companyName: thesis.companyName,
-    theme: thesis.theme,
-    ideaStatus: thesis.ideaStatus,
-    thesisStatus: thesis.thesisStatus,
-    conviction: thesis.conviction,
-    riskLevel: thesis.riskLevel,
-    thesisSummary: thesis.thesisSummary,
-    bullCase: thesis.bullCase,
-    bearCase: thesis.bearCase,
-    keyRisks: thesis.keyRisks,
-    catalysts: thesis.catalysts,
-    lastReviewedDate: thesis.lastReviewedDate,
-    mbsScore: thesis.mbsScore,
-    needsReview: isNeedsReviewThesis(thesis),
-    nextReviewDate: thesis.nextReviewDate,
-    previousMbsScore: thesis.previousMbsScore,
-    categoryValues: {
-      balanceSheet: baseScore,
-      businessQuality: baseScore,
-      growth: baseScore,
-      management: baseScore,
-      moat: baseScore,
-      risk: baseScore,
-      valuation: baseScore
-    }
-  };
+function CatalystEditor({ catalysts, onChange }: {
+  catalysts: LivingThesisCatalystWriteInput[];
+  onChange: (catalysts: LivingThesisCatalystWriteInput[]) => void;
+}): JSX.Element {
+  return (
+    <section className="living-thesis-children">
+      <SectionHeading label="Catalysts" onAdd={() => onChange([...catalysts, { status: 'open', title: '' }])} />
+      {catalysts.length === 0 ? <p className="living-thesis-child-empty">No structured catalysts recorded.</p> : catalysts.map((catalyst, index) => (
+        <div className="living-thesis-child-row living-thesis-child-row--catalyst" key={catalyst.id ?? `new-catalyst-${index}`}>
+          <TextField label={`Catalyst ${index + 1}`} onChange={(value) => onChange(updateAt(catalysts, index, { ...catalyst, title: value }))} required value={catalyst.title} />
+          <TextField label="Detail (optional)" onChange={(value) => onChange(updateAt(catalysts, index, { ...catalyst, detail: value }))} value={catalyst.detail ?? ''} />
+          <SelectField label="Status" onChange={(value) => onChange(updateAt(catalysts, index, { ...catalyst, status: value as LivingThesisCatalystStatus }))} options={LIVING_THESIS_CATALYST_STATUSES.map((value) => ({ label: catalystStatusLabels[value], value }))} value={catalyst.status} />
+          {catalyst.status !== 'retired' ? <Button onClick={() => onChange(updateAt(catalysts, index, { ...catalyst, status: 'retired' }))} size="sm" type="button" variant="ghost">Retire</Button> : null}
+        </div>
+      ))}
+    </section>
+  );
 }
 
-function filterRankingRows(
-  rows: readonly ThesisBoardRow[],
-  filter: RankingsFilter
-): ThesisBoardRow[] {
-  if (filter === 'All ideas') {
-    return [...rows];
-  }
-
-  if (filter === 'Needs Review') {
-    return rows.filter((row) => row.needsReview);
-  }
-
-  return rows.filter((row) => row.ideaStatus === filter);
+function SectionHeading({ label, onAdd }: { label: string; onAdd: () => void }): JSX.Element {
+  return (
+    <div className="living-thesis-section-heading">
+      <div><span>Structured research</span><h3>{label}</h3></div>
+      <Button onClick={onAdd} size="sm" type="button" variant="secondary">Add {label.slice(0, -1).toLowerCase()}</Button>
+    </div>
+  );
 }
 
-function sortRankingRows(
-  rows: readonly ThesisBoardRow[],
-  sort: RankingsSort
-): ThesisBoardRow[] {
-  return [...rows].sort((first, second) => {
-    if (sort === 'Score change') {
-      return getBoardRowScoreChange(second) - getBoardRowScoreChange(first);
-    }
+function BoardFeedbackPanel({ feedback, onReload }: { feedback: BoardFeedback; onReload?: () => Promise<void> }): JSX.Element {
+  const isError = feedback.type === 'conflict' || feedback.type === 'error';
+  return (
+    <div className={`living-thesis-feedback living-thesis-feedback--${feedback.type}`} role={isError ? 'alert' : 'status'}>
+      <strong>{feedback.type === 'conflict' ? 'This thesis changed in another window.' : feedback.type === 'error' ? 'The Living Thesis action could not be completed.' : feedback.type === 'warning' ? 'Unsaved changes are still open.' : 'Saved locally'}</strong>
+      {'messages' in feedback ? feedback.messages.map((message) => <span key={message}>{message}</span>) : <span>{feedback.message}</span>}
+      {feedback.type === 'conflict' ? <span>Reloading will replace the unsaved edits shown here.</span> : null}
+      {feedback.type === 'conflict' && onReload ? <Button onClick={() => void onReload()} size="sm" type="button" variant="secondary">Reload saved version</Button> : null}
+    </div>
+  );
+}
 
-    if (sort === 'Conviction') {
-      return (
-        getConvictionSortValue(second.conviction) -
-        getConvictionSortValue(first.conviction)
-      );
-    }
+function BoardState({ alert = false, children, empty = false, title }: { alert?: boolean; children: ReactNode; empty?: boolean; title: string }): JSX.Element {
+  return <div className={`living-thesis-state${empty ? ' living-thesis-state--empty' : ''}`} role={alert ? 'alert' : 'status'}><strong>{title}</strong><div className="living-thesis-state-copy">{children}</div></div>;
+}
 
-    if (sort === 'Risk') {
-      return (
-        getRiskSortValue(second.riskLevel) - getRiskSortValue(first.riskLevel)
-      );
-    }
+function TextField({ label, onChange, required = false, type = 'text', value, ...inputProps }: { label: string; onChange: (value: string) => void; required?: boolean; type?: 'date' | 'number' | 'text'; value: string; min?: string }): JSX.Element {
+  return <label className="living-thesis-field"><span>{label}</span><input {...inputProps} aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} required={required} type={type} value={value} /></label>;
+}
 
-    if (sort === 'Next review date') {
-      return (
-        getReviewDateSortValue(first.nextReviewDate) -
-        getReviewDateSortValue(second.nextReviewDate)
-      );
-    }
+function TextAreaField({ label, onChange, required = false, value }: { label: string; onChange: (value: string) => void; required?: boolean; value: string }): JSX.Element {
+  return <label className="living-thesis-field living-thesis-field--wide"><span>{label}</span><textarea aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} required={required} rows={4} value={value} /></label>;
+}
 
-    return second.mbsScore - first.mbsScore;
+function SelectField({ label, onChange, options, value }: { label: string; onChange: (value: string) => void; options: readonly { label: string; value: string }[]; value: string }): JSX.Element {
+  return <label className="living-thesis-field"><span>{label}</span><select aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} value={value}>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
+}
+
+function filterTheses(theses: readonly LivingThesis[], filter: BoardFilter): LivingThesis[] {
+  return filter === 'all' ? [...theses] : theses.filter((thesis) => thesis.lifecycle === filter);
+}
+
+function sortTheses(theses: readonly LivingThesis[], sort: BoardSort): LivingThesis[] {
+  return [...theses].sort((first, second) => {
+    if (sort === 'entity') return first.entityName.localeCompare(second.entityName) || first.id.localeCompare(second.id);
+    if (sort === 'next-review') return (first.nextReviewAt ?? '9999-12-31').localeCompare(second.nextReviewAt ?? '9999-12-31') || first.id.localeCompare(second.id);
+    return second.updatedAt.localeCompare(first.updatedAt) || first.id.localeCompare(second.id);
   });
 }
 
-function getBoardRowScoreChange(row: ThesisBoardRow): number {
-  return getScoreChange(row);
+function upsertThesis(theses: readonly LivingThesis[], saved: LivingThesis): LivingThesis[] {
+  return theses.some((thesis) => thesis.id === saved.id) ? theses.map((thesis) => thesis.id === saved.id ? saved : thesis) : [saved, ...theses];
 }
 
-function formatBoardRowScoreChange(row: ThesisBoardRow): string {
-  return formatScoreChange(row);
+function updateAt<T>(items: readonly T[], index: number, value: T): T[] {
+  return items.map((item, itemIndex) => itemIndex === index ? value : item);
 }
 
-function getScoreChangeTone(row: ThesisBoardRow): 'down' | 'flat' | 'up' {
-  const change = getBoardRowScoreChange(row);
-
-  if (change > 0) {
-    return 'up';
-  }
-
-  if (change < 0) {
-    return 'down';
-  }
-
-  return 'flat';
-}
-
-function getConvictionSortValue(conviction: string): number {
-  if (conviction === 'High') {
-    return 3;
-  }
-
-  if (conviction === 'Medium') {
-    return 2;
-  }
-
-  if (conviction === 'Low') {
-    return 1;
-  }
-
-  return 0;
-}
-
-function getRiskSortValue(riskLevel: string): number {
-  if (riskLevel === 'High') {
-    return 3;
-  }
-
-  if (riskLevel === 'Medium') {
-    return 2;
-  }
-
-  return 1;
-}
-
-function getReviewDateSortValue(date: string): number {
-  if (!date) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
-  const value = Date.parse(`${date}T00:00:00.000Z`);
-
-  return Number.isNaN(value) ? Number.MAX_SAFE_INTEGER : value;
-}
-
-function buildMbsInput(
-  values: Record<ManualBusinessScoreCategory, string>
-): Partial<Record<ManualBusinessScoreCategory, number>> {
-  return MBS_CATEGORIES.reduce<Partial<Record<ManualBusinessScoreCategory, number>>>(
-    (input, category) => {
-      const value = values[category].trim();
-
-      if (value) {
-        input[category] = Number(value);
-      }
-
-      return input;
-    },
-    {}
-  );
-}
-
-function getScoreDrivers(
-  input: Partial<Record<ManualBusinessScoreCategory, number>>,
-  direction: 'strongest' | 'weakest'
-): ScoreDriver[] {
-  return MBS_CATEGORIES.flatMap((category) => {
-    const value = input[category];
-
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      return [];
-    }
-
-    return [
-      {
-        category,
-        label: categoryLabels[category],
-        value
-      }
-    ];
-  })
-    .sort((first, second) =>
-      direction === 'strongest'
-        ? second.value - first.value
-        : first.value - second.value
-    )
-    .slice(0, 3);
-}
-
-function getScoreVariant(rating: string): BadgeVariant {
-  if (rating === 'exceptional') {
-    return 'success';
-  }
-
-  if (rating === 'strong') {
-    return 'accent';
-  }
-
-  if (rating === 'mixed') {
-    return 'warning';
-  }
-
-  if (rating === 'weak') {
-    return 'risk';
-  }
-
+function getLifecycleBadge(lifecycle: LivingThesisLifecycle): 'accent' | 'neutral' | 'success' | 'warning' {
+  if (lifecycle === 'active') return 'success';
+  if (lifecycle === 'monitoring') return 'accent';
+  if (lifecycle === 'paused') return 'warning';
   return 'neutral';
-}
-
-function getThesisStatusVariant(status: string): BadgeVariant {
-  if (status === 'Strong' || status === 'Improving') {
-    return 'success';
-  }
-
-  if (status === 'Weakening') {
-    return 'warning';
-  }
-
-  if (status === 'Broken') {
-    return 'risk';
-  }
-
-  return 'neutral';
-}
-
-function getIdeaStatusVariant(status: string): BadgeVariant {
-  if (status === 'Active') {
-    return 'accent';
-  }
-
-  if (status === 'Needs Review') {
-    return 'warning';
-  }
-
-  if (status === 'Caution') {
-    return 'risk';
-  }
-
-  if (status === 'Watchlist' || status === 'Researching') {
-    return 'neutral';
-  }
-
-  return 'neutral';
-}
-
-function formatRank(
-  rankedItem: ManualPortfolioRankedItem | undefined,
-  fallbackIndex: number
-): string {
-  if (!rankedItem || rankedItem.rank === null) {
-    return String(fallbackIndex + 1);
-  }
-
-  return String(rankedItem.rank);
-}
-
-function formatBoardScoreChange(row: ThesisBoardRow): string {
-  const currentScore = calculateMbsScore(buildMbsInput(row.categoryValues)).score;
-  const change = currentScore - row.previousMbsScore;
-
-  if (change > 0) {
-    return `+${change}`;
-  }
-
-  return String(change);
-}
-
-function getCategoryScorePercent(value: string): string {
-  const numberValue = Number(value);
-
-  if (!Number.isFinite(numberValue)) {
-    return '0%';
-  }
-
-  const clampedValue = Math.min(
-    MBS_CATEGORY_MAX_SCORE,
-    Math.max(MBS_CATEGORY_MIN_SCORE, numberValue)
-  );
-
-  return `${(clampedValue / MBS_CATEGORY_MAX_SCORE) * 100}%`;
 }

@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { dashboardSummariesStorageChannels } from '../shared/dashboardSummariesStorage';
 import { localDataStorageChannels } from '../shared/localDataStorage';
+import { createLivingThesesPreloadApi } from './livingThesesPreload';
 import { mbsScoreSnapshotsStorageChannels } from '../shared/mbsScoreSnapshotsStorage';
 import { portfolioRankerStorageChannels } from '../shared/portfolioRankerStorage';
 import { remindersStorageChannels } from '../shared/remindersStorage';
@@ -25,6 +26,9 @@ const thesisInvestingApi: ThesisInvestingApi = {
     previewImportFromJson: () =>
       ipcRenderer.invoke(localDataStorageChannels.previewImportFromJson)
   },
+  livingTheses: createLivingThesesPreloadApi((channel, ...args) =>
+    ipcRenderer.invoke(channel, ...args)
+  ),
   mbsScoreSnapshots: {
     list: () => ipcRenderer.invoke(mbsScoreSnapshotsStorageChannels.list),
     save: (snapshot) =>

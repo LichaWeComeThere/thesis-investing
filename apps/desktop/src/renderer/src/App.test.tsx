@@ -19,6 +19,7 @@ const localDataInfo = {
     'Reminders',
     'Portfolio Ranker Inputs',
     'MBS Score Snapshots',
+    'Living Thesis records',
     'Dashboard summaries read persisted local data'
   ],
   recordCounts: {
@@ -72,6 +73,7 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('Reminders');
     expect(html).toContain('Portfolio Ranker Inputs');
     expect(html).toContain('MBS Score Snapshots');
+    expect(html).toContain('Living Thesis records');
     expect(html).toContain('Dashboard summaries read persisted local data');
     expect(html).toContain('Theme Library uses included reference content');
     expect(html).toContain('In-progress form drafts unless explicitly saved');
@@ -86,7 +88,9 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('Persisted record counts');
     expect(html).toContain('Watchlist items');
     expect(html).toContain('Portfolio Ranker Inputs');
-    expect(html).toContain('Theme Library content and Thesis Board prototype data');
+    expect(html).toContain(
+      'Living Thesis records are saved locally but are not yet included'
+    );
     expect(html).toContain('Export local data');
     expect(html).toContain('Create a JSON backup of persisted local records');
     expect(html).toContain('Import local data');

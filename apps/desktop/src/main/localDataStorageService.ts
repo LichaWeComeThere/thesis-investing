@@ -434,6 +434,7 @@ function getPersistedWorkflows(): string[] {
     'Reminders',
     'Portfolio Ranker Inputs',
     'MBS Score Snapshots',
+    'Living Thesis records',
     'Dashboard summaries read persisted local data'
   ];
 }

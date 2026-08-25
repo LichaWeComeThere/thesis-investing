@@ -46,7 +46,8 @@ These counts exclude static or transient content:
 - selected route, filters, search, sort, and other UI state
 - in-progress form drafts unless explicitly saved
 - onboarding completion in localStorage
-- Thesis Board prototype mock data
+- Living Thesis records, which persist locally but are not yet included in the
+  Phase 2 maintenance count summary
 
 ## Troubleshooting Guidance
 
