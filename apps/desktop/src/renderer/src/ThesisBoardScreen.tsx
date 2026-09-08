@@ -12,8 +12,8 @@ import {
   type LivingThesisRiskStatus
 } from '@thesis-investing/core';
 import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
-import type { FormEvent, ReactNode } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReactNode, RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
   LivingThesisCatalystWriteInput,
@@ -34,6 +34,11 @@ type ThesisBoardScreenProps = {
   initialFeedback?: BoardFeedback | null;
   initialLoadState?: BoardLoadState;
   initialTheses?: LivingThesis[];
+  navigationRequest?: {
+    destination: string;
+    onLeave: () => void;
+    onStay: () => void;
+  };
 };
 
 type BoardLoadState = 'error' | 'loaded' | 'loading';
@@ -104,7 +109,8 @@ export function ThesisBoardScreen({
   client = getDefaultLivingThesesStorageClient(),
   initialFeedback = null,
   initialLoadState,
-  initialTheses
+  initialTheses,
+  navigationRequest
 }: ThesisBoardScreenProps): JSX.Element {
   const [theses, setTheses] = useState<LivingThesis[]>(initialTheses ?? []);
   const [loadState, setLoadState] = useState<BoardLoadState>(
@@ -120,6 +126,13 @@ export function ThesisBoardScreen({
   const [feedback, setFeedback] = useState<BoardFeedback | null>(initialFeedback);
   const [filter, setFilter] = useState<BoardFilter>('all');
   const [sort, setSort] = useState<BoardSort>('recently-updated');
+  const editorFormRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (navigationRequest && !isDirty && !isSaving) {
+      navigationRequest.onLeave();
+    }
+  }, [isDirty, isSaving, navigationRequest]);
 
   const loadTheses = useCallback(async (preferredId = ''): Promise<void> => {
     if (!client) {
@@ -171,6 +184,7 @@ export function ThesisBoardScreen({
   const selectedThesis = theses.find((thesis) => thesis.id === selectedId);
 
   function selectThesis(thesis: LivingThesis): void {
+    if (isSaving) return;
     if (isDirty) {
       setFeedback({
         message: 'Save or cancel the current changes before opening another thesis.',
@@ -186,6 +200,7 @@ export function ThesisBoardScreen({
   }
 
   function beginCreate(): void {
+    if (isSaving) return;
     if (isDirty) {
       setFeedback({
         message: 'Save or cancel the current changes before creating a thesis.',
@@ -210,6 +225,7 @@ export function ThesisBoardScreen({
   }
 
   function cancelEditing(): void {
+    if (isSaving) return;
     if (isCreating) {
       const firstThesis = theses[0];
       setIsCreating(false);
@@ -233,8 +249,16 @@ export function ThesisBoardScreen({
     setFeedback(null);
   }
 
-  async function saveDraft(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
+  async function saveDraft(): Promise<void> {
+    if (isSaving) return;
+
+    if (!editorFormRef.current?.checkValidity()) {
+      setFeedback({
+        messages: ['Complete the required fields and correct any invalid values before saving. Choose Continue editing to review them.'],
+        type: 'error'
+      });
+      return;
+    }
 
     if (!client) {
       setFeedback({
@@ -246,28 +270,36 @@ export function ThesisBoardScreen({
 
     setIsSaving(true);
     setFeedback(null);
-    const result = await saveLivingThesisDraft(client, draft, isCreating);
-    setIsSaving(false);
+    try {
+      const result = await saveLivingThesisDraft(client, draft, isCreating);
 
-    if (!result.ok) {
+      if (!result.ok) {
+        setFeedback({
+          messages: result.errors,
+          type: result.code === 'conflict' ? 'conflict' : 'error'
+        });
+        return;
+      }
+
+      setTheses((current) => upsertThesis(current, result.value));
+      setSelectedId(result.value.id);
+      setDraft(thesisToDraft(result.value));
+      setIsCreating(false);
+      setIsDirty(false);
       setFeedback({
-        messages: result.errors,
-        type: result.code === 'conflict' ? 'conflict' : 'error'
+        message: isCreating
+          ? 'Living Thesis created and saved locally.'
+          : `Changes saved locally. Version ${result.value.version} is current.`,
+        type: 'saved'
       });
-      return;
+    } catch {
+      setFeedback({
+        messages: ['The thesis could not be saved. Your edits are still open; try again.'],
+        type: 'error'
+      });
+    } finally {
+      setIsSaving(false);
     }
-
-    setTheses((current) => upsertThesis(current, result.value));
-    setSelectedId(result.value.id);
-    setDraft(thesisToDraft(result.value));
-    setIsCreating(false);
-    setIsDirty(false);
-    setFeedback({
-      message: isCreating
-        ? 'Living Thesis created and saved locally.'
-        : `Changes saved locally. Version ${result.value.version} is current.`,
-      type: 'saved'
-    });
   }
 
   async function reloadAfterConflict(): Promise<void> {
@@ -343,7 +375,7 @@ export function ThesisBoardScreen({
                 <option value="next-review">Next review</option>
               </select>
             </label>
-            <Button onClick={beginCreate} size="sm" type="button">
+            <Button disabled={isSaving} onClick={beginCreate} size="sm" type="button">
               New thesis
             </Button>
           </div>
@@ -366,7 +398,7 @@ export function ThesisBoardScreen({
           {loadState === 'loaded' && theses.length === 0 ? (
             <BoardState empty title="No Living Thesis records yet">
               <span>Create a thesis when you are ready to save your research locally.</span>
-              <Button onClick={beginCreate} size="sm" type="button">
+              <Button disabled={isSaving} onClick={beginCreate} size="sm" type="button">
                 Create first thesis
               </Button>
             </BoardState>
@@ -378,6 +410,7 @@ export function ThesisBoardScreen({
                 <button
                   aria-pressed={thesis.id === selectedId}
                   className={`living-thesis-list-item${thesis.id === selectedId ? ' living-thesis-list-item--selected' : ''}`}
+                  disabled={isSaving}
                   key={thesis.id}
                   onClick={() => selectThesis(thesis)}
                   type="button"
@@ -411,6 +444,7 @@ export function ThesisBoardScreen({
         {(isCreating || selectedThesis) && loadState !== 'error' ? (
           <LivingThesisEditor
             draft={draft}
+            formRef={editorFormRef}
             isCreating={isCreating}
             isDirty={isDirty}
             isSaving={isSaving}
@@ -426,57 +460,132 @@ export function ThesisBoardScreen({
           </Card>
         )}
       </div>
+
+      {navigationRequest && (isDirty || isSaving) ? (
+        <UnsavedThesisDialog
+          destination={navigationRequest.destination}
+          feedback={feedback}
+          isSaving={isSaving}
+          onDiscard={navigationRequest.onLeave}
+          onSave={saveDraft}
+          onStay={navigationRequest.onStay}
+        />
+      ) : null}
     </div>
   );
 }
 
-function LivingThesisEditor({ draft, isCreating, isDirty, isSaving, onCancel, onChange, onSubmit }: {
+function UnsavedThesisDialog({ destination, feedback, isSaving, onDiscard, onSave, onStay }: {
+  destination: string;
+  feedback: BoardFeedback | null;
+  isSaving: boolean;
+  onDiscard: () => void;
+  onSave: () => Promise<void>;
+  onStay: () => void;
+}): JSX.Element {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const continueRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const previousFocus = document.activeElement;
+    dialog.showModal();
+    continueRef.current?.focus();
+    return () => {
+      dialog.close();
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    };
+  }, []);
+
+  const errors = feedback && 'messages' in feedback ? feedback.messages : [];
+
+  return (
+    <dialog
+      aria-describedby="unsaved-thesis-description"
+      aria-labelledby="unsaved-thesis-title"
+      className="living-thesis-leave-dialog"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!isSaving) onStay();
+      }}
+      ref={dialogRef}
+    >
+      <h2 id="unsaved-thesis-title">Unsaved thesis changes</h2>
+      <p id="unsaved-thesis-description">
+        Save your changes before opening {destination}, or discard them and leave.
+      </p>
+      {isSaving ? <p role="status">Saving your thesis. Please wait...</p> : null}
+      {errors.length > 0 ? (
+        <div className="living-thesis-feedback living-thesis-feedback--error" role="alert">
+          {errors.map((message) => <span key={message}>{message}</span>)}
+        </div>
+      ) : null}
+      <div className="living-thesis-leave-actions">
+        <Button disabled={isSaving} onClick={() => void onSave()} type="button">
+          {isSaving ? 'Saving...' : 'Save and leave'}
+        </Button>
+        <Button disabled={isSaving} onClick={onDiscard} type="button" variant="secondary">
+          Discard and leave
+        </Button>
+        <button className="living-thesis-continue" disabled={isSaving} onClick={onStay} ref={continueRef} type="button">
+          Continue editing
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
+function LivingThesisEditor({ draft, formRef, isCreating, isDirty, isSaving, onCancel, onChange, onSubmit }: {
   draft: BoardDraft;
+  formRef: RefObject<HTMLFormElement>;
   isCreating: boolean;
   isDirty: boolean;
   isSaving: boolean;
   onCancel: () => void;
   onChange: <K extends keyof BoardDraft>(field: K, value: BoardDraft[K]) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  onSubmit: () => Promise<void>;
 }): JSX.Element {
   return (
     <Card className="living-thesis-editor-card" title={isCreating ? 'Create Living Thesis' : 'Thesis details'}>
-      <form className="living-thesis-form" onSubmit={(event) => void onSubmit(event)}>
-        <div className="living-thesis-form-heading">
-          <div>
-            <span>{isCreating ? 'New local record' : `Version ${draft.version}`}</span>
-            <strong>{draft.entityName || 'Untitled entity'}</strong>
+      <form ref={formRef} onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
+        <fieldset className="living-thesis-form" disabled={isSaving}>
+          <div className="living-thesis-form-heading">
+            <div>
+              <span>{isCreating ? 'New local record' : `Version ${draft.version}`}</span>
+              <strong>{draft.entityName || 'Untitled entity'}</strong>
+            </div>
+            {isDirty ? <Badge variant="warning">Unsaved changes</Badge> : null}
           </div>
-          {isDirty ? <Badge variant="warning">Unsaved changes</Badge> : null}
-        </div>
 
-        <div className="living-thesis-field-grid">
-          <TextField label="Entity name" onChange={(value) => onChange('entityName', value)} required value={draft.entityName} />
-          <TextField label="Ticker (optional)" onChange={(value) => onChange('ticker', value)} value={draft.ticker} />
-          <TextField label="Thesis title" onChange={(value) => onChange('title', value)} required value={draft.title} />
-          <TextField label="Theme (optional)" onChange={(value) => onChange('theme', value)} value={draft.theme} />
-          <SelectField label="Lifecycle" onChange={(value) => onChange('lifecycle', value as LivingThesisLifecycle)} options={LIVING_THESIS_LIFECYCLES.map((value) => ({ label: lifecycleLabels[value], value }))} value={draft.lifecycle} />
-          <SelectField label="Conviction" onChange={(value) => onChange('conviction', value as LivingThesisConviction)} options={LIVING_THESIS_CONVICTIONS.map((value) => ({ label: convictionLabels[value], value }))} value={draft.conviction} />
-          <SelectField label="Risk level" onChange={(value) => onChange('riskLevel', value as LivingThesisRiskLevel)} options={LIVING_THESIS_RISK_LEVELS.map((value) => ({ label: riskLevelLabels[value], value }))} value={draft.riskLevel} />
-          <TextField label="Review cadence (days)" min="1" onChange={(value) => onChange('reviewCadenceDays', value)} type="number" value={draft.reviewCadenceDays} />
-          <TextField label="Next review" onChange={(value) => onChange('nextReviewAt', value)} type="date" value={draft.nextReviewAt} />
-        </div>
+          <div className="living-thesis-field-grid">
+            <TextField label="Entity name" onChange={(value) => onChange('entityName', value)} required value={draft.entityName} />
+            <TextField label="Ticker (optional)" onChange={(value) => onChange('ticker', value)} value={draft.ticker} />
+            <TextField label="Thesis title" onChange={(value) => onChange('title', value)} required value={draft.title} />
+            <TextField label="Theme (optional)" onChange={(value) => onChange('theme', value)} value={draft.theme} />
+            <SelectField label="Lifecycle" onChange={(value) => onChange('lifecycle', value as LivingThesisLifecycle)} options={LIVING_THESIS_LIFECYCLES.map((value) => ({ label: lifecycleLabels[value], value }))} value={draft.lifecycle} />
+            <SelectField label="Conviction" onChange={(value) => onChange('conviction', value as LivingThesisConviction)} options={LIVING_THESIS_CONVICTIONS.map((value) => ({ label: convictionLabels[value], value }))} value={draft.conviction} />
+            <SelectField label="Risk level" onChange={(value) => onChange('riskLevel', value as LivingThesisRiskLevel)} options={LIVING_THESIS_RISK_LEVELS.map((value) => ({ label: riskLevelLabels[value], value }))} value={draft.riskLevel} />
+            <TextField label="Review cadence (days)" min="1" onChange={(value) => onChange('reviewCadenceDays', value)} type="number" value={draft.reviewCadenceDays} />
+            <TextField label="Next review" onChange={(value) => onChange('nextReviewAt', value)} type="date" value={draft.nextReviewAt} />
+          </div>
 
-        <TextAreaField label="Thesis summary" onChange={(value) => onChange('summary', value)} required value={draft.summary} />
-        <div className="living-thesis-case-grid">
-          <TextAreaField label="Bull case (optional)" onChange={(value) => onChange('bullCase', value)} value={draft.bullCase} />
-          <TextAreaField label="Bear case (optional)" onChange={(value) => onChange('bearCase', value)} value={draft.bearCase} />
-        </div>
+          <TextAreaField label="Thesis summary" onChange={(value) => onChange('summary', value)} required value={draft.summary} />
+          <div className="living-thesis-case-grid">
+            <TextAreaField label="Bull case (optional)" onChange={(value) => onChange('bullCase', value)} value={draft.bullCase} />
+            <TextAreaField label="Bear case (optional)" onChange={(value) => onChange('bearCase', value)} value={draft.bearCase} />
+          </div>
 
-        <RiskEditor onChange={(risks) => onChange('risks', risks)} risks={draft.risks} />
-        <CatalystEditor catalysts={draft.catalysts} onChange={(catalysts) => onChange('catalysts', catalysts)} />
+          <RiskEditor onChange={(risks) => onChange('risks', risks)} risks={draft.risks} />
+          <CatalystEditor catalysts={draft.catalysts} onChange={(catalysts) => onChange('catalysts', catalysts)} />
 
-        <div className="living-thesis-form-actions">
-          <Button disabled={isSaving} type="submit">
-            {isSaving ? 'Saving...' : isCreating ? 'Create thesis' : 'Save changes'}
-          </Button>
-          <Button onClick={onCancel} type="button" variant="secondary">Cancel</Button>
-        </div>
+          <div className="living-thesis-form-actions">
+            <Button disabled={isSaving} type="submit">
+              {isSaving ? 'Saving...' : isCreating ? 'Create thesis' : 'Save changes'}
+            </Button>
+            <Button onClick={onCancel} type="button" variant="secondary">Cancel</Button>
+          </div>
+        </fieldset>
       </form>
     </Card>
   );
@@ -584,3 +693,4 @@ function getLifecycleBadge(lifecycle: LivingThesisLifecycle): 'accent' | 'neutra
   if (lifecycle === 'paused') return 'warning';
   return 'neutral';
 }
+
