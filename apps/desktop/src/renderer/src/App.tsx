@@ -1130,12 +1130,16 @@ export function SettingsAboutScreen({
                         <dt>MBS Score Snapshots</dt>
                         <dd>{recordCounts.mbsScoreSnapshots}</dd>
                       </div>
+                      <div>
+                        <dt>Living Theses</dt>
+                        <dd>{recordCounts.livingTheses}</dd>
+                      </div>
                     </dl>
                     <p className="local-data-status-message">
-                      Counts reflect the five Phase 2 workflows above. Living
-                      Thesis records are saved locally but are not yet included
-                      in this maintenance count summary. Theme Library content
-                      remains bundled reference material.
+                      Living Thesis counts include active and archived records.
+                      Each thesis includes its saved risks and catalysts in
+                      backups. Theme Library content remains bundled reference
+                      material.
                     </p>
                   </>
                 ) : (
@@ -1164,8 +1168,9 @@ export function SettingsAboutScreen({
                 <h2>Export local data</h2>
                 <p>
                   Create a JSON backup of persisted local records: Watchlist,
-                  Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS
-                  Score Snapshots. Choose where to save the file. Exporting
+                  Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS
+                  Score Snapshots, and Living Theses with their risks and
+                  catalysts. Choose where to save the file. Exporting
                   copies these records without changing them in the app.
                   Static Theme Baskets, transient UI state, app logs, and raw
                   SQLite files are not included.
@@ -1209,7 +1214,9 @@ export function SettingsAboutScreen({
                         localDataExportState.outcome.counts
                           .mbsScoreSnapshots
                       }{' '}
-                      MBS score snapshots.
+                      MBS score snapshots, plus{' '}
+                      {localDataExportState.outcome.counts.livingTheses} Living
+                      Theses (including risks and catalysts).
                     </p>
                     <p>
                       Export generated{' '}
@@ -1308,6 +1315,10 @@ export function SettingsAboutScreen({
                         <dt>MBS Score Snapshots</dt>
                         <dd>{activeImportPreview.counts.mbsScoreSnapshots}</dd>
                       </div>
+                      <div>
+                        <dt>Living Theses</dt>
+                        <dd>{activeImportPreview.counts.livingTheses}</dd>
+                      </div>
                     </dl>
                     {activeImportPreview.warnings.length > 0 ? (
                       <ul className="local-data-import-warnings">
@@ -1366,7 +1377,9 @@ export function SettingsAboutScreen({
                       }{' '}
                       portfolio ranker inputs, and{' '}
                       {localDataImportState.outcome.imported.mbsScoreSnapshots}{' '}
-                      MBS score snapshots.
+                      MBS score snapshots, plus{' '}
+                      {localDataImportState.outcome.imported.livingTheses} Living
+                      Theses (including risks and catalysts).
                     </p>
                     {localDataImportState.outcome.warnings.length > 0 ? (
                       <ul className="local-data-import-warnings">

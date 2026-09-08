@@ -67,6 +67,8 @@ export interface MbsScoreSnapshotRepository {
 
 export interface LivingThesisRepository {
   create(thesis: LivingThesis): RepositoryResult<LivingThesis>;
+  /** Append a backup aggregate with its saved version; never overwrite existing IDs. */
+  restore(thesis: LivingThesis): RepositoryResult<LivingThesis>;
   getById(id: EntityId): LivingThesis | undefined;
   list(): LivingThesis[];
   update(

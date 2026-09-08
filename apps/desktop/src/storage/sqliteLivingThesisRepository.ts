@@ -36,21 +36,23 @@ export function createSqliteLivingThesisRepository(
       }
 
       return runTransaction(database, "create Living Thesis", () => {
-        if (readParentRow(database, normalized.id)) {
-          throw new LivingThesisRepositoryError(
-            `Living Thesis ${normalized.id} already exists.`
-          );
-        }
-
-        assertChildIdsAvailableForCreate(database, normalized);
-        insertParent(database, normalized);
-        normalized.risks.forEach((risk) => insertRisk(database, risk));
-        normalized.catalysts.forEach((catalyst) =>
-          insertCatalyst(database, catalyst)
-        );
-
-        return readRequiredAggregate(database, normalized.id);
+        return insertAggregate(database, normalized);
       });
+    },
+
+    restore(thesis) {
+      const normalized = normalizeLivingThesis(thesis);
+      const validation = validateLivingThesis(normalized);
+
+      if (!validation.valid) {
+        return failure(validation.errors);
+      }
+
+      // A savepoint keeps this aggregate atomic without committing the enclosing
+      // backup import. Unlike create(), restore preserves a saved version > 1.
+      return runTransaction(database, "restore Living Thesis", () => {
+        return insertAggregate(database, normalized);
+      }, true);
     },
 
     getById(id) {
@@ -131,22 +133,42 @@ export function createSqliteLivingThesisRepository(
   };
 }
 
+function insertAggregate(database: DatabaseSync, thesis: LivingThesis): LivingThesis {
+  if (readParentRow(database, thesis.id)) {
+    throw new LivingThesisRepositoryError(
+      `Living Thesis ${thesis.id} already exists.`
+    );
+  }
+
+  assertChildIdsAvailableForCreate(database, thesis);
+  insertParent(database, thesis);
+  thesis.risks.forEach((risk) => insertRisk(database, risk));
+  thesis.catalysts.forEach((catalyst) =>
+    insertCatalyst(database, catalyst)
+  );
+
+  return readRequiredAggregate(database, thesis.id);
+}
+
 function runTransaction<T>(
   database: DatabaseSync,
   operationName: string,
-  operation: () => T
+  operation: () => T,
+  useSavepoint = false
 ): RepositoryResult<T> {
   let transactionStarted = false;
 
   try {
-    database.exec("BEGIN IMMEDIATE;");
+    database.exec(useSavepoint ? "SAVEPOINT living_thesis_restore;" : "BEGIN IMMEDIATE;");
     transactionStarted = true;
     const value = operation();
-    database.exec("COMMIT;");
+    database.exec(useSavepoint ? "RELEASE living_thesis_restore;" : "COMMIT;");
     return success(value);
   } catch (error) {
     if (transactionStarted) {
-      database.exec("ROLLBACK;");
+      database.exec(useSavepoint
+        ? "ROLLBACK TO living_thesis_restore; RELEASE living_thesis_restore;"
+        : "ROLLBACK;");
     }
 
     const message =

@@ -204,6 +204,7 @@ describe('localDataStorageService', () => {
       value: {
         status: 'completed',
         counts: {
+          livingTheses: 0,
           mbsScoreSnapshots: 0,
           portfolioRankerItems: 0,
           reminders: 0,
@@ -218,12 +219,13 @@ describe('localDataStorageService', () => {
     expect(writtenFilePath).toBe('/tmp/thesis-export.json');
     expect(JSON.parse(writtenContents)).toEqual({
       format: 'thesis-investing-local-data-export',
-      formatVersion: 1,
+      formatVersion: 2,
       appName: 'Thesis Investing',
       appVersion: '0.0.0-test',
       exportedAt: '2026-06-10T12:00:00.000Z',
       storageAdapter: 'node:sqlite',
       counts: {
+        livingTheses: 0,
         mbsScoreSnapshots: 0,
         portfolioRankerItems: 0,
         reminders: 0,
@@ -231,6 +233,7 @@ describe('localDataStorageService', () => {
         watchlistItems: 0
       },
       data: {
+        livingTheses: [],
         mbsScoreSnapshots: [],
         portfolioRankerItems: [],
         reminders: [],
@@ -312,6 +315,7 @@ describe('localDataStorageService', () => {
       value: {
         status: 'completed',
         counts: {
+          livingTheses: 0,
           mbsScoreSnapshots: 1,
           portfolioRankerItems: 1,
           reminders: 1,
@@ -394,7 +398,7 @@ describe('localDataStorageService', () => {
           counts: populatedCounts,
           exportedAt: '2026-06-10T12:00:00.000Z',
           fileName: 'thesis-export.json',
-          formatVersion: 1,
+          formatVersion: 2,
           previewId: 'preview-test',
           warnings: []
         }
@@ -503,7 +507,7 @@ describe('localDataStorageService', () => {
     const versionStorage = await createSqliteStorage();
     const unsupportedVersion = {
       ...createEmptyExport(),
-      formatVersion: 2
+      formatVersion: 3
     };
     const versionService = createImportService(
       versionStorage,
@@ -512,7 +516,7 @@ describe('localDataStorageService', () => {
 
     await expect(versionService.previewImportFromJson()).resolves.toEqual({
       ok: false,
-      errors: ['Unsupported local data export format version: 2.']
+      errors: ['Unsupported local data export format version: 3.']
     });
     await versionService.close();
   });
@@ -623,6 +627,7 @@ describe('localDataStorageService', () => {
 });
 
 const emptyCounts = {
+  livingTheses: 0,
   mbsScoreSnapshots: 0,
   portfolioRankerItems: 0,
   reminders: 0,
@@ -631,6 +636,7 @@ const emptyCounts = {
 };
 
 const populatedCounts = {
+  livingTheses: 0,
   mbsScoreSnapshots: 1,
   portfolioRankerItems: 1,
   reminders: 1,
@@ -641,6 +647,7 @@ const populatedCounts = {
 function createEmptyExport(): LocalDataExportDocument {
   return buildLocalDataExportDocument({
     exportedAt: '2026-06-10T12:00:00.000Z',
+    livingTheses: [],
     mbsScoreSnapshots: [],
     portfolioRankerItems: [],
     reminders: [],
@@ -652,6 +659,7 @@ function createEmptyExport(): LocalDataExportDocument {
 function createPopulatedExport(): LocalDataExportDocument {
   return buildLocalDataExportDocument({
     exportedAt: '2026-06-10T12:00:00.000Z',
+    livingTheses: [],
     mbsScoreSnapshots: [
       {
         companyName: 'Microsoft',

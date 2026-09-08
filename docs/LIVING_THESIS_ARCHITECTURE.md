@@ -567,13 +567,20 @@ module.
 
 ## Import And Export Compatibility
 
-Phase 2 format version 1 must remain readable and unchanged while Living Thesis
-support is developed. Adding Living Thesis records and related history requires
-a new export format version.
+The Stage 4 backup extension writes format version 2 with Living Thesis current
+state and nested risks and catalysts. Counts include parent theses, including
+archived records. Saved versions and timestamps survive restore; colliding
+parent and child IDs are remapped together in a single append-only transaction.
+Malformed aggregates and cross-thesis child references are rejected before
+confirmation. Repository restore uses a savepoint so a later failure rolls back
+the entire backup. The schema and normal create/update contract are unchanged.
 
-A future version should include arrays and counts for Living Theses, risks,
-catalysts, Review Sessions, Decision Log entries, revisions, and linked MBS
-snapshots. Import should:
+Phase 2 format version 1 remains readable with its unchanged five-workflow
+shape. Its preview explicitly states that no Living Theses are included.
+
+Later format extensions should add Review Sessions, Decision Log entries,
+revisions, and formally linked MBS snapshots as those entities are implemented.
+Relationship-aware import must continue to:
 
 1. fully validate the document and all relationships before writing;
 2. preview counts without mutation;
@@ -586,11 +593,13 @@ snapshots. Import should:
 9. reject dangling or cross-thesis references;
 10. return exact imported counts and warnings.
 
-Backward-compatible import of version 1 should continue to import its five
+Backward-compatible import of version 1 continues to import its five
 existing workflows. Because version 1 has no formal Living Thesis entity, its
 snapshot `thesisId` is a legacy reference and must not be guessed into a new
-Living Thesis relationship. Stage 3 must implement an explicit compatibility
-boundary and fixture-based tests while preserving the frozen version 1 format.
+Living Thesis relationship. The importer retains the existing legacy Thesis
+Note remapping behavior. File-based roundtrip tests, a historical version 1
+fixture, collision tests, and injected SQLite failures cover this compatibility
+boundary and the atomic restore behavior.
 
 ## Architecture And Safety Boundaries
 
@@ -662,6 +671,6 @@ remaining persistence and feature-stage questions are:
     enough to ship without implying recommendations?
 5. Should a future explicit Create from demo action copy any example history,
     or create only clean current state and one creation revision?
-6. When export format version 2 is introduced, should in-progress Review
+6. When Review Sessions become portable in a later format, should in-progress Review
     Sessions be portable or imported as inactive drafts?
 
