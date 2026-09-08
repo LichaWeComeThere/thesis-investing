@@ -6232,8 +6232,66 @@ select:focus-visible {
 }
 
 .living-thesis-form {
+  border: 0;
   display: grid;
   gap: 18px;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.living-thesis-leave-dialog {
+  background: var(--ti-color-surface-elevated);
+  border: 1px solid var(--ti-color-border-strong);
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  color: var(--ti-color-text);
+  font: inherit;
+  max-width: min(560px, calc(100vw - 48px));
+  padding: 28px;
+}
+
+.living-thesis-leave-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.living-thesis-leave-dialog h2 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+.living-thesis-leave-dialog p {
+  color: var(--ti-color-text-muted);
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+
+.living-thesis-leave-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.living-thesis-continue {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--ti-color-text);
+  cursor: pointer;
+  font: inherit;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+.living-thesis-continue:focus-visible {
+  outline: 2px solid var(--ti-color-border-strong);
+  outline-offset: 3px;
+}
+
+.living-thesis-leave-actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .living-thesis-form-heading,
@@ -6355,3 +6413,4 @@ select:focus-visible {
     flex-direction: column;
   }
 }
+

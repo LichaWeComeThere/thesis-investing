@@ -387,6 +387,25 @@ review conclusions and future score changes still belong to the later Review
 Workflow and Review Session stages. The Board consumes only `LivingThesis`,
 never a production `LivingThesis | MockThesis` union.
 
+### Unsaved Thesis Board edits
+
+Sidebar navigation keeps the current Board editor open when it contains unsaved
+changes. The user can choose **Save and leave**, **Discard and leave**, or
+**Continue editing**. Save and leave uses the same local create/update operation
+as the editor and opens the requested workspace only after a successful save.
+Validation errors, storage failures, and version conflicts preserve the draft
+and appear in the dialog. Continue editing and Escape cancel the navigation;
+Discard and leave abandons only the in-memory draft without a storage write.
+
+While a save is pending, the editor and dialog actions are disabled. Navigation
+waits for that save, including saves started with the editor's Save changes
+button. A clean Board and the already active sidebar item require no dialog.
+
+This guard covers sidebar navigation. Drafts are still in memory: closing the
+application, reloading its renderer, or a crash does not recover unsaved edits.
+The existing save/cancel requirement for switching between thesis records is
+unchanged.
+
 ## Review Workflow Architecture
 
 The preserved branch's ordered workflow is a useful starting point. The
@@ -645,3 +664,4 @@ remaining persistence and feature-stage questions are:
     or create only clean current state and one creation revision?
 6. When export format version 2 is introduced, should in-progress Review
     Sessions be portable or imported as inactive drafts?
+

@@ -5,7 +5,7 @@ import {
   PageHeader,
   themeCssVariables
 } from '@thesis-investing/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   LocalDataExportOutcome,
   LocalDataInfo,
@@ -293,6 +293,7 @@ type AppShellProps = {
 
 function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   const [selectedViewId, setSelectedViewId] = useState(navigationViews[0].id);
+  const [pendingViewId, setPendingViewId] = useState<string | null>(null);
   const [theses, setTheses] = useState<MockThesis[]>(() => cloneMockTheses());
   const selectedView = useMemo(
     () =>
@@ -300,6 +301,23 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
       navigationViews[0],
     [selectedViewId]
   );
+
+  function requestNavigation(viewId: string): void {
+    if (viewId === selectedViewId) return;
+
+    if (selectedViewId === 'thesis-board') {
+      setPendingViewId(viewId);
+      return;
+    }
+
+    setSelectedViewId(viewId);
+  }
+
+  const completeBoardNavigation = useCallback(() => {
+    if (pendingViewId) setSelectedViewId(pendingViewId);
+    setPendingViewId(null);
+  }, [pendingViewId]);
+  const cancelBoardNavigation = useCallback(() => setPendingViewId(null), []);
 
   function updateThesisScore(
     thesisId: string,
@@ -343,7 +361,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
                 fullWidth
                 isActive={isActive}
                 key={view.id}
-                onClick={() => setSelectedViewId(view.id)}
+                onClick={() => requestNavigation(view.id)}
                 type="button"
                 variant="sidebar"
               >
@@ -372,7 +390,13 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
             theses={theses}
           />
         ) : selectedView.id === 'thesis-board' ? (
-          <ThesisBoardScreen />
+          <ThesisBoardScreen
+            navigationRequest={pendingViewId ? {
+              destination: navigationViews.find((view) => view.id === pendingViewId)?.navLabel ?? 'another workspace',
+              onLeave: completeBoardNavigation,
+              onStay: cancelBoardNavigation
+            } : undefined}
+          />
         ) : selectedView.id === 'portfolio-ranker' ? (
           <PortfolioRankerScreen
             onOpenWorkspace={setSelectedViewId}
@@ -1466,3 +1490,4 @@ function formatLocalDataTimestamp(value: string): string {
     timeStyle: 'short'
   }).format(date);
 }
+
