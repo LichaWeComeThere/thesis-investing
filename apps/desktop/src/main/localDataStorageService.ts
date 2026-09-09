@@ -8,6 +8,7 @@ import type {
   LocalDataExportDocument,
   LocalDataExportOutcome,
   LocalDataInfo,
+  LocalDataImportDocument,
   LocalDataImportOutcome,
   LocalDataOpenFolderOutcome,
   LocalDataImportPreviewOutcome,
@@ -99,7 +100,7 @@ export function createLocalDataStorageService({
 }: LocalDataStorageServiceOptions): LocalDataStorageService {
   let storagePromise: Promise<SqliteStorage> | null = null;
   let pendingImport: {
-    document: LocalDataExportDocument;
+    document: LocalDataImportDocument;
     previewId: string;
   } | null = null;
 
@@ -148,17 +149,20 @@ export function createLocalDataStorageService({
         }
 
         const storage = await getStorage();
-        const exportDocument = buildLocalDataExportDocument({
-          appVersion,
-          exportedAt,
-          mbsScoreSnapshots: storage.repositories.mbsScoreSnapshots.list(),
-          portfolioRankerItems:
-            storage.repositories.portfolioRankerItems.list(),
-          reminders: storage.repositories.reminders.list(),
-          storageAdapter,
-          thesisNotes: storage.repositories.thesisNotes.list(),
-          watchlistItems: storage.repositories.watchlistItems.list()
-        });
+        const exportDocument = storage.runInTransaction(() =>
+          buildLocalDataExportDocument({
+            appVersion,
+            exportedAt,
+            livingTheses: storage.repositories.livingTheses.list(),
+            mbsScoreSnapshots: storage.repositories.mbsScoreSnapshots.list(),
+            portfolioRankerItems:
+              storage.repositories.portfolioRankerItems.list(),
+            reminders: storage.repositories.reminders.list(),
+            storageAdapter,
+            thesisNotes: storage.repositories.thesisNotes.list(),
+            watchlistItems: storage.repositories.watchlistItems.list()
+          })
+        );
 
         await writeTextFile(
           saveResult.filePath,
@@ -332,6 +336,7 @@ type LocalDataExportDocumentInput = LocalDataExportDocument['data'] & {
 export function buildLocalDataExportDocument({
   appVersion,
   exportedAt,
+  livingTheses,
   mbsScoreSnapshots,
   portfolioRankerItems,
   reminders,
@@ -340,6 +345,7 @@ export function buildLocalDataExportDocument({
   watchlistItems
 }: LocalDataExportDocumentInput): LocalDataExportDocument {
   const counts = createLocalDataCounts({
+    livingTheses,
     mbsScoreSnapshots,
     portfolioRankerItems,
     reminders,
@@ -356,6 +362,7 @@ export function buildLocalDataExportDocument({
     storageAdapter,
     counts,
     data: {
+      livingTheses,
       watchlistItems,
       thesisNotes,
       reminders,
@@ -381,6 +388,7 @@ async function getLocalDataRecordCounts(
   const storage = await getStorage();
 
   return createLocalDataCounts({
+    livingTheses: storage.repositories.livingTheses.list(),
     mbsScoreSnapshots: storage.repositories.mbsScoreSnapshots.list(),
     portfolioRankerItems: storage.repositories.portfolioRankerItems.list(),
     reminders: storage.repositories.reminders.list(),
@@ -390,6 +398,7 @@ async function getLocalDataRecordCounts(
 }
 
 function createLocalDataCounts({
+  livingTheses,
   mbsScoreSnapshots,
   portfolioRankerItems,
   reminders,
@@ -397,6 +406,7 @@ function createLocalDataCounts({
   watchlistItems
 }: LocalDataExportDocument['data']): LocalDataExportCounts {
   return {
+    livingTheses: livingTheses.length,
     watchlistItems: watchlistItems.length,
     thesisNotes: thesisNotes.length,
     reminders: reminders.length,
@@ -407,6 +417,7 @@ function createLocalDataCounts({
 
 function createEmptyLocalDataCounts(): LocalDataExportCounts {
   return {
+    livingTheses: 0,
     mbsScoreSnapshots: 0,
     portfolioRankerItems: 0,
     reminders: 0,
@@ -434,6 +445,7 @@ function getPersistedWorkflows(): string[] {
     'Reminders',
     'Portfolio Ranker Inputs',
     'MBS Score Snapshots',
+    'Living Thesis records',
     'Dashboard summaries read persisted local data'
   ];
 }

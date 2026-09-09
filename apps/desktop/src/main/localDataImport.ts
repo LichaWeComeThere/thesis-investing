@@ -1,4 +1,7 @@
 import {
+  validateLivingThesis,
+  validateLivingThesisCatalyst,
+  validateLivingThesisRisk,
   validateMbsScoreSnapshot,
   validatePortfolioRankerItem,
   validateReminder,
@@ -11,7 +14,8 @@ import {
   LOCAL_DATA_EXPORT_FORMAT,
   LOCAL_DATA_EXPORT_FORMAT_VERSION,
   type LocalDataExportCounts,
-  type LocalDataExportDocument,
+  type LocalDataImportDocument,
+  type LocalDataImportFormatVersion,
   type LocalDataStorageResult
 } from '../shared/localDataStorage';
 import type { RepositoryResult } from '../storage/repositories';
@@ -22,12 +26,13 @@ const COUNT_KEYS: Array<keyof LocalDataExportCounts> = [
   'thesisNotes',
   'reminders',
   'portfolioRankerItems',
-  'mbsScoreSnapshots'
+  'mbsScoreSnapshots',
+  'livingTheses'
 ];
 
 export function parseLocalDataImportDocument(
   contents: string
-): LocalDataStorageResult<LocalDataExportDocument> {
+): LocalDataStorageResult<LocalDataImportDocument> {
   let parsed: unknown;
 
   try {
@@ -46,7 +51,7 @@ export function parseLocalDataImportDocument(
     ]);
   }
 
-  if (parsed.formatVersion !== LOCAL_DATA_EXPORT_FORMAT_VERSION) {
+  if (parsed.formatVersion !== 1 && parsed.formatVersion !== LOCAL_DATA_EXPORT_FORMAT_VERSION) {
     return failure([
       `Unsupported local data export format version: ${String(
         parsed.formatVersion
@@ -55,11 +60,14 @@ export function parseLocalDataImportDocument(
   }
 
   const errors = validateExportMetadata(parsed);
+  const countKeys = COUNT_KEYS.filter(
+    (key) => parsed.formatVersion !== 1 || key !== 'livingTheses'
+  );
 
   if (!isRecord(parsed.counts)) {
     errors.push('Export counts must be an object.');
   } else {
-    for (const key of COUNT_KEYS) {
+    for (const key of countKeys) {
       if (!isNonNegativeInteger(parsed.counts[key])) {
         errors.push(`Export count ${key} must be a non-negative integer.`);
       }
@@ -69,7 +77,7 @@ export function parseLocalDataImportDocument(
   if (!isRecord(parsed.data)) {
     errors.push('Export data must be an object.');
   } else {
-    validateDataArrays(parsed.data, errors);
+    validateDataArrays(parsed.data, parsed.formatVersion, errors);
   }
 
   const counts = parsed.counts;
@@ -78,23 +86,50 @@ export function parseLocalDataImportDocument(
   if (
     isRecord(counts) &&
     isRecord(data) &&
-    COUNT_KEYS.every((key) => Array.isArray(data[key]))
+    countKeys.every((key) => Array.isArray(data[key]))
   ) {
-    for (const key of COUNT_KEYS) {
+    for (const key of countKeys) {
       if (counts[key] !== (data[key] as unknown[]).length) {
         errors.push(`Export count ${key} does not match its data array.`);
       }
     }
   }
 
-  return errors.length > 0
-    ? failure(errors)
-    : success(parsed as unknown as LocalDataExportDocument);
+  if (parsed.formatVersion === 1 &&
+    ((isRecord(counts) && 'livingTheses' in counts) ||
+      (isRecord(data) && 'livingTheses' in data))) {
+    errors.push('Living Theses require export format version 2.');
+  }
+
+  if (errors.length > 0) {
+    return failure(errors);
+  }
+
+  const document = parsed as unknown as LocalDataImportDocument;
+  if (document.formatVersion === 1) {
+    return success({
+      ...document,
+      counts: { ...document.counts, livingTheses: 0 },
+      data: { ...document.data, livingTheses: [] }
+    });
+  }
+
+  const childIds = new Set<string>();
+  for (const thesis of document.data.livingTheses) {
+    for (const child of [...thesis.risks, ...thesis.catalysts]) {
+      if (childIds.has(child.id)) {
+        errors.push(`Living Thesis child ID ${child.id} must be unique across all risks and catalysts in the backup.`);
+      }
+      childIds.add(child.id);
+    }
+  }
+
+  return errors.length > 0 ? failure(errors) : success(document);
 }
 
 export function getLocalDataImportWarnings(
   storage: SqliteStorage,
-  document: LocalDataExportDocument
+  document: LocalDataImportDocument
 ): string[] {
   const totalRecords = COUNT_KEYS.reduce(
     (total, key) => total + document.counts[key],
@@ -120,8 +155,16 @@ export function getLocalDataImportWarnings(
     countCollisions(
       document.data.mbsScoreSnapshots,
       storage.repositories.mbsScoreSnapshots.getById
+    ) +
+    countCollisions(
+      document.data.livingTheses,
+      storage.repositories.livingTheses.getById
     );
   const warnings: string[] = [];
+
+  if (document.formatVersion === 1) {
+    warnings.push('This older backup does not include Living Theses. Existing Living Theses on this computer will remain unchanged.');
+  }
 
   if (totalRecords === 0) {
     warnings.push('This export contains no persisted records to import.');
@@ -133,35 +176,60 @@ export function getLocalDataImportWarnings(
     );
   }
 
+  const existingChildIds = new Set(
+    storage.repositories.livingTheses.list().flatMap(
+      (thesis) => [...thesis.risks, ...thesis.catalysts].map(({ id }) => id)
+    )
+  );
+  const childCollisions = document.data.livingTheses.flatMap(
+    (thesis) => [...thesis.risks, ...thesis.catalysts]
+  ).filter(({ id }) => existingChildIds.has(id)).length;
+  if (childCollisions > 0) {
+    warnings.push(`${childCollisions} imported risk/catalyst ID${childCollisions === 1 ? '' : 's'} already exist and will be remapped with their parent links preserved.`);
+  }
+
   return warnings;
 }
 
 export function appendLocalDataImport(
   storage: SqliteStorage,
-  document: LocalDataExportDocument
+  document: LocalDataImportDocument
 ): LocalDataExportCounts {
-  const thesisIds = allocateImportIds(
-    document.data.thesisNotes,
-    storage.repositories.thesisNotes.list().map(({ id }) => id)
-  );
-  const watchlistIds = allocateImportIds(
-    document.data.watchlistItems,
-    storage.repositories.watchlistItems.list().map(({ id }) => id)
-  );
-  const reminderIds = allocateImportIds(
-    document.data.reminders,
-    storage.repositories.reminders.list().map(({ id }) => id)
-  );
-  const portfolioRankerIds = allocateImportIds(
-    document.data.portfolioRankerItems,
-    storage.repositories.portfolioRankerItems.list().map(({ id }) => id)
-  );
-  const mbsSnapshotIds = allocateImportIds(
-    document.data.mbsScoreSnapshots,
-    storage.repositories.mbsScoreSnapshots.list().map(({ id }) => id)
-  );
+  return storage.runInTransaction(() => {
+    const thesisIds = allocateImportIds(
+      document.data.thesisNotes,
+      storage.repositories.thesisNotes.list().map(({ id }) => id)
+    );
+    const watchlistIds = allocateImportIds(
+      document.data.watchlistItems,
+      storage.repositories.watchlistItems.list().map(({ id }) => id)
+    );
+    const reminderIds = allocateImportIds(
+      document.data.reminders,
+      storage.repositories.reminders.list().map(({ id }) => id)
+    );
+    const portfolioRankerIds = allocateImportIds(
+      document.data.portfolioRankerItems,
+      storage.repositories.portfolioRankerItems.list().map(({ id }) => id)
+    );
+    const mbsSnapshotIds = allocateImportIds(
+      document.data.mbsScoreSnapshots,
+      storage.repositories.mbsScoreSnapshots.list().map(({ id }) => id)
+    );
+    const existingLivingTheses = storage.repositories.livingTheses.list();
+    const livingThesisIds = allocateImportIds(
+      document.data.livingTheses,
+      existingLivingTheses.map(({ id }) => id)
+    );
+    const livingChildIds = allocateImportIds(
+      document.data.livingTheses.flatMap(
+        (thesis) => [...thesis.risks, ...thesis.catalysts]
+      ),
+      existingLivingTheses.flatMap(
+        (thesis) => [...thesis.risks, ...thesis.catalysts].map(({ id }) => id)
+      )
+    );
 
-  storage.runInTransaction(() => {
     for (const note of document.data.thesisNotes) {
       requireCreated(
         storage.repositories.thesisNotes.create({
@@ -213,9 +281,29 @@ export function appendLocalDataImport(
         'MBS score snapshot'
       );
     }
-  });
 
-  return { ...document.counts };
+    for (const thesis of document.data.livingTheses) {
+      const thesisId = livingThesisIds.get(thesis.id) ?? thesis.id;
+      requireCreated(
+        storage.repositories.livingTheses.restore({
+          ...thesis,
+          id: thesisId,
+          risks: thesis.risks.map((risk) => ({
+            ...risk,
+            id: livingChildIds.get(risk.id) ?? risk.id,
+            thesisId
+          })),
+          catalysts: thesis.catalysts.map((catalyst) => ({
+            ...catalyst,
+            id: livingChildIds.get(catalyst.id) ?? catalyst.id,
+            thesisId
+          }))
+        }),
+        'Living Thesis'
+      );
+    }
+    return { ...document.counts };
+  });
 }
 
 function validateExportMetadata(value: Record<string, unknown>): string[] {
@@ -245,6 +333,7 @@ function validateExportMetadata(value: Record<string, unknown>): string[] {
 
 function validateDataArrays(
   data: Record<string, unknown>,
+  formatVersion: LocalDataImportFormatVersion,
   errors: string[]
 ): void {
   validateRecordArray(
@@ -282,6 +371,52 @@ function validateDataArrays(
     validateMbsScoreSnapshot,
     errors
   );
+  if (formatVersion === LOCAL_DATA_EXPORT_FORMAT_VERSION) {
+    validateRecordArray(
+      data.livingTheses,
+      'livingTheses',
+      validateLivingThesisShape,
+      validateLivingThesis,
+      errors
+    );
+  }
+}
+
+function validateLivingThesisShape(record: Record<string, unknown>): string[] {
+  const errors = validateFields(record, {
+    requiredStrings: [
+      'id', 'entityName', 'title', 'summary', 'lifecycle', 'conviction',
+      'riskLevel', 'createdAt', 'updatedAt'
+    ],
+    optionalStrings: [
+      'ticker', 'theme', 'bullCase', 'bearCase', 'nextReviewAt', 'archivedAt'
+    ],
+    requiredNumbers: ['version'],
+    optionalNumbers: ['reviewCadenceDays']
+  });
+  validateRecordArray(
+    record.risks,
+    'risks',
+    (risk) => validateFields(risk, {
+      requiredStrings: [
+        'id', 'thesisId', 'title', 'status', 'severity', 'createdAt', 'updatedAt'
+      ],
+      optionalStrings: ['detail']
+    }),
+    validateLivingThesisRisk,
+    errors
+  );
+  validateRecordArray(
+    record.catalysts,
+    'catalysts',
+    (catalyst) => validateFields(catalyst, {
+      requiredStrings: ['id', 'thesisId', 'title', 'status', 'createdAt', 'updatedAt'],
+      optionalStrings: ['detail']
+    }),
+    validateLivingThesisCatalyst,
+    errors
+  );
+  return errors;
 }
 
 function validateRecordArray<T extends { id: string }>(
@@ -467,12 +602,19 @@ function allocateImportIds<T extends { id: string }>(
   records: T[],
   existingIds: string[]
 ): Map<string, string> {
-  const usedIds = new Set(existingIds);
+  const existing = new Set(existingIds);
+  // Reserve free IDs from the backup before allocating suffixes for collisions.
+  const usedIds = new Set([...existingIds, ...records.map(({ id }) => id)]);
   const importedIds = new Map<string, string>();
 
   for (const record of records) {
     let id = record.id;
     let suffix = 1;
+
+    if (!existing.has(id)) {
+      importedIds.set(id, id);
+      continue;
+    }
 
     while (usedIds.has(id)) {
       id = `${record.id}-import-${suffix}`;

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { registerDashboardSummariesIpc } from './dashboardSummariesIpc';
 import { registerLocalDataIpc } from './localDataIpc';
+import { registerLivingThesesIpc } from './livingThesesIpc';
 import { registerMbsScoreSnapshotsIpc } from './mbsScoreSnapshotsIpc';
 import { registerPortfolioRankerIpc } from './portfolioRankerIpc';
 import { registerRemindersIpc } from './remindersIpc';
@@ -38,6 +39,7 @@ function createWindow(): void {
 void app.whenReady().then(() => {
   registerDashboardSummariesIpc();
   registerLocalDataIpc();
+  registerLivingThesesIpc();
   registerMbsScoreSnapshotsIpc();
   registerPortfolioRankerIpc();
   registerRemindersIpc();

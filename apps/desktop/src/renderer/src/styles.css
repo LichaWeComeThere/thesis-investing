@@ -6018,3 +6018,399 @@ select:focus-visible {
     justify-self: start;
   }
 }
+
+/* Phase 3 Stage 4: persisted Living Thesis Board */
+.living-thesis-board {
+  max-width: 1500px;
+}
+
+.living-thesis-provenance {
+  background: rgba(72, 224, 204, 0.07);
+  border: 1px solid rgba(72, 224, 204, 0.22);
+  border-radius: 8px;
+  color: var(--ti-color-text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+  padding: 11px 14px;
+}
+
+.living-thesis-feedback {
+  align-items: flex-start;
+  background: rgba(20, 184, 166, 0.08);
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  border-radius: 8px;
+  color: var(--ti-color-text-muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.living-thesis-feedback strong {
+  color: var(--ti-color-text);
+}
+
+.living-thesis-feedback .ti-button {
+  margin-top: 6px;
+}
+
+.living-thesis-feedback--conflict,
+.living-thesis-feedback--warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.living-thesis-feedback--error {
+  background: rgba(239, 68, 68, 0.07);
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+.living-thesis-board-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.living-thesis-board-layout > .ti-card {
+  min-width: 0;
+}
+
+.living-thesis-list-card {
+  position: sticky;
+  top: 22px;
+}
+
+.living-thesis-list-toolbar {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.living-thesis-list-toolbar .ti-button {
+  grid-column: 1 / -1;
+}
+
+.living-thesis-list-toolbar label,
+.living-thesis-field {
+  color: var(--ti-color-text-muted);
+  display: grid;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 6px;
+  letter-spacing: 0;
+}
+
+.living-thesis-list-toolbar select,
+.living-thesis-field input,
+.living-thesis-field select,
+.living-thesis-field textarea {
+  background: rgba(8, 16, 30, 0.7);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
+  color: var(--ti-color-text);
+  font: inherit;
+  letter-spacing: 0;
+  min-height: 40px;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.living-thesis-field textarea {
+  line-height: 1.55;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.living-thesis-list-toolbar select:focus,
+.living-thesis-field input:focus,
+.living-thesis-field select:focus,
+.living-thesis-field textarea:focus {
+  border-color: var(--ti-color-border-strong);
+  box-shadow: 0 0 0 3px rgba(72, 224, 204, 0.1);
+  outline: none;
+}
+
+.living-thesis-list {
+  display: grid;
+  gap: 8px;
+  max-height: calc(100vh - 310px);
+  min-height: 280px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.living-thesis-list-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--ti-color-text);
+  cursor: pointer;
+  display: grid;
+  gap: 7px;
+  letter-spacing: 0;
+  min-height: 122px;
+  padding: 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.living-thesis-list-item:hover,
+.living-thesis-list-item--selected {
+  background: rgba(72, 224, 204, 0.07);
+  border-color: rgba(72, 224, 204, 0.28);
+}
+
+.living-thesis-list-item:focus-visible {
+  outline: 2px solid var(--ti-color-primary);
+  outline-offset: 2px;
+}
+
+.living-thesis-list-item > span:not(.living-thesis-list-heading):not(.living-thesis-list-meta) {
+  color: var(--ti-color-text-muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.living-thesis-list-item > small,
+.living-thesis-list-meta small {
+  color: var(--ti-color-text-subtle);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.living-thesis-list-heading,
+.living-thesis-list-meta {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.living-thesis-list-heading strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.living-thesis-list-meta {
+  flex-wrap: wrap;
+}
+
+.living-thesis-state {
+  align-items: flex-start;
+  color: var(--ti-color-text-muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  gap: 7px;
+  line-height: 1.5;
+  min-height: 160px;
+  padding: 24px 10px;
+}
+
+.living-thesis-state strong {
+  color: var(--ti-color-text);
+  font-size: 15px;
+}
+
+.living-thesis-state-copy {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.living-thesis-state--empty {
+  justify-content: center;
+}
+
+.living-thesis-form {
+  border: 0;
+  display: grid;
+  gap: 18px;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.living-thesis-leave-dialog {
+  background: var(--ti-color-surface-elevated);
+  border: 1px solid var(--ti-color-border-strong);
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  color: var(--ti-color-text);
+  font: inherit;
+  max-width: min(560px, calc(100vw - 48px));
+  padding: 28px;
+}
+
+.living-thesis-leave-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.living-thesis-leave-dialog h2 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+.living-thesis-leave-dialog p {
+  color: var(--ti-color-text-muted);
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+
+.living-thesis-leave-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.living-thesis-continue {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--ti-color-text);
+  cursor: pointer;
+  font: inherit;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+.living-thesis-continue:focus-visible {
+  outline: 2px solid var(--ti-color-border-strong);
+  outline-offset: 3px;
+}
+
+.living-thesis-leave-actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.living-thesis-form-heading,
+.living-thesis-section-heading {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.living-thesis-form-heading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.living-thesis-form-heading span,
+.living-thesis-section-heading span {
+  color: var(--ti-color-text-subtle);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.living-thesis-form-heading strong {
+  color: var(--ti-color-text);
+  font-size: 18px;
+}
+
+.living-thesis-field-grid,
+.living-thesis-case-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.living-thesis-field--wide {
+  min-width: 0;
+}
+
+.living-thesis-children {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.living-thesis-section-heading h3 {
+  color: var(--ti-color-text);
+  font-size: 16px;
+  letter-spacing: 0;
+  margin: 3px 0 0;
+}
+
+.living-thesis-child-empty {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+  margin: 0;
+}
+
+.living-thesis-child-row {
+  align-items: end;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 3px solid rgba(248, 113, 113, 0.62);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(140px, 1fr) minmax(160px, 1.3fr) 110px 110px auto;
+  padding: 10px;
+}
+
+.living-thesis-child-row--catalyst {
+  border-left-color: rgba(45, 212, 191, 0.68);
+  grid-template-columns: minmax(140px, 1fr) minmax(180px, 1.5fr) 120px auto;
+}
+
+.living-thesis-form-actions {
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+@media (max-width: 1180px) {
+  .living-thesis-child-row,
+  .living-thesis-child-row--catalyst {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 940px) {
+  .living-thesis-board-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .living-thesis-list-card {
+    position: static;
+  }
+
+  .living-thesis-list {
+    max-height: 420px;
+  }
+}
+
+@media (max-width: 620px) {
+  .living-thesis-field-grid,
+  .living-thesis-case-grid,
+  .living-thesis-child-row,
+  .living-thesis-child-row--catalyst,
+  .living-thesis-list-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .living-thesis-form-heading,
+  .living-thesis-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+

@@ -5,7 +5,7 @@ import {
   PageHeader,
   themeCssVariables
 } from '@thesis-investing/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   LocalDataExportOutcome,
   LocalDataInfo,
@@ -79,7 +79,7 @@ const navigationViews: NavigationView[] = [
     navLabel: 'Thesis Board',
     icon: 'thesis-board',
     description:
-      'Combine ranked investment ideas, thesis details, and MBS scoring context in one workspace.'
+      'Create, organize, and update formal Living Thesis records saved in local SQLite.'
   },
   {
     id: 'portfolio-ranker',
@@ -293,6 +293,7 @@ type AppShellProps = {
 
 function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   const [selectedViewId, setSelectedViewId] = useState(navigationViews[0].id);
+  const [pendingViewId, setPendingViewId] = useState<string | null>(null);
   const [theses, setTheses] = useState<MockThesis[]>(() => cloneMockTheses());
   const selectedView = useMemo(
     () =>
@@ -300,6 +301,23 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
       navigationViews[0],
     [selectedViewId]
   );
+
+  function requestNavigation(viewId: string): void {
+    if (viewId === selectedViewId) return;
+
+    if (selectedViewId === 'thesis-board') {
+      setPendingViewId(viewId);
+      return;
+    }
+
+    setSelectedViewId(viewId);
+  }
+
+  const completeBoardNavigation = useCallback(() => {
+    if (pendingViewId) setSelectedViewId(pendingViewId);
+    setPendingViewId(null);
+  }, [pendingViewId]);
+  const cancelBoardNavigation = useCallback(() => setPendingViewId(null), []);
 
   function updateThesisScore(
     thesisId: string,
@@ -343,7 +361,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
                 fullWidth
                 isActive={isActive}
                 key={view.id}
-                onClick={() => setSelectedViewId(view.id)}
+                onClick={() => requestNavigation(view.id)}
                 type="button"
                 variant="sidebar"
               >
@@ -372,7 +390,13 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
             theses={theses}
           />
         ) : selectedView.id === 'thesis-board' ? (
-          <ThesisBoardScreen theses={theses} />
+          <ThesisBoardScreen
+            navigationRequest={pendingViewId ? {
+              destination: navigationViews.find((view) => view.id === pendingViewId)?.navLabel ?? 'another workspace',
+              onLeave: completeBoardNavigation,
+              onStay: cancelBoardNavigation
+            } : undefined}
+          />
         ) : selectedView.id === 'portfolio-ranker' ? (
           <PortfolioRankerScreen
             onOpenWorkspace={setSelectedViewId}
@@ -438,6 +462,7 @@ const persistedWorkflowFallback = [
   'Reminders',
   'Portfolio Ranker Inputs',
   'MBS Score Snapshots',
+  'Living Thesis records',
   'Dashboard summaries read persisted local data'
 ];
 
@@ -1105,11 +1130,16 @@ export function SettingsAboutScreen({
                         <dt>MBS Score Snapshots</dt>
                         <dd>{recordCounts.mbsScoreSnapshots}</dd>
                       </div>
+                      <div>
+                        <dt>Living Theses</dt>
+                        <dd>{recordCounts.livingTheses}</dd>
+                      </div>
                     </dl>
                     <p className="local-data-status-message">
-                      Counts reflect persisted local records only. Theme
-                      Library content and Thesis Board prototype data are not
-                      included.
+                      Living Thesis counts include active and archived records.
+                      Each thesis includes its saved risks and catalysts in
+                      backups. Theme Library content remains bundled reference
+                      material.
                     </p>
                   </>
                 ) : (
@@ -1138,8 +1168,9 @@ export function SettingsAboutScreen({
                 <h2>Export local data</h2>
                 <p>
                   Create a JSON backup of persisted local records: Watchlist,
-                  Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS
-                  Score Snapshots. Choose where to save the file. Exporting
+                  Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS
+                  Score Snapshots, and Living Theses with their risks and
+                  catalysts. Choose where to save the file. Exporting
                   copies these records without changing them in the app.
                   Static Theme Baskets, transient UI state, app logs, and raw
                   SQLite files are not included.
@@ -1183,7 +1214,9 @@ export function SettingsAboutScreen({
                         localDataExportState.outcome.counts
                           .mbsScoreSnapshots
                       }{' '}
-                      MBS score snapshots.
+                      MBS score snapshots, plus{' '}
+                      {localDataExportState.outcome.counts.livingTheses} Living
+                      Theses (including risks and catalysts).
                     </p>
                     <p>
                       Export generated{' '}
@@ -1282,6 +1315,10 @@ export function SettingsAboutScreen({
                         <dt>MBS Score Snapshots</dt>
                         <dd>{activeImportPreview.counts.mbsScoreSnapshots}</dd>
                       </div>
+                      <div>
+                        <dt>Living Theses</dt>
+                        <dd>{activeImportPreview.counts.livingTheses}</dd>
+                      </div>
                     </dl>
                     {activeImportPreview.warnings.length > 0 ? (
                       <ul className="local-data-import-warnings">
@@ -1340,7 +1377,9 @@ export function SettingsAboutScreen({
                       }{' '}
                       portfolio ranker inputs, and{' '}
                       {localDataImportState.outcome.imported.mbsScoreSnapshots}{' '}
-                      MBS score snapshots.
+                      MBS score snapshots, plus{' '}
+                      {localDataImportState.outcome.imported.livingTheses} Living
+                      Theses (including risks and catalysts).
                     </p>
                     {localDataImportState.outcome.warnings.length > 0 ? (
                       <ul className="local-data-import-warnings">
@@ -1464,3 +1503,4 @@ function formatLocalDataTimestamp(value: string): string {
     timeStyle: 'short'
   }).format(date);
 }
+

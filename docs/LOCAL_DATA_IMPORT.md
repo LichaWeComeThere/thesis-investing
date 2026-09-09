@@ -26,9 +26,10 @@ only backup files you trust; they may contain private research notes.
 The importer accepts JSON objects with:
 
 - `format` set to `thesis-investing-local-data-export`
-- `formatVersion` set to `1`
+- `formatVersion` set to `1` or `2`
 - app and export metadata produced by Thesis Investing
-- valid counts matching all five data arrays
+- valid counts matching all five legacy arrays for version 1, or all six
+  arrays (including `livingTheses`) for version 2
 - valid domain records in each data array
 
 Imported record types are:
@@ -38,6 +39,17 @@ Imported record types are:
 - Reminders
 - Portfolio Ranker Inputs
 - MBS Score Snapshots
+- Living Theses with nested risks and catalysts (version 2 only)
+
+Version 1 backups keep their historical shape and import only the five older
+workflows. The preview reports zero Living Theses and explains that the older
+backup does not contain them. Existing Living Theses remain untouched. A file
+claiming version 1 while containing Living Thesis data or counts is rejected.
+
+Version 2 requires the `livingTheses` count and data array even when empty.
+Validation checks parent and child shapes, domain rules, saved versions,
+timestamps, child-to-parent references, unique parent IDs, and child IDs that
+are unique across all risks and catalysts in the backup.
 
 Malformed JSON, unrelated JSON, unsupported format versions, missing arrays,
 count mismatches, and invalid records are rejected before any writes occur.
@@ -67,7 +79,24 @@ new deterministic local suffix such as `-import-1` before creating the record.
 
 When an imported Thesis Note ID is remapped, imported Watchlist and MBS snapshot
 references to that note are remapped with it. Repository validation runs before
-each create, and the five-record import transaction rolls back if a write fails.
+each write, and the entire import transaction rolls back if any write fails.
+
+Living Thesis parent IDs and risk/catalyst IDs are remapped separately. Child
+IDs share a namespace across both child types and all theses. Remapping updates
+every child's `thesisId` to its imported parent. Unused IDs from the backup are
+reserved before allocating collision suffixes, and IDs are checked again on
+confirmation in case local data changed after preview.
+
+The append-only `livingTheses.restore` repository method preserves the saved
+version (including versions greater than 1), timestamps, lifecycle, review
+schedule, and child state. It never replaces an existing aggregate. Its SQLite
+savepoint participates in the enclosing import transaction, so a later failure
+also undoes earlier restored theses and all five older record types. Normal
+Thesis Board creation still requires version 1.
+
+Legacy MBS `thesisId` values keep the existing Thesis Note remapping behavior;
+they are not inferred to reference Living Theses. Formal score linking remains
+a separate workflow stage.
 
 Importing the same file more than once intentionally creates another local copy
 instead of merging or deduplicating records.
@@ -94,9 +123,9 @@ This stage does not import:
 - Theme Baskets or other bundled static content
 - onboarding completion or transient UI state
 - logs, build artifacts, Git data, credentials, secrets, tokens, or API keys
-- arbitrary JSON or export format versions other than version 1
+- arbitrary JSON or export format versions other than 1 and 2
 
-It also does not add database replacement, restore, reset/delete actions,
+It also does not add database replacement, destructive restore, reset/delete actions,
 automatic backup scheduling, cloud sync, auth, live stock APIs, AI analyst
 features, brokerage integrations, or trading execution.
 

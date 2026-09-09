@@ -35,6 +35,10 @@ The status view shows counts for persisted local records:
 - Reminders
 - Portfolio Ranker Inputs
 - MBS Score Snapshots
+- Living Theses (all saved lifecycles, including archived records)
+
+Living Thesis counts represent parent records. Risks and catalysts are included
+inside their thesis in version 2 backups and are not counted as separate theses.
 
 Counts are read through the same Electron main/storage boundary used by export
 and Dashboard summaries. If the SQLite database file does not exist yet, the
@@ -46,7 +50,6 @@ These counts exclude static or transient content:
 - selected route, filters, search, sort, and other UI state
 - in-progress form drafts unless explicitly saved
 - onboarding completion in localStorage
-- Thesis Board prototype mock data
 
 ## Troubleshooting Guidance
 

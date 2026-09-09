@@ -7,7 +7,8 @@ reconciled the renderer prototype and its data-provenance labels. Phase 3 Stage
 2 now implements the framework-independent `LivingThesis` current-state model,
 structured risk and catalyst types, and validation in `packages/core`.
 Phase 3 Stage 3 adds the SQLite persistence foundation for that current-state
-aggregate. IPC APIs and renderer adoption remain future stages.
+aggregate. Phase 3 Stage 4 connects Thesis Board to that repository through
+narrow typed main, IPC, preload, and renderer boundaries.
 
 The plan is based on `main` at
 `46fe0b65a248b449f5246f266ea96e4758af94b7` and on a read-only review of the
@@ -44,7 +45,7 @@ must not be treated as one source of truth.
 | --- | --- | --- | --- |
 | `ThesisNote` | User-authored title, body, status, conviction, ticker, and review date | SQLite | Keep as an existing workflow. Do not silently convert notes into Living Thesis records. Provide an explicit link or creation flow later. |
 | `InvestmentIdea` | Early core aggregation and mapping helpers for notes, ranker input, and MBS input | Not wired as a persisted aggregate | Treat as a predecessor/reference type. Do not extend it into the formal model without first defining migration and deprecation semantics. |
-| Renderer `MockThesis` | Eight shared demo records used by Dashboard, MBS Scorer, Portfolio Ranker, Thesis Monitor, Watchlist, Reminders, and Thesis Board | React memory only | Retain as clearly named demo fixtures, then adapt them to the formal shape without importing them as user data. |
+| Renderer `MockThesis` | Eight shared demo records used by Dashboard, MBS Scorer, Portfolio Ranker, Thesis Monitor, Watchlist, and Reminders | React memory only | Retain as clearly named demo fixtures for screens that have not adopted formal Living Thesis data. Never import them as user data automatically. |
 
 The current `MockThesis` includes identity, ticker/company, theme, idea and
 thesis status, current and previous MBS score, conviction, risk level, thesis
@@ -67,8 +68,9 @@ formal persisted Living Thesis intelligence.
   context.
 - Reminders persists `Reminder` records and displays separate demo review
   dates.
-- Thesis Board edits a renderer-local projection of `MockThesis` and does not
-  persist edits.
+- Thesis Board lists, creates, and updates formal persisted Living Thesis
+  current state. It no longer reads `MockThesis` in production and does not
+  seed fixtures into SQLite.
 
 ### Existing MBS relationship ambiguity
 
@@ -363,26 +365,46 @@ change current MBS persistence.
 
 ## Thesis Board Transition
 
-The Stage 0 Board layout, filtering, sorting, score breakdown, and provenance
-notice can remain. Its data source should change in controlled steps:
+Stage 4 completes the first production adoption of formal Living Thesis data:
 
-1. define the shared domain model and a Board read-model mapper;
-2. add repositories and a narrow renderer client;
-3. load persisted Living Thesis records as the primary source;
-4. show demo fixtures only in an explicitly labeled demo or empty state;
-5. make creation an explicit persisted `create` use case;
-6. persist ordinary current-state edits through validated update commands;
-7. route review-sensitive edits through a Review Session rather than silently
-   changing history.
+- the Board loads persisted records and shows a truthful empty state without
+  automatically inserting demo fixtures;
+- a narrow preload API exposes only `list`, `getById`, `create`, and versioned
+  `update` use cases;
+- Electron main owns UUID and canonical timestamp generation, aggregate
+  construction, validation, and repository access;
+- creation starts at version 1 and successful updates replace renderer state
+  with the repository-returned incremented version;
+- stale versions produce an explicit conflict. The unsaved draft remains in
+  place until the user explicitly reloads the saved version;
+- risks and catalysts retain stable IDs and use statuses such as `retired`
+  instead of ordinary destructive removal;
+- the Board does not display or fabricate MBS history, thesis health, review
+  priority, timeline, or Review Session state.
 
-Simple current-state edits such as title or scheduling may persist immediately.
-Proposed score changes, review conclusions, and material status/conviction/risk
-changes made inside a review should remain Review Session draft state until the
-user explicitly completes the review.
+Ordinary current-state edits persist immediately when the user saves. Proposed
+review conclusions and future score changes still belong to the later Review
+Workflow and Review Session stages. The Board consumes only `LivingThesis`,
+never a production `LivingThesis | MockThesis` union.
 
-The Board should never accept `LivingThesis | MockThesis` as an enduring
-production union. Use an explicit fixture adapter outside the formal domain and
-a single Board read model.
+### Unsaved Thesis Board edits
+
+Sidebar navigation keeps the current Board editor open when it contains unsaved
+changes. The user can choose **Save and leave**, **Discard and leave**, or
+**Continue editing**. Save and leave uses the same local create/update operation
+as the editor and opens the requested workspace only after a successful save.
+Validation errors, storage failures, and version conflicts preserve the draft
+and appear in the dialog. Continue editing and Escape cancel the navigation;
+Discard and leave abandons only the in-memory draft without a storage write.
+
+While a save is pending, the editor and dialog actions are disabled. Navigation
+waits for that save, including saves started with the editor's Save changes
+button. A clean Board and the already active sidebar item require no dialog.
+
+This guard covers sidebar navigation. Drafts are still in memory: closing the
+application, reloading its renderer, or a crash does not recover unsaved edits.
+The existing save/cancel requirement for switching between thesis records is
+unchanged.
 
 ## Review Workflow Architecture
 
@@ -545,13 +567,20 @@ module.
 
 ## Import And Export Compatibility
 
-Phase 2 format version 1 must remain readable and unchanged while Living Thesis
-support is developed. Adding Living Thesis records and related history requires
-a new export format version.
+The Stage 4 backup extension writes format version 2 with Living Thesis current
+state and nested risks and catalysts. Counts include parent theses, including
+archived records. Saved versions and timestamps survive restore; colliding
+parent and child IDs are remapped together in a single append-only transaction.
+Malformed aggregates and cross-thesis child references are rejected before
+confirmation. Repository restore uses a savepoint so a later failure rolls back
+the entire backup. The schema and normal create/update contract are unchanged.
 
-A future version should include arrays and counts for Living Theses, risks,
-catalysts, Review Sessions, Decision Log entries, revisions, and linked MBS
-snapshots. Import should:
+Phase 2 format version 1 remains readable with its unchanged five-workflow
+shape. Its preview explicitly states that no Living Theses are included.
+
+Later format extensions should add Review Sessions, Decision Log entries,
+revisions, and formally linked MBS snapshots as those entities are implemented.
+Relationship-aware import must continue to:
 
 1. fully validate the document and all relationships before writing;
 2. preview counts without mutation;
@@ -564,11 +593,13 @@ snapshots. Import should:
 9. reject dangling or cross-thesis references;
 10. return exact imported counts and warnings.
 
-Backward-compatible import of version 1 should continue to import its five
+Backward-compatible import of version 1 continues to import its five
 existing workflows. Because version 1 has no formal Living Thesis entity, its
 snapshot `thesisId` is a legacy reference and must not be guessed into a new
-Living Thesis relationship. Stage 3 must implement an explicit compatibility
-boundary and fixture-based tests while preserving the frozen version 1 format.
+Living Thesis relationship. The importer retains the existing legacy Thesis
+Note remapping behavior. File-based roundtrip tests, a historical version 1
+fixture, collision tests, and injected SQLite failures cover this compatibility
+boundary and the atomic restore behavior.
 
 ## Architecture And Safety Boundaries
 
@@ -597,8 +628,9 @@ boundary and fixture-based tests while preserving the frozen version 1 format.
    repository transactions, optimistic version enforcement, storage tests, and
    runtime verification. Keep main IPC, preload, renderer adoption, and export
    format changes out of this stage.
-4. **Stage 4 - Thesis Board adoption.** Replace the Board's in-memory source
-   with the repository client while retaining demo empty states and Stage 0 UI.
+4. **Stage 4 - Thesis Board adoption.** Complete. The Board uses the formal
+   repository client, truthful empty states, versioned saves, and explicit
+   conflict recovery without automatic demo insertion.
 5. **Stage 5 - Review Workflow.** Implement and test the pure workflow state
    machine and completion validation against the approved model.
 6. **Stage 6 - Review Session.** Persist explicit in-progress sessions and add
@@ -639,5 +671,6 @@ remaining persistence and feature-stage questions are:
     enough to ship without implying recommendations?
 5. Should a future explicit Create from demo action copy any example history,
     or create only clean current state and one creation revision?
-6. When export format version 2 is introduced, should in-progress Review
+6. When Review Sessions become portable in a later format, should in-progress Review
     Sessions be portable or imported as inactive drafts?
+
