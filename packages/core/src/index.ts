@@ -57,6 +57,18 @@ export {
   updateLivingThesisReviewSection,
   validateLivingThesisReviewCompletion
 } from './livingThesisReviewWorkflow';
+export { validateLivingThesisReviewWorkflowState } from './livingThesisReviewWorkflow';
+export {
+  LIVING_THESIS_REVIEW_SESSION_SCHEMA_VERSION,
+  getLivingThesisChildReferences,
+  getLivingThesisReviewSessionChildReferences,
+  parseLivingThesisReviewSession,
+  validateLivingThesisReviewSession
+} from './livingThesisReviewSession';
+export type {
+  LivingThesisChildReference,
+  LivingThesisReviewSession
+} from './livingThesisReviewSession';
 export type {
   LivingThesisReviewDraft,
   LivingThesisReviewPreview,

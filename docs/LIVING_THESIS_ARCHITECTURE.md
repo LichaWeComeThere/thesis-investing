@@ -10,8 +10,9 @@ Phase 3 Stage 3 adds the SQLite persistence foundation for that current-state
 aggregate. Phase 3 Stage 4 connects Thesis Board to that repository through
 narrow typed main, IPC, preload, and renderer boundaries.
 Phase 3 Stage 5 adds the pure review workflow, proposed-edit preview, and
-guarded completion validation in core. Durable Review Sessions follow in
-Stage 6.
+guarded completion validation in core. Stage 6 part 1 adds durable review session
+storage and backup support; review UI and atomic completion follow separately.
+See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md).
 
 The original plan was based on `main` at
 `46fe0b65a248b449f5246f266ea96e4758af94b7` and on a read-only review of the
@@ -577,7 +578,7 @@ module.
 
 ## Import And Export Compatibility
 
-The Stage 4 backup extension writes format version 2 with Living Thesis current
+The Stage 4 backup extension introduced format version 2 with Living Thesis current
 state and nested risks and catalysts. Counts include parent theses, including
 archived records. Saved versions and timestamps survive restore; colliding
 parent and child IDs are remapped together in a single append-only transaction.
@@ -588,8 +589,13 @@ the entire backup. The schema and normal create/update contract are unchanged.
 Phase 2 format version 1 remains readable with its unchanged five-workflow
 shape. Its preview explicitly states that no Living Theses are included.
 
-Later format extensions should add Review Sessions, Decision Log entries,
-revisions, and formally linked MBS snapshots as those entities are implemented.
+Stage 6 part 1 writes format version 3 with saved review sessions and retains
+version 1 and 2 compatibility. Session IDs, parent IDs, baseline child IDs, and
+draft child IDs are remapped together. Stale baselines remain unchanged and are
+flagged on resume; malformed progress and orphaned sessions are rejected.
+
+Later format extensions should add Decision Log entries, revisions, and formally
+linked MBS snapshots as those entities are implemented.
 Relationship-aware import must continue to:
 
 1. fully validate the document and all relationships before writing;
@@ -644,8 +650,9 @@ boundary and the atomic restore behavior.
 5. **Stage 5 - Review Workflow.** Complete. Core implements and tests ordered
    review transitions, proposed-edit previews, and completion validation
    against the approved model.
-6. **Stage 6 - Review Session.** Persist explicit in-progress sessions and add
-   the atomic completion transaction, including the minimum revision and
+6. **Stage 6 - Review Session.** Part 1 implements explicit in-progress session
+   storage, restart recovery, conflict checks, and format 3 backups. Next add
+   the review UI and atomic completion transaction, including the minimum revision and
    linked-score storage it needs before the later history interfaces.
 7. **Stage 7 - Decision Log.** Add documentary append-only entries and their
    review/session links.

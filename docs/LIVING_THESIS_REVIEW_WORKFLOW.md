@@ -29,8 +29,10 @@ new values and copy nested records and score input so caller-owned objects do
 not mutate the captured baseline or another returned value.
 
 These are typed domain helpers, not parsers for arbitrary JSON or IPC input.
-Stage 6 must validate untrusted payload shapes before calling them and define
-the durable session schema, session ID, timestamps, and any reason codes.
+Stage 6 part 1 adds `parseLivingThesisReviewSession` for unknown storage/backup
+payloads and `validateLivingThesisReviewWorkflowState` for confirmed progress.
+See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md) for the
+durable schema, IDs, timestamp ownership, and service boundary.
 
 ## Ordered steps
 
@@ -93,7 +95,8 @@ completed-session record, and create the linked MBS snapshot or explicit
 decision entry when applicable. Bring forward the minimum history/link storage
 needed for these writes in Stage 6; the later history and decision interfaces
 can follow in their planned stages. Review scheduling policy and session
-export/import coverage also belong to that persistence work.
+export/import coverage also belong to Stage 6; the draft-storage part already
+includes format 3 session backups.
 
 Stage 5 adds no migrations, repository writes, IPC, renderer screen, backup
 format, or live data integration. Existing Board saves and backup behavior

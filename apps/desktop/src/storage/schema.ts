@@ -159,6 +159,30 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_living_thesis_catalysts_parent
         ON living_thesis_catalysts(thesis_id, created_at ASC, id ASC);
     `
+  },
+  {
+    version: 5,
+    name: "add_living_thesis_review_sessions",
+    sql: `
+      CREATE TABLE living_thesis_review_sessions (
+        id TEXT PRIMARY KEY,
+        thesis_id TEXT NOT NULL REFERENCES living_theses(id)
+          ON UPDATE RESTRICT ON DELETE RESTRICT,
+        schema_version INTEGER NOT NULL CHECK (schema_version = 1),
+        version INTEGER NOT NULL CHECK (version > 0),
+        status TEXT NOT NULL CHECK (status IN ('in_progress', 'abandoned')),
+        started_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        abandoned_at TEXT,
+        workflow_json TEXT NOT NULL,
+        CHECK ((status = 'in_progress' AND abandoned_at IS NULL) OR
+          (status = 'abandoned' AND abandoned_at = updated_at AND abandoned_at IS NOT NULL))
+      );
+      CREATE UNIQUE INDEX idx_one_in_progress_review_per_thesis
+        ON living_thesis_review_sessions(thesis_id) WHERE status = 'in_progress';
+      CREATE INDEX idx_review_sessions_parent_updated
+        ON living_thesis_review_sessions(thesis_id, updated_at DESC, id ASC);
+    `
   }
 ];
 

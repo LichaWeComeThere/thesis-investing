@@ -262,6 +262,33 @@ export function getLivingThesisReviewPreview(
   };
 }
 
+/** Validates hydrated typed state, including content of already confirmed steps. */
+export function validateLivingThesisReviewWorkflowState(
+  workflow: LivingThesisReviewWorkflow
+): ValidationResult {
+  const index = stepIndex(workflow.activeStep);
+  const count = workflow.status === 'completed' ? 7 : index;
+  const expected = LIVING_THESIS_REVIEW_WORKFLOW_STEPS.slice(0, count).map(
+    (step) => step.id
+  );
+  const errors = [...validateLivingThesis(workflow.baseline).errors];
+  if (
+    !['in_progress', 'completed', 'abandoned'].includes(workflow.status) ||
+    index < 0 || (workflow.status === 'completed' && index !== 6) ||
+    !sameValue(workflow.completedSteps, expected)
+  ) {
+    errors.push('Review progress must contain each preceding step exactly once and in order.');
+  } else {
+    for (const step of workflow.completedSteps) {
+      if (step !== 'complete_review') errors.push(...stepErrors(workflow, step));
+    }
+  }
+  if (workflow.baseline.lifecycle === 'archived') {
+    errors.push('An archived baseline cannot start a review.');
+  }
+  return { valid: errors.length === 0, errors };
+}
+
 function stepIndex(step: LivingThesisReviewWorkflowStepId): number {
   return LIVING_THESIS_REVIEW_WORKFLOW_STEPS.findIndex(
     (candidate) => candidate.id === step

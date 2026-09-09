@@ -1,5 +1,11 @@
+import { reviewChildOwnershipErrors, reviewSessionParentErrors } from '../storage/reviewSessionIntegrity';
 import {
   validateLivingThesis,
+  validateLivingThesisReviewSession,
+  getLivingThesisChildReferences,
+  getLivingThesisReviewSessionChildReferences,
+  type LivingThesis,
+  type LivingThesisReviewSession,
   validateLivingThesisCatalyst,
   validateLivingThesisRisk,
   validateMbsScoreSnapshot,
@@ -27,7 +33,8 @@ const COUNT_KEYS: Array<keyof LocalDataExportCounts> = [
   'reminders',
   'portfolioRankerItems',
   'mbsScoreSnapshots',
-  'livingTheses'
+  'livingTheses',
+  'reviewSessions'
 ];
 
 export function parseLocalDataImportDocument(
@@ -51,7 +58,7 @@ export function parseLocalDataImportDocument(
     ]);
   }
 
-  if (parsed.formatVersion !== 1 && parsed.formatVersion !== LOCAL_DATA_EXPORT_FORMAT_VERSION) {
+  if (parsed.formatVersion !== 1 && parsed.formatVersion !== 2 && parsed.formatVersion !== LOCAL_DATA_EXPORT_FORMAT_VERSION) {
     return failure([
       `Unsupported local data export format version: ${String(
         parsed.formatVersion
@@ -61,7 +68,8 @@ export function parseLocalDataImportDocument(
 
   const errors = validateExportMetadata(parsed);
   const countKeys = COUNT_KEYS.filter(
-    (key) => parsed.formatVersion !== 1 || key !== 'livingTheses'
+    (key) => (parsed.formatVersion !== 1 || key !== 'livingTheses') &&
+      (parsed.formatVersion === 3 || key !== 'reviewSessions')
   );
 
   if (!isRecord(parsed.counts)) {
@@ -101,18 +109,21 @@ export function parseLocalDataImportDocument(
     errors.push('Living Theses require export format version 2.');
   }
 
-  if (errors.length > 0) {
-    return failure(errors);
+  if (parsed.formatVersion !== 3 &&
+    ((isRecord(counts) && 'reviewSessions' in counts) ||
+      (isRecord(data) && 'reviewSessions' in data))) {
+    errors.push('Review sessions require export format version 3.');
   }
+  if (errors.length > 0) return failure(errors);
 
-  const document = parsed as unknown as LocalDataImportDocument;
-  if (document.formatVersion === 1) {
-    return success({
-      ...document,
-      counts: { ...document.counts, livingTheses: 0 },
-      data: { ...document.data, livingTheses: [] }
-    });
-  }
+  const source = parsed as unknown as LocalDataImportDocument;
+  const document: LocalDataImportDocument = {
+    ...source,
+    counts: { ...source.counts, ...(source.formatVersion === 1 ? { livingTheses: 0 } : {}),
+      ...(source.formatVersion !== 3 ? { reviewSessions: 0 } : {}) },
+    data: { ...source.data, ...(source.formatVersion === 1 ? { livingTheses: [] } : {}),
+      ...(source.formatVersion !== 3 ? { reviewSessions: [] } : {}) }
+  };
 
   const childIds = new Set<string>();
   for (const thesis of document.data.livingTheses) {
@@ -124,6 +135,18 @@ export function parseLocalDataImportDocument(
     }
   }
 
+  const parents = new Map(document.data.livingTheses.map((thesis) => [thesis.id, thesis]));
+  const activeParents = new Set<string>();
+  for (const session of document.data.reviewSessions) {
+    const parent = parents.get(session.thesisId);
+    if (!parent) errors.push('Every review session requires its parent Living Thesis in the backup.');
+    else errors.push(...reviewSessionParentErrors(session, parent));
+    if (session.workflow.status === 'in_progress') {
+      if (activeParents.has(session.thesisId)) errors.push('Only one in-progress review per parent is allowed.');
+      activeParents.add(session.thesisId);
+    }
+  }
+  errors.push(...reviewChildOwnershipErrors(allChildReferences(document.data)));
   return errors.length > 0 ? failure(errors) : success(document);
 }
 
@@ -159,13 +182,23 @@ export function getLocalDataImportWarnings(
     countCollisions(
       document.data.livingTheses,
       storage.repositories.livingTheses.getById
-    );
+    ) + countCollisions(document.data.reviewSessions, storage.repositories.reviewSessions.getById);
   const warnings: string[] = [];
 
   if (document.formatVersion === 1) {
     warnings.push('This older backup does not include Living Theses. Existing Living Theses on this computer will remain unchanged.');
   }
 
+  if (document.formatVersion !== 3) {
+    warnings.push('This older backup does not include review sessions. Existing review sessions will remain unchanged.');
+  }
+  if (document.data.reviewSessions.some((session) => {
+    const parent = document.data.livingTheses.find((thesis) => thesis.id === session.thesisId)!;
+    return session.workflow.status === 'in_progress' &&
+      (parent.version !== session.workflow.baseline.version || parent.lifecycle === 'archived');
+  })) {
+    warnings.push('Some unfinished reviews have changed or archived parent theses. Their original baselines will be preserved and flagged when resumed.');
+  }
   if (totalRecords === 0) {
     warnings.push('This export contains no persisted records to import.');
   }
@@ -176,14 +209,12 @@ export function getLocalDataImportWarnings(
     );
   }
 
-  const existingChildIds = new Set(
-    storage.repositories.livingTheses.list().flatMap(
-      (thesis) => [...thesis.risks, ...thesis.catalysts].map(({ id }) => id)
-    )
-  );
-  const childCollisions = document.data.livingTheses.flatMap(
-    (thesis) => [...thesis.risks, ...thesis.catalysts]
-  ).filter(({ id }) => existingChildIds.has(id)).length;
+  const existingChildIds = new Set(allChildReferences({
+    livingTheses: storage.repositories.livingTheses.list(),
+    reviewSessions: storage.repositories.reviewSessions.list()
+  }).map(({ id }) => id));
+  const childCollisions = uniqueChildReferences(document.data)
+    .filter(({ id }) => existingChildIds.has(id)).length;
   if (childCollisions > 0) {
     warnings.push(`${childCollisions} imported risk/catalyst ID${childCollisions === 1 ? '' : 's'} already exist and will be remapped with their parent links preserved.`);
   }
@@ -221,14 +252,17 @@ export function appendLocalDataImport(
       document.data.livingTheses,
       existingLivingTheses.map(({ id }) => id)
     );
+    const existingSessions = storage.repositories.reviewSessions.list();
+    const reviewSessionIds = allocateImportIds(document.data.reviewSessions, existingSessions.map(({ id }) => id));
     const livingChildIds = allocateImportIds(
-      document.data.livingTheses.flatMap(
-        (thesis) => [...thesis.risks, ...thesis.catalysts]
-      ),
-      existingLivingTheses.flatMap(
-        (thesis) => [...thesis.risks, ...thesis.catalysts].map(({ id }) => id)
-      )
+      uniqueChildReferences(document.data),
+      allChildReferences({ livingTheses: existingLivingTheses, reviewSessions: existingSessions }).map(({ id }) => id)
     );
+    const remapChildren = <T extends Pick<LivingThesis, 'risks' | 'catalysts'>>(thesis: T, thesisId: string): T => ({
+      ...thesis,
+      risks: thesis.risks.map((child) => ({ ...child, id: livingChildIds.get(child.id)!, thesisId })),
+      catalysts: thesis.catalysts.map((child) => ({ ...child, id: livingChildIds.get(child.id)!, thesisId }))
+    });
 
     for (const note of document.data.thesisNotes) {
       requireCreated(
@@ -285,22 +319,19 @@ export function appendLocalDataImport(
     for (const thesis of document.data.livingTheses) {
       const thesisId = livingThesisIds.get(thesis.id) ?? thesis.id;
       requireCreated(
-        storage.repositories.livingTheses.restore({
-          ...thesis,
-          id: thesisId,
-          risks: thesis.risks.map((risk) => ({
-            ...risk,
-            id: livingChildIds.get(risk.id) ?? risk.id,
-            thesisId
-          })),
-          catalysts: thesis.catalysts.map((catalyst) => ({
-            ...catalyst,
-            id: livingChildIds.get(catalyst.id) ?? catalyst.id,
-            thesisId
-          }))
-        }),
+        storage.repositories.livingTheses.restore(remapChildren({ ...thesis, id: thesisId }, thesisId)),
         'Living Thesis'
       );
+    }
+    for (const session of document.data.reviewSessions) {
+      const thesisId = livingThesisIds.get(session.thesisId)!;
+      requireCreated(storage.repositories.reviewSessions.restore({
+        ...session, id: reviewSessionIds.get(session.id)!, thesisId,
+        workflow: { ...session.workflow,
+          baseline: remapChildren({ ...session.workflow.baseline, id: thesisId }, thesisId),
+          draft: remapChildren(session.workflow.draft, thesisId)
+        }
+      }), 'review session');
     }
     return { ...document.counts };
   });
@@ -371,7 +402,7 @@ function validateDataArrays(
     validateMbsScoreSnapshot,
     errors
   );
-  if (formatVersion === LOCAL_DATA_EXPORT_FORMAT_VERSION) {
+  if (formatVersion >= 2) {
     validateRecordArray(
       data.livingTheses,
       'livingTheses',
@@ -379,6 +410,11 @@ function validateDataArrays(
       validateLivingThesis,
       errors
     );
+  }
+  if (formatVersion === 3) {
+    validateRecordArray<LivingThesisReviewSession>(data.reviewSessions, 'reviewSessions',
+      (record) => validateLivingThesisReviewSession(record).errors,
+      () => ({ valid: true, errors: [] }), errors);
   }
 }
 
@@ -665,4 +701,15 @@ function success<T>(value: T): LocalDataStorageResult<T> {
 
 function failure<T>(errors: string[]): LocalDataStorageResult<T> {
   return { ok: false, errors };
+}
+
+function allChildReferences(data: Pick<LocalDataImportDocument['data'], 'livingTheses' | 'reviewSessions'>) {
+  return [
+    ...data.livingTheses.flatMap(getLivingThesisChildReferences),
+    ...data.reviewSessions.flatMap(getLivingThesisReviewSessionChildReferences)
+  ];
+}
+
+function uniqueChildReferences(data: Pick<LocalDataImportDocument['data'], 'livingTheses' | 'reviewSessions'>) {
+  return [...new Map(allChildReferences(data).map((child) => [child.id, child])).values()];
 }

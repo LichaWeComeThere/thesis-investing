@@ -1,8 +1,10 @@
+import { readStoredReviewChildReferences, reviewChildOwnershipErrors } from './reviewSessionIntegrity';
 import type { DatabaseSync } from "node:sqlite";
 
 import {
   normalizeLivingThesis,
   validateLivingThesis,
+  getLivingThesisChildReferences,
   type LivingThesis,
   type LivingThesisCatalyst,
   type LivingThesisRisk
@@ -121,6 +123,7 @@ export function createSqliteLivingThesisRepository(
         }
 
         assertExistingChildrenRetained(current, updated);
+        assertReviewChildOwnership(database, updated);
         updateParent(database, updated, expectedVersion);
         updated.risks.forEach((risk) => upsertRisk(database, risk));
         updated.catalysts.forEach((catalyst) =>
@@ -141,6 +144,7 @@ function insertAggregate(database: DatabaseSync, thesis: LivingThesis): LivingTh
   }
 
   assertChildIdsAvailableForCreate(database, thesis);
+  assertReviewChildOwnership(database, thesis);
   insertParent(database, thesis);
   thesis.risks.forEach((risk) => insertRisk(database, risk));
   thesis.catalysts.forEach((catalyst) =>
@@ -706,4 +710,11 @@ function success<T>(value: T): RepositoryResult<T> {
 
 function failure<T>(errors: string[]): RepositoryResult<T> {
   return { ok: false, errors };
+}
+
+function assertReviewChildOwnership(database: DatabaseSync, thesis: LivingThesis): void {
+  const errors = reviewChildOwnershipErrors([
+    ...readStoredReviewChildReferences(database), ...getLivingThesisChildReferences(thesis)
+  ]);
+  if (errors.length) throw new LivingThesisRepositoryError(errors.join(' '));
 }
