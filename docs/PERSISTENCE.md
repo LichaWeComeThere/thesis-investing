@@ -46,7 +46,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and MBS Scorer screens read and write through the local persistence boundary.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
-- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, and MBS Score Snapshots. Living Thesis records persist locally but are intentionally not yet part of that Phase 2 count summary; static Theme Library content is also excluded.
+- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS Score Snapshots, and Living Theses, including archived records. Static Theme Library content is excluded.
 - Thesis Board uses `window.thesisInvesting.livingTheses` for only `list`,
   `getById`, `create`, and expected-version `update`. No repository, raw SQL,
   database handle, filesystem method, or arbitrary path crosses preload.
@@ -137,9 +137,14 @@ are not inferred, migrated, or automatically reinterpreted. A future explicit
 relationship stage will apply the formal `thesisId -> LivingThesis.id`
 semantics without duplicating score history in `living_theses`.
 
-Phase 2 export/import format version 1 remains unchanged and does not include
-Living Thesis records. Relationship-aware export/import belongs to a later,
-explicitly versioned integration stage.
+The Stage 4 backup extension writes export format version 2 with Living Theses
+and their nested risks and catalysts. Version 1 remains readable without
+inventing Living Thesis relationships for legacy records. Import validates the
+complete backup, remaps parent and child collisions, and restores all six record
+types in one transaction. The internal append-only `restore` method preserves
+saved versions and uses a savepoint without committing the outer import. It is
+not exposed through the Thesis Board create/update IPC. Database schema and
+normal create/update version checks are unchanged.
 
 ## Out Of Scope
 

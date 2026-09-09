@@ -20,6 +20,7 @@ describe('localDataStorageClient', () => {
           localOnlyItems: [],
           persistedWorkflows: [],
           recordCounts: {
+            livingTheses: 0,
             mbsScoreSnapshots: 0,
             portfolioRankerItems: 0,
             reminders: 0,
@@ -35,6 +36,7 @@ describe('localDataStorageClient', () => {
         value: {
           status: 'completed',
           imported: {
+            livingTheses: 0,
             mbsScoreSnapshots: 0,
             portfolioRankerItems: 0,
             reminders: 0,

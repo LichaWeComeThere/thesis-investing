@@ -2,6 +2,9 @@
 
 Phase 2, Stage 2 adds a safe local JSON export from Settings/About.
 
+The Stage 4 backup extension writes format version 2, adding Living Theses and
+their structured risks and catalysts. The importer still accepts version 1.
+
 The export is non-destructive. It reads persisted local records through the
 Electron main/storage layer, asks the user where to save a `.json` file, and
 writes a structured copy for recordkeeping. It does not import, restore, reset,
@@ -28,6 +31,12 @@ The export includes user-entered persisted records from:
 - Reminders
 - Portfolio Ranker Inputs
 - MBS Score Snapshots
+- Living Theses, including archived records, saved versions, timestamps,
+  review scheduling, and nested risks and catalysts
+
+`livingTheses` counts parent thesis records; each record carries its complete
+`risks` and `catalysts` arrays. Export reads all six record types in one SQLite
+transaction so the backup represents a consistent saved state.
 
 The export also includes metadata:
 
@@ -56,7 +65,7 @@ The export does not include:
 ```json
 {
   "format": "thesis-investing-local-data-export",
-  "formatVersion": 1,
+  "formatVersion": 2,
   "appName": "Thesis Investing",
   "appVersion": "0.0.0",
   "exportedAt": "2026-06-10T12:00:00.000Z",
@@ -66,14 +75,16 @@ The export does not include:
     "thesisNotes": 0,
     "reminders": 0,
     "portfolioRankerItems": 0,
-    "mbsScoreSnapshots": 0
+    "mbsScoreSnapshots": 0,
+    "livingTheses": 0
   },
   "data": {
     "watchlistItems": [],
     "thesisNotes": [],
     "reminders": [],
     "portfolioRankerItems": [],
-    "mbsScoreSnapshots": []
+    "mbsScoreSnapshots": [],
+    "livingTheses": []
   }
 }
 ```
@@ -100,8 +111,10 @@ trusted app data folder without changing workflow records. See
 
 ## Current Limitations
 
-Phase 2, Stage 3 can append records from valid version 1 export files after a
-preview and explicit confirmation. Import is not a destructive restore or merge:
+Import accepts valid version 1 and version 2 export files after a preview and
+explicit confirmation. Older app builds that only support version 1 cannot
+read version 2 backups; update the destination app before transferring them.
+Import is not a destructive restore or merge:
 it does not replace the database, overwrite records, or delete existing data.
 See [Local Data Import](LOCAL_DATA_IMPORT.md) for validation and collision rules.
 

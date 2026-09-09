@@ -23,6 +23,7 @@ const localDataInfo = {
     'Dashboard summaries read persisted local data'
   ],
   recordCounts: {
+    livingTheses: 6,
     mbsScoreSnapshots: 5,
     portfolioRankerItems: 4,
     reminders: 3,
@@ -37,6 +38,7 @@ const zeroLocalDataInfo = {
   ...localDataInfo,
   databaseFileExists: false,
   recordCounts: {
+    livingTheses: 0,
     mbsScoreSnapshots: 0,
     portfolioRankerItems: 0,
     reminders: 0,
@@ -89,7 +91,7 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('Watchlist items');
     expect(html).toContain('Portfolio Ranker Inputs');
     expect(html).toContain(
-      'Living Thesis records are saved locally but are not yet included'
+      'Living Thesis counts include active and archived records.'
     );
     expect(html).toContain('Export local data');
     expect(html).toContain('Create a JSON backup of persisted local records');
@@ -139,6 +141,7 @@ describe('SettingsAboutScreen', () => {
           outcome: {
             status: 'completed',
             counts: {
+              livingTheses: 2,
               mbsScoreSnapshots: 1,
               portfolioRankerItems: 1,
               reminders: 1,
@@ -160,6 +163,7 @@ describe('SettingsAboutScreen', () => {
       'Your records in Thesis Investing were not changed.'
     );
     expect(html).toContain('Exported 1 watchlist items');
+    expect(html).toContain('2 Living Theses (including risks and catalysts)');
   });
 
   it('renders local data maintenance success states', () => {
@@ -251,6 +255,7 @@ describe('SettingsAboutScreen', () => {
           status: 'preview',
           preview: {
             counts: {
+              livingTheses: 6,
               mbsScoreSnapshots: 5,
               portfolioRankerItems: 4,
               reminders: 3,
@@ -259,7 +264,7 @@ describe('SettingsAboutScreen', () => {
             },
             exportedAt: '2026-06-10T12:00:00.000Z',
             fileName: 'thesis-export.json',
-            formatVersion: 1,
+            formatVersion: 2,
             previewId: 'preview-test',
             warnings: [
               '1 imported record ID already exists and will be remapped.'
@@ -277,6 +282,7 @@ describe('SettingsAboutScreen', () => {
     expect(html).toContain('thesis-export.json');
     expect(html).toContain('Watchlist items');
     expect(html).toContain('MBS Score Snapshots');
+    expect(html).toContain('<dt>Living Theses</dt><dd>6</dd>');
     expect(html).toContain('Confirm import');
     expect(html).toContain('Cancel import');
     expect(html).toContain('Existing records will not be overwritten');
@@ -290,6 +296,7 @@ describe('SettingsAboutScreen', () => {
           outcome: {
             status: 'completed',
             imported: {
+              livingTheses: 2,
               mbsScoreSnapshots: 1,
               portfolioRankerItems: 1,
               reminders: 1,

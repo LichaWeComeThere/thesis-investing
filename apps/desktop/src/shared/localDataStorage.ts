@@ -1,4 +1,5 @@
 import type {
+  LivingThesis,
   MbsScoreSnapshot,
   PortfolioRankerItem,
   Reminder,
@@ -16,9 +17,11 @@ export const localDataStorageChannels = {
 
 export const LOCAL_DATA_EXPORT_FORMAT =
   'thesis-investing-local-data-export' as const;
-export const LOCAL_DATA_EXPORT_FORMAT_VERSION = 1 as const;
+export const LOCAL_DATA_EXPORT_FORMAT_VERSION = 2 as const;
+export type LocalDataImportFormatVersion = 1 | typeof LOCAL_DATA_EXPORT_FORMAT_VERSION;
 
 export type LocalDataExportCounts = {
+  livingTheses: number;
   watchlistItems: number;
   thesisNotes: number;
   reminders: number;
@@ -51,12 +54,19 @@ export type LocalDataExportDocument = {
   storageAdapter: LocalDataInfo['storageAdapter'];
   counts: LocalDataExportCounts;
   data: {
+    livingTheses: LivingThesis[];
     watchlistItems: WatchlistItem[];
     thesisNotes: ThesisNote[];
     reminders: Reminder[];
     portfolioRankerItems: PortfolioRankerItem[];
     mbsScoreSnapshots: MbsScoreSnapshot[];
   };
+};
+
+// Parsed version 1 imports are normalized with zero Living Theses while retaining
+// their source version for the preview and compatibility warning.
+export type LocalDataImportDocument = Omit<LocalDataExportDocument, 'formatVersion'> & {
+  formatVersion: LocalDataImportFormatVersion;
 };
 
 export type LocalDataExportOutcome =
@@ -74,7 +84,7 @@ export type LocalDataImportPreview = {
   counts: LocalDataExportCounts;
   exportedAt: string;
   fileName: string;
-  formatVersion: typeof LOCAL_DATA_EXPORT_FORMAT_VERSION;
+  formatVersion: LocalDataImportFormatVersion;
   previewId: string;
   warnings: string[];
 };
