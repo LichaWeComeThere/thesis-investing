@@ -1134,11 +1134,16 @@ export function SettingsAboutScreen({
                         <dt>Living Theses</dt>
                         <dd>{recordCounts.livingTheses}</dd>
                       </div>
+                      <div>
+                        <dt>Saved review sessions</dt>
+                        <dd>{recordCounts.reviewSessions}</dd>
+                      </div>
                     </dl>
                     <p className="local-data-status-message">
                       Living Thesis counts include active and archived records.
                       Each thesis includes its saved risks and catalysts in
-                      backups. Theme Library content remains bundled reference
+                      backups. Saved review sessions include unfinished and abandoned
+                      reviews. Theme Library content remains bundled reference
                       material.
                     </p>
                   </>
@@ -1170,7 +1175,7 @@ export function SettingsAboutScreen({
                   Create a JSON backup of persisted local records: Watchlist,
                   Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS
                   Score Snapshots, and Living Theses with their risks and
-                  catalysts. Choose where to save the file. Exporting
+                  catalysts, plus saved review sessions. Choose where to save the file. Exporting
                   copies these records without changing them in the app.
                   Static Theme Baskets, transient UI state, app logs, and raw
                   SQLite files are not included.
@@ -1216,7 +1221,8 @@ export function SettingsAboutScreen({
                       }{' '}
                       MBS score snapshots, plus{' '}
                       {localDataExportState.outcome.counts.livingTheses} Living
-                      Theses (including risks and catalysts).
+                      Theses (including risks and catalysts), and{' '}
+                      {localDataExportState.outcome.counts.reviewSessions} saved review sessions.
                     </p>
                     <p>
                       Export generated{' '}
@@ -1319,6 +1325,10 @@ export function SettingsAboutScreen({
                         <dt>Living Theses</dt>
                         <dd>{activeImportPreview.counts.livingTheses}</dd>
                       </div>
+                      <div>
+                        <dt>Saved review sessions</dt>
+                        <dd>{activeImportPreview.counts.reviewSessions}</dd>
+                      </div>
                     </dl>
                     {activeImportPreview.warnings.length > 0 ? (
                       <ul className="local-data-import-warnings">
@@ -1379,7 +1389,8 @@ export function SettingsAboutScreen({
                       {localDataImportState.outcome.imported.mbsScoreSnapshots}{' '}
                       MBS score snapshots, plus{' '}
                       {localDataImportState.outcome.imported.livingTheses} Living
-                      Theses (including risks and catalysts).
+                      Theses (including risks and catalysts), and{' '}
+                      {localDataImportState.outcome.imported.reviewSessions} saved review sessions.
                     </p>
                     {localDataImportState.outcome.warnings.length > 0 ? (
                       <ul className="local-data-import-warnings">

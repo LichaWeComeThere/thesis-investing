@@ -28,6 +28,7 @@ import type {
   WatchlistItemRepository
 } from "./repositories";
 import { createSqliteLivingThesisRepository } from "./sqliteLivingThesisRepository";
+import { createSqliteReviewSessionRepository } from "./sqliteReviewSessionRepository";
 
 type SqlParam = string | number | null;
 type SqlRow = Record<string, unknown>;
@@ -35,6 +36,7 @@ type SqlRow = Record<string, unknown>;
 export function createSqliteRepositories(
   database: DatabaseSync
 ): LocalStorageRepositories {
+  const livingTheses = createSqliteLivingThesisRepository(database);
   return {
     holdings: createHoldingRepository(database),
     watchlistItems: createWatchlistItemRepository(database),
@@ -42,7 +44,8 @@ export function createSqliteRepositories(
     reminders: createReminderRepository(database),
     portfolioRankerItems: createPortfolioRankerItemRepository(database),
     mbsScoreSnapshots: createMbsScoreSnapshotRepository(database),
-    livingTheses: createSqliteLivingThesisRepository(database)
+    livingTheses,
+    reviewSessions: createSqliteReviewSessionRepository(database, livingTheses)
   };
 }
 

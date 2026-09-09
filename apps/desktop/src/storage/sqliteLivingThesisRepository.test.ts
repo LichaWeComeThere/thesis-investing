@@ -44,7 +44,7 @@ describe("Living Thesis SQLite repository", () => {
 
     runMigrations(database);
 
-    expect(readMigrationVersions(database)).toEqual([1, 2, 3, 4]);
+    expect(readMigrationVersions(database)).toEqual([1, 2, 3, 4, 5]);
     expect(
       database
         .prepare("SELECT ticker FROM watchlist_items WHERE id = ?;")

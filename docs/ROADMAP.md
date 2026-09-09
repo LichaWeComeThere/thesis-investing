@@ -64,8 +64,9 @@ and 2. Stage 1 completed the Living Thesis architecture plan. Formal Living
 Thesis persistence now exists behind the storage repository. Stage 4 adopts it
 in Thesis Board through a narrow typed main/preload/IPC/renderer workflow.
 Stage 5 adds the pure review workflow, proposed-edit preview, and guarded
-completion validation in core. The review UI and durable sessions follow in
-Stage 6.
+completion validation in core. Stage 6 part 1 adds durable review session
+storage, restart recovery, and format 3 backups. Review UI and atomic completion
+remain open Stage 6 work.
 
 The shared Living Thesis current-state model and validation are implemented in
 `packages/core` using the decisions for optional ticker metadata, dedicated
@@ -81,7 +82,7 @@ labeled shared mock data until their own future adoption stages.
 - Stage 3: Living Thesis Persistence Foundation - complete
 - Stage 4: Thesis Board adopts Living Thesis model - complete
 - Stage 5: [Review Workflow](LIVING_THESIS_REVIEW_WORKFLOW.md) - complete
-- Stage 6: Review Session
+- Stage 6: [Review Session](LIVING_THESIS_REVIEW_SESSION_STORAGE.md) - in progress; storage foundation complete
 - Stage 7: Decision Log
 - Stage 8: Score History / Thesis Timeline
 - Stage 9: Thesis Health Engine
