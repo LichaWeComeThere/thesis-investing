@@ -9,8 +9,11 @@ structured risk and catalyst types, and validation in `packages/core`.
 Phase 3 Stage 3 adds the SQLite persistence foundation for that current-state
 aggregate. Phase 3 Stage 4 connects Thesis Board to that repository through
 narrow typed main, IPC, preload, and renderer boundaries.
+Phase 3 Stage 5 adds the pure review workflow, proposed-edit preview, and
+guarded completion validation in core. Durable Review Sessions follow in
+Stage 6.
 
-The plan is based on `main` at
+The original plan was based on `main` at
 `46fe0b65a248b449f5246f266ea96e4758af94b7` and on a read-only review of the
 preserved `feature/review-workflow` and `feature/thesis-board-adopt-model`
 branches. Those branches are reference material, not code selected for merge.
@@ -87,7 +90,7 @@ string.
 
 ### `feature/review-workflow`
 
-The branch is nine commits behind current `main` and has two unique commits:
+The preserved branch contains two prototype commits:
 
 - `a48026d74d74d661280d31bc543202268c4d31f9` adds a shared `LivingThesis`
   model.
@@ -118,8 +121,7 @@ approved model rather than cherry-picking the branch wholesale.
 
 ### `feature/thesis-board-adopt-model`
 
-The branch is also nine commits behind current `main` and has two unique
-commits:
+This preserved branch also contains two prototype commits:
 
 - `ba7eb306848ff330a6ba000aa3b6e8b62e7566c7` adds the same proposed model
   under a different commit.
@@ -408,8 +410,10 @@ unchanged.
 
 ## Review Workflow Architecture
 
-The preserved branch's ordered workflow is a useful starting point. The
-recommended stages are:
+Stage 5 implements the ordered workflow against the approved current-state
+model. The [Review Workflow contract](LIVING_THESIS_REVIEW_WORKFLOW.md) describes
+the public core API, editable draft boundaries, validation, and Stage 6 handoff.
+The steps are:
 
 1. start review and capture reason;
 2. review the thesis summary and cases;
@@ -422,6 +426,12 @@ recommended stages are:
 Pure workflow transitions and completion validation belong in `packages/core`.
 Persistence orchestration and timestamps belong in Electron main services.
 Renderer components should receive a typed Review Session client.
+
+The core workflow captures the baseline thesis ID/version, keeps proposed edits
+and optional score input separate, enforces ordered confirmations, and
+invalidates later confirmations when reviewed content changes. Both completed
+and abandoned workflows reject further edits. Final completion checks current
+saved identity/version and all content again; its returned value is in memory.
 
 Completing a review must be a single transaction. It should verify the baseline
 thesis version, update current state, append a revision, append the completed
@@ -631,10 +641,12 @@ boundary and the atomic restore behavior.
 4. **Stage 4 - Thesis Board adoption.** Complete. The Board uses the formal
    repository client, truthful empty states, versioned saves, and explicit
    conflict recovery without automatic demo insertion.
-5. **Stage 5 - Review Workflow.** Implement and test the pure workflow state
-   machine and completion validation against the approved model.
+5. **Stage 5 - Review Workflow.** Complete. Core implements and tests ordered
+   review transitions, proposed-edit previews, and completion validation
+   against the approved model.
 6. **Stage 6 - Review Session.** Persist explicit in-progress sessions and add
-   the atomic completion transaction.
+   the atomic completion transaction, including the minimum revision and
+   linked-score storage it needs before the later history interfaces.
 7. **Stage 7 - Decision Log.** Add documentary append-only entries and their
    review/session links.
 8. **Stage 8 - Score History / Timeline.** Formalize Living Thesis snapshot
@@ -673,4 +685,3 @@ remaining persistence and feature-stage questions are:
     or create only clean current state and one creation revision?
 6. When Review Sessions become portable in a later format, should in-progress Review
     Sessions be portable or imported as inactive drafts?
-
