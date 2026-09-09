@@ -43,6 +43,30 @@ export {
   validateLivingThesisCatalyst,
   validateLivingThesisRisk
 } from './livingThesis';
+export {
+  LIVING_THESIS_REVIEW_WORKFLOW_STEPS,
+  abandonLivingThesisReviewWorkflow,
+  completeLivingThesisReviewWorkflow,
+  completeLivingThesisReviewWorkflowStep,
+  getLivingThesisReviewPreview,
+  returnToLivingThesisReviewStep,
+  startLivingThesisReviewWorkflow,
+  updateLivingThesisReviewNotes,
+  updateLivingThesisReviewReason,
+  updateLivingThesisReviewScoreDraft,
+  updateLivingThesisReviewSection,
+  validateLivingThesisReviewCompletion
+} from './livingThesisReviewWorkflow';
+export type {
+  LivingThesisReviewDraft,
+  LivingThesisReviewPreview,
+  LivingThesisReviewResult,
+  LivingThesisReviewScoreDraft,
+  LivingThesisReviewSection,
+  LivingThesisReviewSectionInput,
+  LivingThesisReviewWorkflow,
+  LivingThesisReviewWorkflowStepId
+} from './livingThesisReviewWorkflow';
 export type {
   LivingThesis,
   LivingThesisCatalyst,
@@ -92,4 +116,3 @@ export {
   validateWatchlistItem
 } from './validation';
 export type { ValidationResult } from './validation';
-
