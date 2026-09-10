@@ -23,6 +23,11 @@ records.
 
 ## Prototype branches
 
-See [Prototype Branch Archival](PROTOTYPE_BRANCHES.md) for the original commit
-checkpoints and the commands to preserve them with tags before deleting their
-branches. Recording commit IDs in documentation does not create those tags.
+The [Legacy Prototype Code Archives](prototypes/README.md) contain a complete
+patch for each original prototype, recorded commit IDs, and recovery commands
+with exact Git tree checks. Once merged into `main`, these files preserve the
+prototype code independently of the old branches.
+
+See [Prototype Branch Archival](PROTOTYPE_BRANCHES.md) for the deletion checks
+and the optional tag method, which preserves the original Git commits as well.
+Recording commit IDs in documentation does not create tags.

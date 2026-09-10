@@ -1,0 +1,507 @@
+diff --git a/apps/desktop/src/renderer/src/ThesisBoardScreen.tsx b/apps/desktop/src/renderer/src/ThesisBoardScreen.tsx
+index 4ab9b7a948a7e15909ba1e37a96c05fe6783353f..e0510da1ab3323de3cb5b8d26fb51551d9ad9156 100644
+--- a/apps/desktop/src/renderer/src/ThesisBoardScreen.tsx
++++ b/apps/desktop/src/renderer/src/ThesisBoardScreen.tsx
+@@ -4,6 +4,10 @@ import {
+   MBS_CATEGORY_MAX_SCORE,
+   MBS_CATEGORY_MIN_SCORE,
+   rankManualPortfolioItems,
++  type LivingThesis,
++  type LivingThesisConvictionLevel,
++  type LivingThesisHealth,
++  type LivingThesisRiskLevel,
+   type ManualBusinessScoreCategory,
+   type ManualPortfolioRankedItem
+ } from '@thesis-investing/core';
+@@ -15,10 +19,16 @@ import {
+ } from '@thesis-investing/ui';
+ import type { CSSProperties } from 'react';
+ import { useMemo, useState } from 'react';
+-import { mockTheses, type MockThesis } from './data/mockTheses';
++import {
++  mockLivingTheses,
++  mockThesisToLivingThesis,
++  type MockThesis
++} from './data/mockTheses';
++
++type ThesisBoardSourceThesis = LivingThesis | MockThesis;
+ 
+ type ThesisBoardScreenProps = {
+-  theses?: MockThesis[];
++  theses?: ThesisBoardSourceThesis[];
+ };
+ 
+ type ThesisBoardRow = {
+@@ -68,10 +78,14 @@ const categoryHelpers: Record<ManualBusinessScoreCategory, string> = {
+ };
+ 
+ export function ThesisBoardScreen({
+-  theses = mockTheses
++  theses = mockLivingTheses
+ }: ThesisBoardScreenProps): JSX.Element {
++  const livingTheses = useMemo(
++    () => theses.map(normalizeThesisBoardSource),
++    [theses]
++  );
+   const [rows, setRows] = useState<ThesisBoardRow[]>(() =>
+-    theses.map(thesisToBoardRow)
++    livingTheses.map(livingThesisToBoardRow)
+   );
+   const [selectedRowId, setSelectedRowId] = useState(
+     () => rows[0]?.id ?? ''
+@@ -518,18 +532,30 @@ function DriverList({
+   );
+ }
+ 
+-function thesisToBoardRow(thesis: MockThesis): ThesisBoardRow {
+-  const baseScore = String(thesis.mbsScore / 10);
++function normalizeThesisBoardSource(
++  thesis: ThesisBoardSourceThesis
++): LivingThesis {
++  if (isLivingThesis(thesis)) {
++    return thesis;
++  }
+ 
++  return mockThesisToLivingThesis(thesis);
++}
++
++function isLivingThesis(thesis: ThesisBoardSourceThesis): thesis is LivingThesis {
++  return 'mbs' in thesis && 'thesisHealth' in thesis;
++}
++
++function livingThesisToBoardRow(thesis: LivingThesis): ThesisBoardRow {
+   return {
+     id: thesis.id,
+     ticker: thesis.ticker,
+     companyName: thesis.companyName,
+     theme: thesis.theme,
+-    ideaStatus: thesis.ideaStatus,
+-    thesisStatus: thesis.thesisStatus,
+-    conviction: thesis.conviction,
+-    riskLevel: thesis.riskLevel,
++    ideaStatus: formatLivingThesisStage(thesis.thesisStage),
++    thesisStatus: formatLivingThesisHealth(thesis.thesisHealth),
++    conviction: formatLivingThesisConviction(thesis.conviction),
++    riskLevel: formatLivingThesisRisk(thesis.riskLevel),
+     thesisSummary: thesis.thesisSummary,
+     bullCase: thesis.bullCase,
+     bearCase: thesis.bearCase,
+@@ -537,19 +563,56 @@ function thesisToBoardRow(thesis: MockThesis): ThesisBoardRow {
+     catalysts: thesis.catalysts,
+     lastReviewedDate: thesis.lastReviewedDate,
+     nextReviewDate: thesis.nextReviewDate,
+-    previousMbsScore: thesis.previousMbsScore,
++    previousMbsScore: thesis.mbs.previousScore,
+     categoryValues: {
+-      balanceSheet: baseScore,
+-      businessQuality: baseScore,
+-      growth: baseScore,
+-      management: baseScore,
+-      moat: baseScore,
+-      risk: baseScore,
+-      valuation: baseScore
++      balanceSheet: String(thesis.mbs.balanceSheet),
++      businessQuality: String(thesis.mbs.businessQuality),
++      growth: String(thesis.mbs.growth),
++      management: String(thesis.mbs.management),
++      moat: String(thesis.mbs.moat),
++      risk: String(thesis.mbs.risk),
++      valuation: String(thesis.mbs.valuation)
+     }
+   };
+ }
+ 
++function formatLivingThesisConviction(
++  conviction: LivingThesisConvictionLevel
++): string {
++  if (conviction === 'unrated') {
++    return 'Unrated';
++  }
++
++  return capitalizeLabel(conviction);
++}
++
++function formatLivingThesisRisk(riskLevel: LivingThesisRiskLevel): string {
++  return capitalizeLabel(riskLevel);
++}
++
++function formatLivingThesisStage(stage: LivingThesis['thesisStage']): string {
++  if (stage === 'watching') {
++    return 'Watchlist';
++  }
++
++  return capitalizeLabel(stage);
++}
++
++function formatLivingThesisHealth(health: LivingThesisHealth): string {
++  if (health === 'needs_review') {
++    return 'Needs Review';
++  }
++
++  return health
++    .split('_')
++    .map(capitalizeLabel)
++    .join(' ');
++}
++
++function capitalizeLabel(value: string): string {
++  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
++}
++
+ function buildMbsInput(
+   values: Record<ManualBusinessScoreCategory, string>
+ ): Partial<Record<ManualBusinessScoreCategory, number>> {
+diff --git a/apps/desktop/src/renderer/src/data/mockTheses.ts b/apps/desktop/src/renderer/src/data/mockTheses.ts
+index a069f7296aa30a4935017a98607b61213eba9ce6..9c8df32d6c81b6d62ab0d84b2c25d2d24a259aa7 100644
+--- a/apps/desktop/src/renderer/src/data/mockTheses.ts
++++ b/apps/desktop/src/renderer/src/data/mockTheses.ts
+@@ -1,3 +1,10 @@
++import type {
++  LivingThesis,
++  LivingThesisHealth,
++  LivingThesisReviewStatus,
++  LivingThesisStage
++} from '@thesis-investing/core';
++
+ export type MockThesisIdeaStatus =
+   | 'Watchlist'
+   | 'Researching'
+@@ -342,6 +349,83 @@ export const mockTheses: MockThesis[] = [
+   }
+ ];
+ 
++export const mockLivingTheses: LivingThesis[] = mockTheses.map(
++  mockThesisToLivingThesis
++);
++
++export function mockThesisToLivingThesis(thesis: MockThesis): LivingThesis {
++  const categoryScore = thesis.mbsScore / 10;
++  const scoreChange = thesis.mbsScore - thesis.previousMbsScore;
++  const createdAt =
++    thesis.decisionLog[0]?.createdAt ??
++    `${thesis.lastReviewedDate}T09:00:00.000Z`;
++
++  return {
++    id: thesis.id,
++    ticker: thesis.ticker,
++    companyName: thesis.companyName,
++    sector: getMockThesisSector(thesis),
++    theme: thesis.theme,
++    thesisTitle: `${thesis.companyName} ${thesis.theme} thesis`,
++    thesisSummary: thesis.thesisSummary,
++    bullCase: thesis.bullCase,
++    bearCase: thesis.bearCase,
++    keyRisks: thesis.keyRisks,
++    catalysts: thesis.catalysts,
++    notes: thesis.reviewTriggers.join(', '),
++    mbs: {
++      balanceSheet: categoryScore,
++      businessQuality: categoryScore,
++      growth: categoryScore,
++      management: categoryScore,
++      moat: categoryScore,
++      risk: categoryScore,
++      valuation: categoryScore,
++      overallScore: thesis.mbsScore,
++      previousScore: thesis.previousMbsScore,
++      scoreChange
++    },
++    conviction: mapMockConvictionToLivingThesis(thesis.conviction),
++    riskLevel: thesis.riskLevel.toLowerCase() as LivingThesis['riskLevel'],
++    thesisHealth: mapMockStatusToLivingThesisHealth(thesis.thesisStatus),
++    thesisStage: mapMockIdeaStatusToLivingThesisStage(thesis.ideaStatus),
++    reviewStatus: mapMockIdeaStatusToLivingThesisReviewStatus(
++      thesis.ideaStatus
++    ),
++    nextReviewDate: thesis.nextReviewDate,
++    lastReviewedDate: thesis.lastReviewedDate,
++    decisionLog: thesis.decisionLog.map((entry) => ({
++      id: entry.id,
++      decision: entry.title,
++      note: entry.note,
++      createdAt: entry.createdAt
++    })),
++    scoreHistory: [
++      {
++        id: `score-${thesis.id}`,
++        score: thesis.mbsScore,
++        previousScore: thesis.previousMbsScore,
++        scoreChange,
++        recordedAt: `${thesis.lastReviewedDate}T09:00:00.000Z`,
++        note: 'Mock thesis MBS score snapshot.'
++      }
++    ],
++    reviewHistory: [
++      {
++        id: `review-${thesis.id}`,
++        reviewedAt: `${thesis.lastReviewedDate}T09:00:00.000Z`,
++        reviewStatus: mapMockIdeaStatusToLivingThesisReviewStatus(
++          thesis.ideaStatus
++        ),
++        thesisHealth: mapMockStatusToLivingThesisHealth(thesis.thesisStatus),
++        note: thesis.thesisSummary
++      }
++    ],
++    createdAt,
++    updatedAt: `${thesis.lastReviewedDate}T09:00:00.000Z`
++  };
++}
++
+ export function cloneMockTheses(): MockThesis[] {
+   return mockTheses.map(cloneMockThesis);
+ }
+@@ -503,3 +587,67 @@ function scoreToRiskLevel(score: number | undefined): MockThesisRiskLevel {
+ 
+   return 'Medium';
+ }
++
++function mapMockConvictionToLivingThesis(
++  conviction: MockThesisConviction
++): LivingThesis['conviction'] {
++  return conviction.toLowerCase() as LivingThesis['conviction'];
++}
++
++function mapMockStatusToLivingThesisHealth(
++  status: MockThesisStatus
++): LivingThesisHealth {
++  if (status === 'Improving') {
++    return 'improving';
++  }
++
++  if (status === 'Weakening') {
++    return 'weakening';
++  }
++
++  if (status === 'Broken') {
++    return 'needs_review';
++  }
++
++  return 'stable';
++}
++
++function mapMockIdeaStatusToLivingThesisStage(
++  status: MockThesisIdeaStatus
++): LivingThesisStage {
++  if (status === 'Archived') {
++    return 'archived';
++  }
++
++  if (status === 'Watchlist' || status === 'Researching') {
++    return 'watching';
++  }
++
++  return 'active';
++}
++
++function mapMockIdeaStatusToLivingThesisReviewStatus(
++  status: MockThesisIdeaStatus
++): LivingThesisReviewStatus {
++  if (status === 'Needs Review' || status === 'Caution') {
++    return 'overdue';
++  }
++
++  if (status === 'Researching') {
++    return 'due_soon';
++  }
++
++  return 'current';
++}
++
++function getMockThesisSector(thesis: MockThesis): string {
++  if (thesis.theme.includes('Finance')) {
++    return 'Financials';
++  }
++
++  if (thesis.theme.includes('Energy')) {
++    return 'Consumer Discretionary';
++  }
++
++  return 'Technology';
++}
+diff --git a/packages/core/src/index.ts b/packages/core/src/index.ts
+index 788d867778e47432df4097a5331a07e9963bd6f2..26e4eb1bb79a72944eb5766b8d18ee4ed36e4ece 100644
+--- a/packages/core/src/index.ts
++++ b/packages/core/src/index.ts
+@@ -31,6 +31,21 @@ export type {
+ } from './domain';
+ export { createId } from './ids';
+ export type { IdPrefix } from './ids';
++export {
++  exampleLivingThesis
++} from './livingThesis';
++export type {
++  LivingThesis,
++  LivingThesisConvictionLevel,
++  LivingThesisDecisionLogEntry,
++  LivingThesisHealth,
++  LivingThesisMbsScores,
++  LivingThesisReviewHistoryEntry,
++  LivingThesisReviewStatus,
++  LivingThesisRiskLevel,
++  LivingThesisScoreHistoryEntry,
++  LivingThesisStage
++} from './livingThesis';
+ export {
+   createBlankInvestmentIdea,
+   mapMbsScoreToInvestmentIdea,
+diff --git a/packages/core/src/livingThesis.ts b/packages/core/src/livingThesis.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..cefd51c12b9a617e14e59f6ffc1cb6335ca3740c
+--- /dev/null
++++ b/packages/core/src/livingThesis.ts
+@@ -0,0 +1,155 @@
++import type {
++  EntityId,
++  IsoDateString,
++  ManualBusinessScoreCategory,
++  TickerSymbol
++} from './domain';
++
++export type LivingThesisHealth =
++  | 'improving'
++  | 'stable'
++  | 'weakening'
++  | 'needs_review'
++  | 'archived';
++
++export type LivingThesisStage = 'active' | 'watching' | 'archived';
++
++export type LivingThesisReviewStatus = 'current' | 'due_soon' | 'overdue';
++
++export type LivingThesisConvictionLevel =
++  | 'high'
++  | 'medium'
++  | 'low'
++  | 'unrated';
++
++export type LivingThesisRiskLevel = 'low' | 'medium' | 'high';
++
++export type LivingThesisMbsScores = Record<
++  ManualBusinessScoreCategory,
++  number
++> & {
++  overallScore: number;
++  previousScore: number;
++  scoreChange: number;
++};
++
++export type LivingThesisDecisionLogEntry = {
++  id: EntityId;
++  decision: string;
++  note?: string;
++  createdAt: IsoDateString;
++};
++
++export type LivingThesisScoreHistoryEntry = {
++  id: EntityId;
++  score: number;
++  previousScore?: number;
++  scoreChange?: number;
++  recordedAt: IsoDateString;
++  note?: string;
++};
++
++export type LivingThesisReviewHistoryEntry = {
++  id: EntityId;
++  reviewedAt: IsoDateString;
++  reviewStatus: LivingThesisReviewStatus;
++  thesisHealth: LivingThesisHealth;
++  note?: string;
++};
++
++export type LivingThesis = {
++  id: EntityId;
++  ticker: TickerSymbol;
++  companyName: string;
++  sector: string;
++  theme: string;
++  thesisTitle: string;
++  thesisSummary: string;
++  bullCase: string;
++  bearCase: string;
++  keyRisks: string;
++  catalysts: string;
++  notes: string;
++  mbs: LivingThesisMbsScores;
++  conviction: LivingThesisConvictionLevel;
++  riskLevel: LivingThesisRiskLevel;
++  thesisHealth: LivingThesisHealth;
++  thesisStage: LivingThesisStage;
++  reviewStatus: LivingThesisReviewStatus;
++  nextReviewDate: IsoDateString;
++  lastReviewedDate: IsoDateString;
++  decisionLog: LivingThesisDecisionLogEntry[];
++  scoreHistory: LivingThesisScoreHistoryEntry[];
++  reviewHistory: LivingThesisReviewHistoryEntry[];
++  createdAt: IsoDateString;
++  updatedAt: IsoDateString;
++};
++
++export const exampleLivingThesis: LivingThesis = {
++  id: 'living-thesis-nvda',
++  ticker: 'NVDA',
++  companyName: 'NVIDIA',
++  sector: 'Technology',
++  theme: 'AI Infrastructure',
++  thesisTitle: 'NVIDIA AI infrastructure leadership thesis',
++  thesisSummary:
++    'AI accelerator demand and platform depth support durable premium returns.',
++  bullCase:
++    'Data center demand, CUDA ecosystem strength, and networking scale compound together.',
++  bearCase:
++    'Customer concentration and supply constraints could compress expectations.',
++  keyRisks:
++    'Export controls, hyperscaler capex cyclicality, and valuation sensitivity.',
++  catalysts:
++    'Earnings updates, Blackwell ramp, and data center capex commentary.',
++  notes:
++    'Example local thesis record for gradual adoption by app workflows.',
++  mbs: {
++    balanceSheet: 8.6,
++    businessQuality: 8.6,
++    growth: 8.6,
++    management: 8.6,
++    moat: 8.6,
++    risk: 8.6,
++    valuation: 8.6,
++    overallScore: 86,
++    previousScore: 82,
++    scoreChange: 4
++  },
++  conviction: 'high',
++  riskLevel: 'medium',
++  thesisHealth: 'stable',
++  thesisStage: 'active',
++  reviewStatus: 'current',
++  nextReviewDate: '2026-06-12',
++  lastReviewedDate: '2026-05-20',
++  decisionLog: [
++    {
++      id: 'living-decision-nvda-1',
++      decision: 'Score updated',
++      note: 'Business quality and moat assumptions refreshed.',
++      createdAt: '2026-05-20T09:00:00.000Z'
++    }
++  ],
++  scoreHistory: [
++    {
++      id: 'living-score-nvda-1',
++      score: 86,
++      previousScore: 82,
++      scoreChange: 4,
++      recordedAt: '2026-05-20T09:00:00.000Z',
++      note: 'Manual MBS score refreshed after thesis review.'
++    }
++  ],
++  reviewHistory: [
++    {
++      id: 'living-review-nvda-1',
++      reviewedAt: '2026-05-20T09:00:00.000Z',
++      reviewStatus: 'current',
++      thesisHealth: 'stable',
++      note: 'Thesis remains intact after score refresh.'
++    }
++  ],
++  createdAt: '2026-05-01T09:00:00.000Z',
++  updatedAt: '2026-05-20T09:00:00.000Z'
++};
