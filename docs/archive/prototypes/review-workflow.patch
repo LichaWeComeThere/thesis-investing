@@ -1,0 +1,478 @@
+diff --git a/packages/core/src/index.ts b/packages/core/src/index.ts
+index 788d867778e47432df4097a5331a07e9963bd6f2..b717305a72adb3e03997fb9cab7c3a6fb54e3d48 100644
+--- a/packages/core/src/index.ts
++++ b/packages/core/src/index.ts
+@@ -31,6 +31,36 @@ export type {
+ } from './domain';
+ export { createId } from './ids';
+ export type { IdPrefix } from './ids';
++export {
++  exampleLivingThesis
++} from './livingThesis';
++export type {
++  LivingThesis,
++  LivingThesisConvictionLevel,
++  LivingThesisDecisionLogEntry,
++  LivingThesisHealth,
++  LivingThesisMbsScores,
++  LivingThesisReviewHistoryEntry,
++  LivingThesisReviewStatus,
++  LivingThesisRiskLevel,
++  LivingThesisScoreHistoryEntry,
++  LivingThesisStage
++} from './livingThesis';
++export {
++  canCompleteLivingThesisReviewWorkflow,
++  completeLivingThesisReviewWorkflowStep,
++  getNextLivingThesisReviewWorkflowStep,
++  LIVING_THESIS_REVIEW_WORKFLOW_STEPS,
++  startLivingThesisReviewWorkflow,
++  updateLivingThesisReviewReason,
++  updateLivingThesisReviewScoreDraft
++} from './livingThesisReviewWorkflow';
++export type {
++  LivingThesisReviewWorkflow,
++  LivingThesisReviewWorkflowStatus,
++  LivingThesisReviewWorkflowStep,
++  LivingThesisReviewWorkflowStepId
++} from './livingThesisReviewWorkflow';
+ export {
+   createBlankInvestmentIdea,
+   mapMbsScoreToInvestmentIdea,
+diff --git a/packages/core/src/livingThesis.ts b/packages/core/src/livingThesis.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..cefd51c12b9a617e14e59f6ffc1cb6335ca3740c
+--- /dev/null
++++ b/packages/core/src/livingThesis.ts
+@@ -0,0 +1,155 @@
++import type {
++  EntityId,
++  IsoDateString,
++  ManualBusinessScoreCategory,
++  TickerSymbol
++} from './domain';
++
++export type LivingThesisHealth =
++  | 'improving'
++  | 'stable'
++  | 'weakening'
++  | 'needs_review'
++  | 'archived';
++
++export type LivingThesisStage = 'active' | 'watching' | 'archived';
++
++export type LivingThesisReviewStatus = 'current' | 'due_soon' | 'overdue';
++
++export type LivingThesisConvictionLevel =
++  | 'high'
++  | 'medium'
++  | 'low'
++  | 'unrated';
++
++export type LivingThesisRiskLevel = 'low' | 'medium' | 'high';
++
++export type LivingThesisMbsScores = Record<
++  ManualBusinessScoreCategory,
++  number
++> & {
++  overallScore: number;
++  previousScore: number;
++  scoreChange: number;
++};
++
++export type LivingThesisDecisionLogEntry = {
++  id: EntityId;
++  decision: string;
++  note?: string;
++  createdAt: IsoDateString;
++};
++
++export type LivingThesisScoreHistoryEntry = {
++  id: EntityId;
++  score: number;
++  previousScore?: number;
++  scoreChange?: number;
++  recordedAt: IsoDateString;
++  note?: string;
++};
++
++export type LivingThesisReviewHistoryEntry = {
++  id: EntityId;
++  reviewedAt: IsoDateString;
++  reviewStatus: LivingThesisReviewStatus;
++  thesisHealth: LivingThesisHealth;
++  note?: string;
++};
++
++export type LivingThesis = {
++  id: EntityId;
++  ticker: TickerSymbol;
++  companyName: string;
++  sector: string;
++  theme: string;
++  thesisTitle: string;
++  thesisSummary: string;
++  bullCase: string;
++  bearCase: string;
++  keyRisks: string;
++  catalysts: string;
++  notes: string;
++  mbs: LivingThesisMbsScores;
++  conviction: LivingThesisConvictionLevel;
++  riskLevel: LivingThesisRiskLevel;
++  thesisHealth: LivingThesisHealth;
++  thesisStage: LivingThesisStage;
++  reviewStatus: LivingThesisReviewStatus;
++  nextReviewDate: IsoDateString;
++  lastReviewedDate: IsoDateString;
++  decisionLog: LivingThesisDecisionLogEntry[];
++  scoreHistory: LivingThesisScoreHistoryEntry[];
++  reviewHistory: LivingThesisReviewHistoryEntry[];
++  createdAt: IsoDateString;
++  updatedAt: IsoDateString;
++};
++
++export const exampleLivingThesis: LivingThesis = {
++  id: 'living-thesis-nvda',
++  ticker: 'NVDA',
++  companyName: 'NVIDIA',
++  sector: 'Technology',
++  theme: 'AI Infrastructure',
++  thesisTitle: 'NVIDIA AI infrastructure leadership thesis',
++  thesisSummary:
++    'AI accelerator demand and platform depth support durable premium returns.',
++  bullCase:
++    'Data center demand, CUDA ecosystem strength, and networking scale compound together.',
++  bearCase:
++    'Customer concentration and supply constraints could compress expectations.',
++  keyRisks:
++    'Export controls, hyperscaler capex cyclicality, and valuation sensitivity.',
++  catalysts:
++    'Earnings updates, Blackwell ramp, and data center capex commentary.',
++  notes:
++    'Example local thesis record for gradual adoption by app workflows.',
++  mbs: {
++    balanceSheet: 8.6,
++    businessQuality: 8.6,
++    growth: 8.6,
++    management: 8.6,
++    moat: 8.6,
++    risk: 8.6,
++    valuation: 8.6,
++    overallScore: 86,
++    previousScore: 82,
++    scoreChange: 4
++  },
++  conviction: 'high',
++  riskLevel: 'medium',
++  thesisHealth: 'stable',
++  thesisStage: 'active',
++  reviewStatus: 'current',
++  nextReviewDate: '2026-06-12',
++  lastReviewedDate: '2026-05-20',
++  decisionLog: [
++    {
++      id: 'living-decision-nvda-1',
++      decision: 'Score updated',
++      note: 'Business quality and moat assumptions refreshed.',
++      createdAt: '2026-05-20T09:00:00.000Z'
++    }
++  ],
++  scoreHistory: [
++    {
++      id: 'living-score-nvda-1',
++      score: 86,
++      previousScore: 82,
++      scoreChange: 4,
++      recordedAt: '2026-05-20T09:00:00.000Z',
++      note: 'Manual MBS score refreshed after thesis review.'
++    }
++  ],
++  reviewHistory: [
++    {
++      id: 'living-review-nvda-1',
++      reviewedAt: '2026-05-20T09:00:00.000Z',
++      reviewStatus: 'current',
++      thesisHealth: 'stable',
++      note: 'Thesis remains intact after score refresh.'
++    }
++  ],
++  createdAt: '2026-05-01T09:00:00.000Z',
++  updatedAt: '2026-05-20T09:00:00.000Z'
++};
+diff --git a/packages/core/src/livingThesisReviewWorkflow.test.ts b/packages/core/src/livingThesisReviewWorkflow.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f334f4a282b7b153513bed33409402aa614d91da
+--- /dev/null
++++ b/packages/core/src/livingThesisReviewWorkflow.test.ts
+@@ -0,0 +1,92 @@
++import { describe, expect, it } from 'vitest';
++import { exampleLivingThesis } from './livingThesis';
++import {
++  canCompleteLivingThesisReviewWorkflow,
++  completeLivingThesisReviewWorkflowStep,
++  getNextLivingThesisReviewWorkflowStep,
++  startLivingThesisReviewWorkflow,
++  updateLivingThesisReviewReason,
++  updateLivingThesisReviewScoreDraft
++} from './livingThesisReviewWorkflow';
++
++describe('living thesis review workflow', () => {
++  it('starts a local review workflow from a living thesis', () => {
++    const workflow = startLivingThesisReviewWorkflow(
++      exampleLivingThesis,
++      '2026-06-01T09:00:00.000Z'
++    );
++
++    expect(workflow).toMatchObject({
++      thesisId: exampleLivingThesis.id,
++      status: 'in_progress',
++      activeStep: 'start_review',
++      completedSteps: [],
++      reviewReason: '',
++      startedAt: '2026-06-01T09:00:00.000Z'
++    });
++    expect(workflow.scoreDraft).toEqual(exampleLivingThesis.mbs);
++    expect(workflow.scoreDraft).not.toBe(exampleLivingThesis.mbs);
++  });
++
++  it('tracks the ordered review steps without persistence', () => {
++    expect(getNextLivingThesisReviewWorkflowStep('start_review')).toBe(
++      'review_thesis_summary'
++    );
++    expect(getNextLivingThesisReviewWorkflowStep('complete_review')).toBe(
++      undefined
++    );
++  });
++
++  it('requires reviewed steps and a reason before completion is ready', () => {
++    let workflow = startLivingThesisReviewWorkflow(exampleLivingThesis);
++
++    for (const stepId of [
++      'start_review',
++      'review_thesis_summary',
++      'review_risks_and_catalysts',
++      'adjust_mbs_score',
++      'add_review_reason'
++    ] as const) {
++      workflow = completeLivingThesisReviewWorkflowStep(workflow, stepId);
++    }
++
++    expect(canCompleteLivingThesisReviewWorkflow(workflow)).toBe(false);
++
++    workflow = updateLivingThesisReviewReason(
++      workflow,
++      'Quarterly review after data center earnings update.'
++    );
++
++    expect(canCompleteLivingThesisReviewWorkflow(workflow)).toBe(true);
++
++    workflow = completeLivingThesisReviewWorkflowStep(
++      workflow,
++      'complete_review',
++      '2026-06-01T10:00:00.000Z'
++    );
++
++    expect(workflow.status).toBe('complete');
++    expect(workflow.completedAt).toBe('2026-06-01T10:00:00.000Z');
++  });
++
++  it('updates the local score draft immutably', () => {
++    const workflow = startLivingThesisReviewWorkflow(exampleLivingThesis);
++    const nextDraft = {
++      ...workflow.scoreDraft,
++      overallScore: 88,
++      previousScore: workflow.scoreDraft.overallScore,
++      scoreChange: 2
++    };
++
++    const updatedWorkflow = updateLivingThesisReviewScoreDraft(
++      workflow,
++      nextDraft,
++      '2026-06-01T09:30:00.000Z'
++    );
++
++    expect(updatedWorkflow.scoreDraft.overallScore).toBe(88);
++    expect(updatedWorkflow.scoreDraft).toEqual(nextDraft);
++    expect(updatedWorkflow.scoreDraft).not.toBe(nextDraft);
++    expect(updatedWorkflow.updatedAt).toBe('2026-06-01T09:30:00.000Z');
++  });
++});
+diff --git a/packages/core/src/livingThesisReviewWorkflow.ts b/packages/core/src/livingThesisReviewWorkflow.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..701c0543d5d5ea4eda4472003bc08fb2552458a0
+--- /dev/null
++++ b/packages/core/src/livingThesisReviewWorkflow.ts
+@@ -0,0 +1,172 @@
++import type { EntityId, IsoDateString } from './domain';
++import type { LivingThesis, LivingThesisMbsScores } from './livingThesis';
++
++export type LivingThesisReviewWorkflowStepId =
++  | 'start_review'
++  | 'review_thesis_summary'
++  | 'review_risks_and_catalysts'
++  | 'adjust_mbs_score'
++  | 'add_review_reason'
++  | 'complete_review';
++
++export type LivingThesisReviewWorkflowStatus =
++  | 'not_started'
++  | 'in_progress'
++  | 'complete';
++
++export type LivingThesisReviewWorkflowStep = {
++  id: LivingThesisReviewWorkflowStepId;
++  label: string;
++  description: string;
++};
++
++export type LivingThesisReviewWorkflow = {
++  thesisId: EntityId;
++  status: LivingThesisReviewWorkflowStatus;
++  activeStep: LivingThesisReviewWorkflowStepId;
++  completedSteps: LivingThesisReviewWorkflowStepId[];
++  reviewReason: string;
++  scoreDraft: LivingThesisMbsScores;
++  startedAt?: IsoDateString;
++  completedAt?: IsoDateString;
++  updatedAt?: IsoDateString;
++};
++
++export const LIVING_THESIS_REVIEW_WORKFLOW_STEPS: LivingThesisReviewWorkflowStep[] =
++  [
++    {
++      id: 'start_review',
++      label: 'Start review',
++      description: 'Begin a local review session for the selected thesis.'
++    },
++    {
++      id: 'review_thesis_summary',
++      label: 'Review thesis summary',
++      description: 'Re-read the core thesis and current investment logic.'
++    },
++    {
++      id: 'review_risks_and_catalysts',
++      label: 'Review risks and catalysts',
++      description: 'Check whether risks, catalysts, and triggers changed.'
++    },
++    {
++      id: 'adjust_mbs_score',
++      label: 'Adjust MBS score',
++      description: 'Update local score assumptions before saving later.'
++    },
++    {
++      id: 'add_review_reason',
++      label: 'Add review reason',
++      description: 'Capture why this thesis was reviewed.'
++    },
++    {
++      id: 'complete_review',
++      label: 'Complete review',
++      description: 'Mark the local review workflow complete.'
++    }
++  ];
++
++export function startLivingThesisReviewWorkflow(
++  thesis: LivingThesis,
++  startedAt?: IsoDateString
++): LivingThesisReviewWorkflow {
++  return {
++    thesisId: thesis.id,
++    status: 'in_progress',
++    activeStep: 'start_review',
++    completedSteps: [],
++    reviewReason: '',
++    scoreDraft: { ...thesis.mbs },
++    startedAt,
++    updatedAt: startedAt
++  };
++}
++
++export function updateLivingThesisReviewReason(
++  workflow: LivingThesisReviewWorkflow,
++  reviewReason: string,
++  updatedAt?: IsoDateString
++): LivingThesisReviewWorkflow {
++  return {
++    ...workflow,
++    reviewReason,
++    updatedAt: updatedAt ?? workflow.updatedAt
++  };
++}
++
++export function updateLivingThesisReviewScoreDraft(
++  workflow: LivingThesisReviewWorkflow,
++  scoreDraft: LivingThesisMbsScores,
++  updatedAt?: IsoDateString
++): LivingThesisReviewWorkflow {
++  return {
++    ...workflow,
++    scoreDraft: { ...scoreDraft },
++    updatedAt: updatedAt ?? workflow.updatedAt
++  };
++}
++
++export function completeLivingThesisReviewWorkflowStep(
++  workflow: LivingThesisReviewWorkflow,
++  stepId: LivingThesisReviewWorkflowStepId,
++  updatedAt?: IsoDateString
++): LivingThesisReviewWorkflow {
++  const completedSteps = addCompletedWorkflowStep(
++    workflow.completedSteps,
++    stepId
++  );
++  const nextStep = getNextLivingThesisReviewWorkflowStep(stepId);
++
++  if (stepId === 'complete_review') {
++    return {
++      ...workflow,
++      status: 'complete',
++      activeStep: 'complete_review',
++      completedSteps,
++      completedAt: updatedAt,
++      updatedAt: updatedAt ?? workflow.updatedAt
++    };
++  }
++
++  return {
++    ...workflow,
++    status: 'in_progress',
++    activeStep: nextStep ?? stepId,
++    completedSteps,
++    updatedAt: updatedAt ?? workflow.updatedAt
++  };
++}
++
++export function canCompleteLivingThesisReviewWorkflow(
++  workflow: LivingThesisReviewWorkflow
++): boolean {
++  const requiredSteps = LIVING_THESIS_REVIEW_WORKFLOW_STEPS.filter(
++    (step) => step.id !== 'complete_review'
++  ).map((step) => step.id);
++
++  return (
++    workflow.reviewReason.trim().length > 0 &&
++    requiredSteps.every((stepId) => workflow.completedSteps.includes(stepId))
++  );
++}
++
++export function getNextLivingThesisReviewWorkflowStep(
++  stepId: LivingThesisReviewWorkflowStepId
++): LivingThesisReviewWorkflowStepId | undefined {
++  const stepIndex = LIVING_THESIS_REVIEW_WORKFLOW_STEPS.findIndex(
++    (step) => step.id === stepId
++  );
++
++  return LIVING_THESIS_REVIEW_WORKFLOW_STEPS[stepIndex + 1]?.id;
++}
++
++function addCompletedWorkflowStep(
++  completedSteps: LivingThesisReviewWorkflowStepId[],
++  stepId: LivingThesisReviewWorkflowStepId
++): LivingThesisReviewWorkflowStepId[] {
++  if (completedSteps.includes(stepId)) {
++    return completedSteps;
++  }
++
++  return [...completedSteps, stepId];
++}
