@@ -41,10 +41,8 @@ pnpm verify:storage
 - [Roadmap](docs/ROADMAP.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Codex Workflow](docs/CODEX_WORKFLOW.md)
-- [Backlog](docs/BACKLOG.md)
 - [Definition Of Done](docs/DEFINITION_OF_DONE.md)
 - [Issue Labels](docs/ISSUE_LABELS.md)
-- [Phase 1 Issues](docs/PHASE_1_ISSUES.md)
 - [Phase 1 Closeout](docs/PHASE_1_CLOSEOUT.md)
 - [Phase 2 Closeout](docs/PHASE_2_CLOSEOUT.md)
 - [Design System](docs/DESIGN_SYSTEM.md)
@@ -61,11 +59,11 @@ pnpm verify:storage
 - [Release Smoke Test](docs/RELEASE_SMOKE_TEST.md)
 - [First-Run Onboarding](docs/ONBOARDING.md)
 - [Persistence](docs/PERSISTENCE.md)
-- [Persistence Wiring Plan](docs/PERSISTENCE_WIRING_PLAN.md)
 - [Local Data Export](docs/LOCAL_DATA_EXPORT.md)
 - [Local Data Import](docs/LOCAL_DATA_IMPORT.md)
 - [Local Data Maintenance](docs/LOCAL_DATA_MAINTENANCE.md)
 - [Storage Runtime Verification](docs/STORAGE_RUNTIME_VERIFICATION.md)
+- [Historical Plans and Prototype Archives](docs/archive/README.md)
 
 ## Financial Disclaimer
 
