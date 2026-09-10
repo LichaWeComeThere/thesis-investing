@@ -36,6 +36,12 @@ updates with the renderer's expected version. A successful save returns the
 repository-incremented version; a stale save returns an explicit conflict and
 the renderer retains its draft until the user chooses to reload saved state.
 
+Phase 3, Stage 6 part 1 adds durable review session storage with independent
+draft versions, original thesis baselines, restart recovery, and abandonment.
+Saved sessions are included in format 3 backups. The review screen and typed IPC
+remain later work; draft persistence does not modify the current thesis. See
+[Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md).
+
 ## Package Boundary
 
 Local persistence currently lives in `apps/desktop/src/storage`.
@@ -46,7 +52,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and MBS Scorer screens read and write through the local persistence boundary.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
-- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS Score Snapshots, and Living Theses, including archived records. Static Theme Library content is excluded.
+- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS Score Snapshots, Living Theses (including archived records), and saved review sessions (including abandoned records). Static Theme Library content is excluded.
 - Thesis Board uses `window.thesisInvesting.livingTheses` for only `list`,
   `getById`, `create`, and expected-version `update`. No repository, raw SQL,
   database handle, filesystem method, or arbitrary path crosses preload.
@@ -71,7 +77,7 @@ The repository interfaces are intentionally the stable boundary. Future work can
 
 For the Stage 17 Electron runtime check, see the [storage runtime verification guide](STORAGE_RUNTIME_VERIFICATION.md).
 
-For the staged plan to wire this boundary into visible screens, see the [persistence wiring plan](PERSISTENCE_WIRING_PLAN.md).
+For the completed Phase 1 rollout, see the [archived persistence wiring plan](archive/phase-1/PERSISTENCE_WIRING_PLAN.md). It records historical implementation state; the current boundaries are described here and in the Living Thesis guides.
 
 For the Settings/About maintenance controls, see [Local Data Maintenance](LOCAL_DATA_MAINTENANCE.md).
 
@@ -108,6 +114,14 @@ parent thesis. Storage connections explicitly enable SQLite foreign-key
 enforcement. The parent table stores no MBS value, snapshot pointer, health,
 review priority, or historical workflow arrays.
 
+Migration v5 (Phase 3 Stage 6 part 1) adds:
+
+- `living_thesis_review_sessions`
+
+Sessions reference a saved Living Thesis and store a validated workflow with its
+original baseline. A partial unique index permits one in-progress review per
+thesis. Session versions advance independently of the parent thesis version.
+
 The domain tables include local created/updated date columns where appropriate, but repositories do not generate timestamps as side effects. Dates are accepted as inputs from future application workflows.
 
 ## Repositories
@@ -121,6 +135,7 @@ The storage module defines repository interfaces for:
 - portfolio ranker items
 - MBS score snapshots
 - Living Theses with normalized current risk and catalyst children
+- Living Thesis review sessions with immutable baselines and version-checked drafts
 
 Repository implementations validate core domain data before writing to SQLite and normalize ticker symbols consistently with `packages/core`.
 
@@ -137,14 +152,13 @@ are not inferred, migrated, or automatically reinterpreted. A future explicit
 relationship stage will apply the formal `thesisId -> LivingThesis.id`
 semantics without duplicating score history in `living_theses`.
 
-The Stage 4 backup extension writes export format version 2 with Living Theses
-and their nested risks and catalysts. Version 1 remains readable without
-inventing Living Thesis relationships for legacy records. Import validates the
-complete backup, remaps parent and child collisions, and restores all six record
-types in one transaction. The internal append-only `restore` method preserves
-saved versions and uses a savepoint without committing the outer import. It is
-not exposed through the Thesis Board create/update IPC. Database schema and
-normal create/update version checks are unchanged.
+Current backups use format 3, including Living Theses and saved review sessions.
+Versions 1 and 2 remain readable without inventing later record types or
+reinterpreting legacy MBS references. Import validates the entire backup,
+remaps parent/session/child IDs together, and restores all seven record types
+in one transaction. Internal append-only restore methods retain saved versions
+and use savepoints without committing the outer import. See the
+[export guide](LOCAL_DATA_EXPORT.md) and [import guide](LOCAL_DATA_IMPORT.md).
 
 ## Out Of Scope
 

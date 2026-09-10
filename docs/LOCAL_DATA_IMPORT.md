@@ -26,10 +26,9 @@ only backup files you trust; they may contain private research notes.
 The importer accepts JSON objects with:
 
 - `format` set to `thesis-investing-local-data-export`
-- `formatVersion` set to `1` or `2`
+- `formatVersion` set to `1`, `2`, or `3`
 - app and export metadata produced by Thesis Investing
-- valid counts matching all five legacy arrays for version 1, or all six
-  arrays (including `livingTheses`) for version 2
+- valid counts matching the arrays required by that format version
 - valid domain records in each data array
 
 Imported record types are:
@@ -39,17 +38,37 @@ Imported record types are:
 - Reminders
 - Portfolio Ranker Inputs
 - MBS Score Snapshots
-- Living Theses with nested risks and catalysts (version 2 only)
+- Living Theses with nested risks and catalysts (versions 2 and 3)
+- Saved in-progress and abandoned review sessions (version 3)
 
-Version 1 backups keep their historical shape and import only the five older
-workflows. The preview reports zero Living Theses and explains that the older
-backup does not contain them. Existing Living Theses remain untouched. A file
-claiming version 1 while containing Living Thesis data or counts is rejected.
+| Format | Required data arrays and counts |
+| --- | --- |
+| 1 | The five legacy record types |
+| 2 | The five legacy types plus `livingTheses` |
+| 3 | The six version 2 types plus `reviewSessions` |
 
-Version 2 requires the `livingTheses` count and data array even when empty.
+Version 1 and 2 backups keep their historical shapes. After validation, missing
+later record types normalize to empty arrays. The preview explains that version
+1 has no Living Theses or review sessions, and version 2 has no review sessions.
+Existing local records remain untouched. A file claiming an older version while
+including newer data arrays or counts is rejected to prevent silent omission.
+
+Versions 2 and 3 require the `livingTheses` count and data array even when empty.
 Validation checks parent and child shapes, domain rules, saved versions,
 timestamps, child-to-parent references, unique parent IDs, and child IDs that
 are unique across all risks and catalysts in the backup.
+
+Version 3 also requires `reviewSessions` and its matching count, even when
+empty. Every session must include its parent Living Thesis in the same backup.
+The parser validates the session schema, timestamps, identities, and confirmed
+step order. Unconfirmed sections may retain unfinished text, dates, and partial
+finite score inputs; confirmed sections must pass their domain validation.
+
+A session baseline cannot be newer than its parent. Equal versions must contain
+the same saved thesis state. An older baseline is preserved and flagged on
+resume; it is not silently replaced. Baseline children must still belong to the
+parent with the same kind, and only one in-progress session per parent is
+allowed. Session schema 1 does not accept completed reviews.
 
 Malformed JSON, unrelated JSON, unsupported format versions, missing arrays,
 count mismatches, and invalid records are rejected before any writes occur.
@@ -81,18 +100,28 @@ When an imported Thesis Note ID is remapped, imported Watchlist and MBS snapshot
 references to that note are remapped with it. Repository validation runs before
 each write, and the entire import transaction rolls back if any write fails.
 
-Living Thesis parent IDs and risk/catalyst IDs are remapped separately. Child
-IDs share a namespace across both child types and all theses. Remapping updates
-every child's `thesisId` to its imported parent. Unused IDs from the backup are
-reserved before allocating collision suffixes, and IDs are checked again on
-confirmation in case local data changed after preview.
+Living Thesis parent IDs, review session IDs, and risk/catalyst IDs use separate
+remapping tables. One shared child-ID map covers current theses and every
+session baseline and draft, including draft-only children. A child ID retains
+one parent and kind throughout those records. Existing draft-only IDs also
+participate in collision detection. Remapping updates every parent, baseline,
+and child reference consistently. Unused incoming IDs are reserved before
+allocating suffixes; IDs are checked again on confirmation in case local data
+changed after preview.
 
 The append-only `livingTheses.restore` repository method preserves the saved
 version (including versions greater than 1), timestamps, lifecycle, review
 schedule, and child state. It never replaces an existing aggregate. Its SQLite
-savepoint participates in the enclosing import transaction, so a later failure
-also undoes earlier restored theses and all five older record types. Normal
+savepoint participates in the enclosing import transaction. Review sessions are
+restored after their parents, preserving their independent draft versions,
+timestamps, original baselines, proposed edits, notes, step progress, and score
+drafts. Their restore method also uses a savepoint. A later failure rolls back
+all seven imported record types; the preview remains available for retry. Normal
 Thesis Board creation still requires version 1.
+
+Review-session storage is implemented before its review screen and renderer IPC.
+Importing a session does not expose new review controls, complete a review, or
+write a score snapshot. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md).
 
 Legacy MBS `thesisId` values keep the existing Thesis Note remapping behavior;
 they are not inferred to reference Living Theses. Formal score linking remains
@@ -123,7 +152,7 @@ This stage does not import:
 - Theme Baskets or other bundled static content
 - onboarding completion or transient UI state
 - logs, build artifacts, Git data, credentials, secrets, tokens, or API keys
-- arbitrary JSON or export format versions other than 1 and 2
+- arbitrary JSON or export format versions other than 1, 2, and 3
 
 It also does not add database replacement, destructive restore, reset/delete actions,
 automatic backup scheduling, cloud sync, auth, live stock APIs, AI analyst

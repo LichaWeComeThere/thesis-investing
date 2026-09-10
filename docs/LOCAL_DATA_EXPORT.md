@@ -2,8 +2,9 @@
 
 Phase 2, Stage 2 adds a safe local JSON export from Settings/About.
 
-The Stage 4 backup extension writes format version 2, adding Living Theses and
-their structured risks and catalysts. The importer still accepts version 1.
+New backups use format version 3. They include Living Theses with structured
+risks and catalysts, plus saved review sessions. The importer also accepts the
+original version 1 and version 2 formats.
 
 The export is non-destructive. It reads persisted local records through the
 Electron main/storage layer, asks the user where to save a `.json` file, and
@@ -33,10 +34,18 @@ The export includes user-entered persisted records from:
 - MBS Score Snapshots
 - Living Theses, including archived records, saved versions, timestamps,
   review scheduling, and nested risks and catalysts
+- Saved review sessions, including in-progress and abandoned reviews, original
+  thesis baselines, proposed edits, notes, step progress, and partial score inputs
 
 `livingTheses` counts parent thesis records; each record carries its complete
-`risks` and `catalysts` arrays. Export reads all six record types in one SQLite
+`risks` and `catalysts` arrays. `reviewSessions` counts saved session records,
+including abandoned sessions. Export reads all seven record types in one SQLite
 transaction so the backup represents a consistent saved state.
+
+Review-session storage is implemented, but review controls are not yet exposed
+in the app. Only explicitly saved sessions are included; exporting does not
+automatically capture unsaved Board forms or other transient edits. See
+[Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md).
 
 The export also includes metadata:
 
@@ -54,7 +63,7 @@ The export does not include:
 
 - Theme Baskets, because they are static bundled educational content
 - onboarding completion from renderer `localStorage`
-- selected route, filters, search, sort, selected rows, or form drafts
+- selected route, filters, search, sort, selected rows, or unsaved form drafts
 - app logs, temp files, build artifacts, `node_modules`, or Git data
 - credentials, secrets, tokens, or API keys
 - the raw SQLite database file
@@ -65,10 +74,10 @@ The export does not include:
 ```json
 {
   "format": "thesis-investing-local-data-export",
-  "formatVersion": 2,
+  "formatVersion": 3,
   "appName": "Thesis Investing",
   "appVersion": "0.0.0",
-  "exportedAt": "2026-06-10T12:00:00.000Z",
+  "exportedAt": "2026-09-10T12:00:00.000Z",
   "storageAdapter": "node:sqlite",
   "counts": {
     "watchlistItems": 0,
@@ -76,7 +85,8 @@ The export does not include:
     "reminders": 0,
     "portfolioRankerItems": 0,
     "mbsScoreSnapshots": 0,
-    "livingTheses": 0
+    "livingTheses": 0,
+    "reviewSessions": 0
   },
   "data": {
     "watchlistItems": [],
@@ -84,7 +94,8 @@ The export does not include:
     "reminders": [],
     "portfolioRankerItems": [],
     "mbsScoreSnapshots": [],
-    "livingTheses": []
+    "livingTheses": [],
+    "reviewSessions": []
   }
 }
 ```
@@ -111,9 +122,9 @@ trusted app data folder without changing workflow records. See
 
 ## Current Limitations
 
-Import accepts valid version 1 and version 2 export files after a preview and
-explicit confirmation. Older app builds that only support version 1 cannot
-read version 2 backups; update the destination app before transferring them.
+Import accepts valid version 1, 2, and 3 export files after a preview and
+explicit confirmation. Older app builds that support only version 1 or 2 cannot
+read version 3 backups; update the destination app before transferring them.
 Import is not a destructive restore or merge:
 it does not replace the database, overwrite records, or delete existing data.
 See [Local Data Import](LOCAL_DATA_IMPORT.md) for validation and collision rules.
