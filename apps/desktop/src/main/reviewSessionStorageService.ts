@@ -3,19 +3,15 @@ import {
   abandonLivingThesisReviewWorkflow,
   parseLivingThesisReviewSession,
   startLivingThesisReviewWorkflow,
-  type LivingThesis,
   type LivingThesisReviewSession
 } from '@thesis-investing/core';
 import type { RepositoryResult } from '../storage/repositories';
 import type { SqliteStorage } from '../storage/sqlite';
 
-export type ResumedReviewSession = {
-  session: LivingThesisReviewSession;
-  currentThesis: LivingThesis;
-  baselineStatus: 'current' | 'changed' | 'archived';
-};
+import type { ResumedReviewSession } from '../shared/reviewSessionsStorage';
+export type { ResumedReviewSession } from '../shared/reviewSessionsStorage';
 
-/** Main-process storage foundation; renderer IPC and review UI follow separately. */
+/** Draft operations never modify the saved thesis or complete the review. */
 export function createReviewSessionStorageService(
   createStorage: () => Promise<SqliteStorage>,
   options: { createId?: () => string; now?: () => string } = {}
@@ -32,6 +28,18 @@ export function createReviewSessionStorageService(
     catch { return failure('Review storage is unavailable. Try again.'); }
   }
   return {
+    getActive(thesisId: string): Promise<RepositoryResult<ResumedReviewSession | null>> {
+      return run((storage) => storage.runInTransaction(() => {
+        const currentThesis = storage.repositories.livingTheses.getById(thesisId);
+        if (!currentThesis) return failure('The Living Thesis was not found.');
+        const session = storage.repositories.reviewSessions.getInProgressByThesisId(thesisId);
+        return { ok: true, value: session ? {
+          session, currentThesis,
+          baselineStatus: currentThesis.lifecycle === 'archived' ? 'archived'
+            : currentThesis.version === session.workflow.baseline.version ? 'current' : 'changed'
+        } : null };
+      }));
+    },
     async close() {
       if (!storagePromise) return;
       try { (await storagePromise).close(); } finally { storagePromise = undefined; }

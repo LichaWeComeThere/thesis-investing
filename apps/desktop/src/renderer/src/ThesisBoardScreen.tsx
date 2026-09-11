@@ -14,6 +14,10 @@ import {
 import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
 import type { ReactNode, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ReviewSessionLauncher } from './ReviewSessionLauncher';
+import { ReviewSessionScreen } from './ReviewSessionScreen';
+import { getDefaultReviewSessionsStorageClient } from './reviewSessionsStorageClient';
+import type { ResumedReviewSession, ReviewSessionsStorageApi } from '../../shared/reviewSessionsStorage';
 
 import type {
   LivingThesisCatalystWriteInput,
@@ -30,6 +34,7 @@ import {
 } from './livingThesesStorageClient';
 
 type ThesisBoardScreenProps = {
+  reviewClient?: ReviewSessionsStorageApi | null;
   client?: LivingThesesStorageClient | null;
   initialFeedback?: BoardFeedback | null;
   initialLoadState?: BoardLoadState;
@@ -107,11 +112,13 @@ const emptyDraft: BoardDraft = {
 
 export function ThesisBoardScreen({
   client = getDefaultLivingThesesStorageClient(),
+  reviewClient = getDefaultReviewSessionsStorageClient(),
   initialFeedback = null,
   initialLoadState,
   initialTheses,
   navigationRequest
 }: ThesisBoardScreenProps): JSX.Element {
+  const [review, setReview] = useState<ResumedReviewSession | null>(null);
   const [theses, setTheses] = useState<LivingThesis[]>(initialTheses ?? []);
   const [loadState, setLoadState] = useState<BoardLoadState>(
     initialLoadState ?? (initialTheses ? 'loaded' : 'loading')
@@ -129,10 +136,10 @@ export function ThesisBoardScreen({
   const editorFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (navigationRequest && !isDirty && !isSaving) {
+    if (navigationRequest && !review && !isDirty && !isSaving) {
       navigationRequest.onLeave();
     }
-  }, [isDirty, isSaving, navigationRequest]);
+  }, [isDirty, isSaving, navigationRequest, review]);
 
   const loadTheses = useCallback(async (preferredId = ''): Promise<void> => {
     if (!client) {
@@ -324,6 +331,11 @@ export function ThesisBoardScreen({
     });
   }
 
+  if (review && reviewClient) {
+    return <ReviewSessionScreen key={review.session.id} initialReview={review} client={reviewClient}
+      navigationRequest={navigationRequest} onReturn={() => setReview(null)} />;
+  }
+
   return (
     <div className="thesis-board-screen living-thesis-board">
       <PageHeader
@@ -334,8 +346,7 @@ export function ThesisBoardScreen({
       />
 
       <p className="living-thesis-provenance" role="note">
-        This Board reads and writes formal Living Thesis records in local SQLite.
-        MBS history, review workflows, health, and review priority are separate future stages.
+        Your theses and saved review drafts stay on this device. Start a review to revisit your research one section at a time.
       </p>
 
       {feedback ? (
@@ -344,6 +355,10 @@ export function ThesisBoardScreen({
           onReload={feedback.type === 'conflict' ? reloadAfterConflict : undefined}
         />
       ) : null}
+
+      {selectedThesis && !isCreating && loadState === 'loaded' ? <ReviewSessionLauncher
+        key={selectedThesis.id} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving} onOpen={setReview}
+      /> : null}
 
       <div className="living-thesis-board-layout">
         <Card className="living-thesis-list-card" title="Living Thesis records">
@@ -693,4 +708,3 @@ function getLifecycleBadge(lifecycle: LivingThesisLifecycle): 'accent' | 'neutra
   if (lifecycle === 'paused') return 'warning';
   return 'neutral';
 }
-

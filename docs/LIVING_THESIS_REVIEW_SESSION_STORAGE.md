@@ -1,8 +1,9 @@
 # Living Thesis Review Session Storage
 
-Phase 3 Stage 6, part 1 adds durable unfinished reviews. It implements storage
-and backup support, with no review screen or renderer IPC yet. A draft save
-never changes the current thesis or creates a revision, score, or decision.
+Phase 3 Stage 6, part 1 adds durable unfinished reviews and backup support.
+[Part 2](LIVING_THESIS_REVIEW_SESSION_UI.md) connects this contract to the guided
+review screen through typed IPC. A draft save never changes the current thesis
+or creates a revision, score, or decision.
 
 ## Persisted contract
 
@@ -34,6 +35,8 @@ intact. Session reads are deterministic by update time descending then ID.
 
 `createReviewSessionStorageService` supplies:
 
+- `getActive(thesisId)`: read the current thesis and its active session together,
+  including baseline status, so the Board can offer Start or Resume review.
 - `start(thesisId)`: load the saved thesis, generate a session ID and timestamps,
   then recheck its baseline inside the creation transaction. Archived theses
   cannot start a review; an existing active review must be resumed or abandoned.
@@ -56,8 +59,9 @@ review baselines/drafts, including draft-only children. No hard-delete method
 is exposed. Main storage failures return safe retry messages.
 
 Draft persistence is explicit, not automatic capture of unsaved Board fields.
-The later UI must call the service through a narrow validated IPC contract,
-show save failures, and require conflict resolution before final completion.
+The guided UI calls the service through a narrow validated IPC contract and
+retains edits after save failures. Final completion must resolve any changed
+baseline before writing current thesis state.
 
 ## Backups
 
@@ -92,7 +96,7 @@ changed/archived parents, abandonment, schema 4 upgrades, ID reservation,
 format 1/2 compatibility, format 3 file round trips, stale baseline recovery,
 and full import rollback after an injected later-session failure.
 
-Remaining Stage 6 work is the review screen and typed IPC, followed by atomic
-completion with the minimum revision and linked-score storage. Manual Windows
+Remaining Stage 6 work is atomic completion with the minimum revision and
+linked-score storage. Manual Windows
 UI/installer testing remains deferred; automated Windows packaging does not
 establish interactive behavior.
