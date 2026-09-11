@@ -5,6 +5,7 @@ import type { LivingThesesStorageApi } from './livingThesesStorage';
 import type { MbsScoreSnapshotsStorageApi } from './mbsScoreSnapshotsStorage';
 import type { PortfolioRankerStorageApi } from './portfolioRankerStorage';
 import type { RemindersStorageApi } from './remindersStorage';
+import type { ReviewSessionsStorageApi } from './reviewSessionsStorage';
 import type { ThesisNotesStorageApi } from './thesisNotesStorage';
 
 export const watchlistStorageChannels = {
@@ -30,6 +31,7 @@ export type WatchlistStorageApi = {
 };
 
 export type ThesisInvestingApi = {
+  reviewSessions: ReviewSessionsStorageApi;
   dashboardSummaries: DashboardSummariesStorageApi;
   localData: LocalDataStorageApi;
   livingTheses: LivingThesesStorageApi;

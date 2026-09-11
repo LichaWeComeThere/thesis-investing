@@ -11,8 +11,9 @@ aggregate. Phase 3 Stage 4 connects Thesis Board to that repository through
 narrow typed main, IPC, preload, and renderer boundaries.
 Phase 3 Stage 5 adds the pure review workflow, proposed-edit preview, and
 guarded completion validation in core. Stage 6 part 1 adds durable review session
-storage and backup support; review UI and atomic completion follow separately.
-See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md).
+storage and backup support. Part 2 adds the guided review UI and typed IPC;
+atomic completion follows separately. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md)
+and [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md).
 
 The original plan was based on `main` at
 `46fe0b65a248b449f5246f266ea96e4758af94b7` and on a read-only review of the
@@ -651,9 +652,11 @@ boundary and the atomic restore behavior.
    review transitions, proposed-edit previews, and completion validation
    against the approved model.
 6. **Stage 6 - Review Session.** Part 1 implements explicit in-progress session
-   storage, restart recovery, conflict checks, and format 3 backups. Next add
-   the review UI and atomic completion transaction, including the minimum revision and
-   linked-score storage it needs before the later history interfaces.
+   storage, restart recovery, conflict checks, and format 3 backups. Part 2
+   connects the guided UI through typed IPC, including explicit saves and
+   navigation protection. Next add the atomic completion transaction, including
+   the minimum revision and linked-score storage it needs before the later
+   history interfaces.
 7. **Stage 7 - Decision Log.** Add documentary append-only entries and their
    review/session links.
 8. **Stage 8 - Score History / Timeline.** Formalize Living Thesis snapshot

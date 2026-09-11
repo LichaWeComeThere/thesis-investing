@@ -5,7 +5,8 @@
   "type": "module",
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "pnpm --filter @thesis-investing/desktop dev",
+    "dev": "node apps/desktop/scripts/dev.mjs",
+    "preview:review": "node apps/desktop/scripts/reviewPreview.mjs",
     "build": "pnpm -r --if-present build",
     "test": "pnpm -r --if-present test",
     "lint": "eslint .",

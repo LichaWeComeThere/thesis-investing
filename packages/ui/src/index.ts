@@ -8,3 +8,6 @@ export { PageHeader } from './components/PageHeader';
 export type { PageHeaderProps } from './components/PageHeader';
 export { themeCssVariables, tokens } from './tokens';
 export type { Tokens } from './tokens';
+export { DraftLeaveDialog } from './components/DraftLeaveDialog';
+export { ReviewStepNavigation } from './components/ReviewStepNavigation';
+export type { ReviewStep } from './components/ReviewStepNavigation';

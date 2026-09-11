@@ -4,7 +4,7 @@ Thesis Investing is a Windows-first desktop app for building investment discipli
 
 This repository has completed Phase 1: Offline Windows MVP, Phase 2: Local Data Foundation through closeout QA, and Phase 3 Stage 5: Review Workflow. The desktop app has onboarding, a navigation shell, a local Dashboard summary overview, local manual MVP screens for scoring, ranking, thesis notes, watchlists, static theme baskets, reminders, and a persisted Living Thesis Board. It includes local SQLite persistence for Watchlist items, Thesis Notes, Reminders, Portfolio Ranker inputs, MBS Score Snapshots, and formal Living Thesis current state with structured risks and catalysts. Read-only Dashboard summaries, non-destructive export, preview-first append-only import, and local data maintenance remain available; new backups use export format version 3 and include Living Theses, their risks and catalysts, and saved review sessions, while version 1 and 2 backups remain readable. It does not connect to brokerage accounts, execute trades, provide personalized financial advice, or use live stock APIs.
 
-The [Stage 5 review workflow](docs/LIVING_THESIS_REVIEW_WORKFLOW.md) provides core review steps, proposed-edit previews, and completion validation. [Stage 6, part 1](docs/LIVING_THESIS_REVIEW_SESSION_STORAGE.md) adds durable review draft storage, restart recovery, independent version checks, and backup coverage. The review screen and atomic completion remain later Stage 6 work; this storage foundation does not yet expose review controls in the app.
+The [Stage 5 review workflow](docs/LIVING_THESIS_REVIEW_WORKFLOW.md) provides core review steps, proposed-edit previews, and completion validation. [Stage 6, part 1](docs/LIVING_THESIS_REVIEW_SESSION_STORAGE.md) adds durable review draft storage, restart recovery, independent version checks, and backup coverage. [Stage 6, part 2](docs/LIVING_THESIS_REVIEW_SESSION_UI.md) connects that storage to a guided review in Thesis Board: start or resume a review, work through six sections, and save an unfinished draft. Atomic completion remains the next Stage 6 task; saving a review draft keeps the current thesis and score history unchanged.
 
 ## Windows-first
 
@@ -27,7 +27,12 @@ pnpm test
 pnpm build
 pnpm package:windows
 pnpm verify:storage
+pnpm preview:review
 ```
+
+`pnpm preview:review` opens a browser development server with a separate example
+database and fictional research. See the [review UI guide](docs/LIVING_THESIS_REVIEW_SESSION_UI.md#browser-development-preview)
+for its scope and data location. `pnpm dev` still launches the Electron app.
 
 ## Workspace Layout
 
@@ -64,6 +69,8 @@ pnpm verify:storage
 - [Local Data Maintenance](docs/LOCAL_DATA_MAINTENANCE.md)
 - [Storage Runtime Verification](docs/STORAGE_RUNTIME_VERIFICATION.md)
 - [Historical Plans and Prototype Archives](docs/archive/README.md)
+- [Guided Review UI](docs/LIVING_THESIS_REVIEW_SESSION_UI.md)
+- [Guided Review Design QA](design-qa.md)
 
 ## Financial Disclaimer
 
