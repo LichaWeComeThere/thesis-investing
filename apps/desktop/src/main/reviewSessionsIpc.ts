@@ -15,5 +15,6 @@ export function registerReviewSessionsIpc(): void {
   ipcMain.handle(channels.start, (_event, id: unknown) => handlers.start(id));
   ipcMain.handle(channels.resume, (_event, id: unknown) => handlers.resume(id));
   ipcMain.handle(channels.saveDraft, (_event, id: unknown, workflow: unknown, version: unknown) => handlers.saveDraft(id, workflow, version));
+  ipcMain.handle(channels.complete, (_event, id: unknown, workflow: unknown, version: unknown) => handlers.complete(id, workflow, version));
   app.once('before-quit', () => { void service.close(); });
 }

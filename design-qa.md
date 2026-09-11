@@ -1,5 +1,47 @@
 # Guided Review design QA
 
+Current completion QA is recorded below. The earlier draft UI assessment is
+preserved as historical evidence.
+
+## Complete review — Stage 6 part 3
+
+Date: 2026-09-11. This extends the approved guided review layout with a final
+confirmation and a saved-result message on the Board.
+
+| Evidence | View |
+| --- | --- |
+| [Desktop confirmation](docs/screenshots/review-completion-desktop.jpg) | 1100×720; clear consequence, Complete review, and focused Keep editing |
+| [Small desktop confirmation](docs/screenshots/review-completion-small.jpg) | 860×560; complete dialog and both actions visible |
+| [Saved result](docs/screenshots/review-completion-saved.jpg) | 1100×720; completed status, updated version, and Start review available |
+
+The screenshots use only fictional Acme Research data in the isolated preview
+database. Captures retain one pixel per CSS pixel and crop the development
+size selector; the production app is not resized.
+
+- Walked through all six sections, changed the summary and confidence, and
+  explicitly skipped a new score. The final preview showed those changes.
+- Keep editing and Escape each closed confirmation without applying changes.
+  Focus began on Keep editing. Both actions fit the minimum desktop frame.
+- Confirming applied the review, returned to the Board with version 2 and a
+  success message, and released the active review so another can be started.
+- The integration test also verifies a new review date and cadence in the
+  preview, completion request, current thesis, and revision. Native browser
+  date entry was not confirmed during this visual pass.
+- No application console errors were observed. Browser extension messages
+  were excluded. No new visual or interaction blocker was found in these states.
+- 413 tests pass: 139 core, 5 shared UI, and 269 desktop. Coverage includes
+  failures after each write, full rollback and retry, lost-response recovery,
+  stale/archived theses, immutable history, migration, and backup round trips.
+- Lint, typecheck, and production build pass. Stale incremental build metadata
+  from the local snapshot was cleared before the successful build; no build
+  configuration or dependency lock changes were needed.
+
+Manual Windows UI, installer interaction, native window-close behavior, and
+assistive-technology checks remain deferred. The later timeline/decision
+interfaces are outside this change.
+
+## Historical draft UI assessment — Stage 6 part 2
+
 Date: 2026-09-11
 
 Scope: Phase 3 Stage 6, part 2. Implement the selected Guided Review direction

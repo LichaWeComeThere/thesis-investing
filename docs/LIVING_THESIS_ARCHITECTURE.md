@@ -11,9 +11,14 @@ aggregate. Phase 3 Stage 4 connects Thesis Board to that repository through
 narrow typed main, IPC, preload, and renderer boundaries.
 Phase 3 Stage 5 adds the pure review workflow, proposed-edit preview, and
 guarded completion validation in core. Stage 6 part 1 adds durable review session
-storage and backup support. Part 2 adds the guided review UI and typed IPC;
-atomic completion follows separately. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md)
+storage and backup support. Part 2 adds the guided review UI and typed IPC.
+Stage 6 now also implements explicit atomic completion, immutable before/after
+revisions, optional linked scores, and format 4 history backups. Manual Windows
+UI verification remains pending; Decision Log is the next separate Stage 7 task. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md)
 and [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md).
+
+Sections describing later entities and workflows remain architectural plans,
+not claims that those features are implemented.
 
 The original plan was based on `main` at
 `46fe0b65a248b449f5246f266ea96e4758af94b7` and on a read-only review of the
@@ -267,8 +272,8 @@ without making opaque JSON mutation a persistence contract.
 | `living_thesis_risks` | Mutable current state with retirement | Structured current risks. |
 | `living_thesis_catalysts` | Mutable current state with retirement | Structured current catalysts. |
 | `living_thesis_review_sessions` | Mutable only while in progress; immutable after completion | Review draft, baseline version, reason, notes, proposed changes, and completion metadata. |
-| `living_thesis_decisions` | Append-only | Documentary reasoning linked to a thesis and optionally a review session. |
-| `living_thesis_revisions` | Append-only | Versioned before/after domain-state snapshots or validated deltas for each committed current-state change. |
+| Planned `living_thesis_decisions` (Stage 7) | Append-only | Documentary reasoning linked to a thesis and optionally a review session. |
+| `living_thesis_revisions` | Append-only | Full before/after snapshots for completed reviews. Broader edit-history coverage remains later work. |
 | Existing `mbs_score_snapshots` | Append-only | Canonical MBS score history, optionally linked to a Living Thesis. |
 
 Conceptually, one Living Thesis owns many risk items, catalyst items, Review
@@ -435,31 +440,44 @@ invalidates later confirmations when reviewed content changes. Both completed
 and abandoned workflows reject further edits. Final completion checks current
 saved identity/version and all content again; its returned value is in memory.
 
-Completing a review must be a single transaction. It should verify the baseline
-thesis version, update current state, append a revision, append the completed
-review record, save/link an MBS snapshot when applicable, append any explicit
-Decision Log entry, and calculate the next review date. Failure should roll the
-whole operation back.
+Stage 6 completion now runs in a single transaction. It verifies the exact
+original baseline and independent session version, checks current parent
+identity/version and archived state, updates the thesis once, marks the session
+complete, appends a full before/after revision, and saves/links a new MBS snapshot
+when chosen. Failure rolls back the whole operation. An exact retry after a lost
+response returns the saved result without duplicating history or scores.
+
+The original plan also anticipated explicit Decision Log entries and automatic
+review-date calculation. Decision Log remains Stage 7 work. Current completion
+saves the user's chosen review date and cadence; it does not generate either a
+decision or a new date.
 
 ## Review Session
 
-A Review Session should have:
+The current schema 2 Review Session has the fields below. Schema 1 unfinished
+and abandoned sessions remain readable; completion upgrades an older session.
+The linked decision field remains a future Stage 7 extension.
+
+A Review Session has:
 
 - stable session ID and thesis ID;
 - status: `in_progress`, `completed`, or `abandoned`;
 - baseline thesis version;
 - start, update, completion, and optional abandonment timestamps;
-- review reason code and optional explanation;
+- free-text review reason;
 - draft/proposed thesis changes;
 - optional draft MBS input;
 - review notes;
-- completion result references such as revision, decision, and snapshot IDs.
+- completion references: required revision ID and a score snapshot ID exactly
+  when a new score was chosen.
 
-Recommendation: persist an incomplete session after the user explicitly clicks
-Start Review. Multi-step work should survive restart, but autosaving a review
-draft must not alter the current Living Thesis. Draft writes may update the
-in-progress session. A completed session becomes immutable. An abandoned
-session should be retained as such rather than silently deleted.
+Starting a review creates its durable session. Explicit **Save draft** captures
+unfinished progress for restart recovery without changing the current thesis.
+**Complete review** confirms and applies the proposed changes. Completed and
+abandoned sessions are immutable. Database migration 6 retains older records
+and adds immutable revisions, with one result per session and thesis version.
+The guided UI exposes five named IPC operations: get active, start, resume,
+save draft, and complete; abandonment remains a storage-service operation.
 
 ## Decision Log
 
@@ -590,13 +608,19 @@ the entire backup. The schema and normal create/update contract are unchanged.
 Phase 2 format version 1 remains readable with its unchanged five-workflow
 shape. Its preview explicitly states that no Living Theses are included.
 
-Stage 6 part 1 writes format version 3 with saved review sessions and retains
+Stage 6 part 1 introduced format version 3 with saved review sessions and retains
 version 1 and 2 compatibility. Session IDs, parent IDs, baseline child IDs, and
 draft child IDs are remapped together. Stale baselines remain unchanged and are
 flagged on resume; malformed progress and orphaned sessions are rejected.
 
-Later format extensions should add Decision Log entries, revisions, and formally
-linked MBS snapshots as those entities are implemented.
+Stage 6 completion now writes format version 4 with eight arrays, adding
+`thesisRevisions` and completed session/score relationships. Formats 1–3 remain
+readable. Import validates both sides of each completion, rejects orphaned or
+duplicate history transitions, and remaps parent/session/revision/score/child
+references consistently. The original score arrays remain in place; formally
+linked review scores are distinguished from legacy Thesis Note references.
+Later format extensions will add Decision Log entries when Stage 7 implements
+them.
 Relationship-aware import must continue to:
 
 1. fully validate the document and all relationships before writing;
@@ -651,16 +675,15 @@ boundary and the atomic restore behavior.
 5. **Stage 5 - Review Workflow.** Complete. Core implements and tests ordered
    review transitions, proposed-edit previews, and completion validation
    against the approved model.
-6. **Stage 6 - Review Session.** Part 1 implements explicit in-progress session
-   storage, restart recovery, conflict checks, and format 3 backups. Part 2
-   connects the guided UI through typed IPC, including explicit saves and
-   navigation protection. Next add the atomic completion transaction, including
-   the minimum revision and linked-score storage it needs before the later
-   history interfaces.
+6. **Stage 6 - Review Session.** Complete, with manual Windows UI verification
+   pending. Durable drafts, guided UI, validated IPC, navigation protection,
+   atomic completion, immutable revisions, optional linked scores, exact retry,
+   and format 4 backups are implemented. Later stages add the history interfaces.
 7. **Stage 7 - Decision Log.** Add documentary append-only entries and their
    review/session links.
-8. **Stage 8 - Score History / Timeline.** Formalize Living Thesis snapshot
-   links, revision history, and the derived unified timeline.
+8. **Stage 8 - Score History / Timeline.** Build history browsing and a derived
+   unified timeline over the review revisions and linked scores introduced in
+   Stage 6, extending event coverage where explicitly scoped.
 9. **Stage 9 - Thesis Health Engine.** Add deterministic assessment and reason
    codes over persisted local evidence.
 10. **Stage 10 - Review Queue.** Build the explainable queue from schedules,

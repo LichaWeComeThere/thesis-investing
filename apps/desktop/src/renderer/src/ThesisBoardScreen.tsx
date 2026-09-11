@@ -333,7 +333,15 @@ export function ThesisBoardScreen({
 
   if (review && reviewClient) {
     return <ReviewSessionScreen key={review.session.id} initialReview={review} client={reviewClient}
-      navigationRequest={navigationRequest} onReturn={() => setReview(null)} />;
+      navigationRequest={navigationRequest} onReturn={() => setReview(null)} onComplete={(completed) => {
+        setTheses((current) => upsertThesis(current, completed.thesis));
+        setDraft(thesisToDraft(completed.thesis));
+        setSelectedId(completed.thesis.id);
+        setIsCreating(false); setIsDirty(false);
+        setFeedback({ type: 'saved', message: `Review completed. Your thesis and review history are saved.${completed.scoreSnapshot ? ' The new business score is saved too.' : ''}` });
+        navigationRequest?.onStay();
+        setReview(null);
+      }} />;
   }
 
   return (

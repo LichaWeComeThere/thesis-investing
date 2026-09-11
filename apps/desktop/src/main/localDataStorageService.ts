@@ -155,6 +155,7 @@ export function createLocalDataStorageService({
             exportedAt,
             livingTheses: storage.repositories.livingTheses.list(),
             reviewSessions: storage.repositories.reviewSessions.list(),
+            thesisRevisions: storage.repositories.thesisRevisions.list(),
             mbsScoreSnapshots: storage.repositories.mbsScoreSnapshots.list(),
             portfolioRankerItems:
               storage.repositories.portfolioRankerItems.list(),
@@ -339,6 +340,7 @@ export function buildLocalDataExportDocument({
   exportedAt,
   livingTheses,
   reviewSessions,
+  thesisRevisions,
   mbsScoreSnapshots,
   portfolioRankerItems,
   reminders,
@@ -349,6 +351,7 @@ export function buildLocalDataExportDocument({
   const counts = createLocalDataCounts({
     livingTheses,
     reviewSessions,
+    thesisRevisions,
     mbsScoreSnapshots,
     portfolioRankerItems,
     reminders,
@@ -367,6 +370,7 @@ export function buildLocalDataExportDocument({
     data: {
       livingTheses,
       reviewSessions,
+      thesisRevisions,
       watchlistItems,
       thesisNotes,
       reminders,
@@ -394,6 +398,7 @@ async function getLocalDataRecordCounts(
   return createLocalDataCounts({
     livingTheses: storage.repositories.livingTheses.list(),
     reviewSessions: storage.repositories.reviewSessions.list(),
+    thesisRevisions: storage.repositories.thesisRevisions.list(),
     mbsScoreSnapshots: storage.repositories.mbsScoreSnapshots.list(),
     portfolioRankerItems: storage.repositories.portfolioRankerItems.list(),
     reminders: storage.repositories.reminders.list(),
@@ -405,6 +410,7 @@ async function getLocalDataRecordCounts(
 function createLocalDataCounts({
   livingTheses,
   reviewSessions,
+  thesisRevisions,
   mbsScoreSnapshots,
   portfolioRankerItems,
   reminders,
@@ -414,6 +420,7 @@ function createLocalDataCounts({
   return {
     livingTheses: livingTheses.length,
     reviewSessions: reviewSessions.length,
+    thesisRevisions: thesisRevisions.length,
     watchlistItems: watchlistItems.length,
     thesisNotes: thesisNotes.length,
     reminders: reminders.length,
@@ -426,6 +433,7 @@ function createEmptyLocalDataCounts(): LocalDataExportCounts {
   return {
     livingTheses: 0,
     reviewSessions: 0,
+    thesisRevisions: 0,
     mbsScoreSnapshots: 0,
     portfolioRankerItems: 0,
     reminders: 0,
@@ -454,7 +462,8 @@ function getPersistedWorkflows(): string[] {
     'Portfolio Ranker Inputs',
     'MBS Score Snapshots',
     'Living Thesis records',
-    'Saved Living Thesis review sessions',
+    'Saved and completed Living Thesis reviews',
+    'Living Thesis revision history',
     'Dashboard summaries read persisted local data'
   ];
 }

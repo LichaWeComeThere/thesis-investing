@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  abandonLivingThesisReviewWorkflow, completeLivingThesisReviewWorkflowStep,
+  abandonLivingThesisReviewWorkflow, completeLivingThesisReviewWorkflow, completeLivingThesisReviewWorkflowStep,
   parseLivingThesisReviewSession, startLivingThesisReviewWorkflow, updateLivingThesisReviewReason,
+  updateLivingThesisReviewScoreDraft,
   type LivingThesis, type LivingThesisReviewResult, type LivingThesisReviewSession
 } from './index';
 
@@ -44,7 +45,7 @@ describe('durable review session validation', () => {
     ['missing steps', patchWorkflow({ completedSteps: undefined })], ['null score', patchWorkflow({ scoreDraft: null })],
     ['missing factors', patchWorkflow({ scoreDraft: { kind: 'score' } })],
     ...[NaN, Infinity, null].map<[string, unknown]>((moat) => [`invalid factor ${String(moat)}`, patchWorkflow({ scoreDraft: { kind: 'score', input: { moat } } })]),
-    ['unknown schema', { ...session(), schemaVersion: 2 }], ['fractional version', { ...session(), version: 1.5 }],
+    ['unknown schema', { ...session(), schemaVersion: 3 }], ['fractional version', { ...session(), version: 1.5 }],
     ['unsafe version', { ...session(), version: Number.MAX_SAFE_INTEGER + 1 }], ['wrong parent', { ...session(), thesisId: 'other' }],
     ['noncanonical time', { ...session(), updatedAt: '2026-09-09' }],
     ['time reversal', { ...session(), updatedAt: '2026-09-08T12:00:00.000Z' }],
@@ -82,5 +83,63 @@ describe('durable review session validation', () => {
     expect(parseLivingThesisReviewSession({ ...original, workflow }).ok).toBe(false);
     expect(parseLivingThesisReviewSession({ ...original, workflow, abandonedAt: time }).ok).toBe(true);
     expect(parseLivingThesisReviewSession({ ...original, abandonedAt: time }).ok).toBe(false);
+  });
+
+  it('reads original schema 1 drafts and abandoned sessions alongside new schema 2 drafts', () => {
+    for (const schemaVersion of [1, 2] as const) {
+      const original = { ...session(), schemaVersion };
+      expect(value(parseLivingThesisReviewSession(original)).schemaVersion).toBe(schemaVersion);
+      const abandoned = { ...original, workflow: value(abandonLivingThesisReviewWorkflow(original.workflow)), abandonedAt: time };
+      expect(value(parseLivingThesisReviewSession(abandoned))).toEqual(abandoned);
+    }
+  });
+
+  it('requires complete, terminal schema 2 sessions to have immutable completion references', () => {
+    const original = session();
+    let workflow = value(updateLivingThesisReviewReason(original.workflow, 'Quarterly review'));
+    workflow = value(updateLivingThesisReviewScoreDraft(workflow, { kind: 'skip' }));
+    while (workflow.activeStep !== 'complete_review') {
+      workflow = value(completeLivingThesisReviewWorkflowStep(workflow, workflow.activeStep));
+    }
+    workflow = value(completeLivingThesisReviewWorkflow(workflow, original.workflow.baseline));
+    const completed = { ...original, schemaVersion: 2, workflow, completedAt: time, revisionId: 'revision' };
+    expect(parseLivingThesisReviewSession(completed).ok).toBe(true);
+    for (const patch of [
+      { schemaVersion: 1 }, { completedAt: undefined }, { completedAt: '2026-09-10T12:00:00.000Z' },
+      { revisionId: '' }, { revisionId: undefined }, { scoreSnapshotId: 'unexpected' }, { abandonedAt: time },
+      { workflow: { ...workflow, activeStep: 'preview_changes' } },
+      { workflow: { ...workflow, completedSteps: workflow.completedSteps.slice(0, -1) } },
+      { workflow: { ...workflow, reviewReason: '' } },
+      { workflow: { ...workflow, draft: { ...workflow.draft, summary: '' } } }
+    ]) expect(parseLivingThesisReviewSession({ ...completed, ...patch }).ok).toBe(false);
+  });
+
+  it('requires a valid complete score and matching snapshot reference only for scored completions', () => {
+    const original = session();
+    let workflow = value(updateLivingThesisReviewReason(original.workflow, 'Reassess quality'));
+    workflow = value(updateLivingThesisReviewScoreDraft(workflow, { kind: 'score', input: {
+      moat: 0, management: 1, balanceSheet: 2, valuation: 3, growth: 4, businessQuality: 5, risk: 4
+    } }));
+    while (workflow.activeStep !== 'complete_review') {
+      workflow = value(completeLivingThesisReviewWorkflowStep(workflow, workflow.activeStep));
+    }
+    workflow = value(completeLivingThesisReviewWorkflow(workflow, original.workflow.baseline));
+    const completed = { ...original, schemaVersion: 2, workflow, completedAt: time, revisionId: 'revision', scoreSnapshotId: 'score' };
+    expect(parseLivingThesisReviewSession(completed).ok).toBe(true);
+    expect(parseLivingThesisReviewSession({ ...completed, scoreSnapshotId: undefined }).ok).toBe(false);
+    expect(parseLivingThesisReviewSession({ ...completed, scoreSnapshotId: ' ' }).ok).toBe(false);
+    expect(parseLivingThesisReviewSession({ ...completed, workflow: { ...workflow, scoreDraft: { kind: 'score', input: { moat: 0 } } } }).ok).toBe(false);
+  });
+
+  it('rejects completion metadata on every unfinished or abandoned session schema', () => {
+    for (const schemaVersion of [1, 2] as const) {
+      const original = { ...session(), schemaVersion };
+      for (const workflow of [original.workflow, value(abandonLivingThesisReviewWorkflow(original.workflow))]) {
+        const candidate = { ...original, workflow, ...(workflow.status === 'abandoned' ? { abandonedAt: time } : {}) };
+        for (const metadata of [{ completedAt: time }, { revisionId: 'revision' }, { scoreSnapshotId: 'score' }]) {
+          expect(parseLivingThesisReviewSession({ ...candidate, ...metadata }).ok).toBe(false);
+        }
+      }
+    }
   });
 });

@@ -29,6 +29,7 @@ import type {
 } from "./repositories";
 import { createSqliteLivingThesisRepository } from "./sqliteLivingThesisRepository";
 import { createSqliteReviewSessionRepository } from "./sqliteReviewSessionRepository";
+import { createSqliteThesisRevisionRepository } from './sqliteThesisRevisionRepository';
 
 type SqlParam = string | number | null;
 type SqlRow = Record<string, unknown>;
@@ -37,15 +38,18 @@ export function createSqliteRepositories(
   database: DatabaseSync
 ): LocalStorageRepositories {
   const livingTheses = createSqliteLivingThesisRepository(database);
+  const reviewSessions = createSqliteReviewSessionRepository(database, livingTheses);
+  const mbsScoreSnapshots = createMbsScoreSnapshotRepository(database);
   return {
     holdings: createHoldingRepository(database),
     watchlistItems: createWatchlistItemRepository(database),
     thesisNotes: createThesisNoteRepository(database),
     reminders: createReminderRepository(database),
     portfolioRankerItems: createPortfolioRankerItemRepository(database),
-    mbsScoreSnapshots: createMbsScoreSnapshotRepository(database),
+    mbsScoreSnapshots,
     livingTheses,
-    reviewSessions: createSqliteReviewSessionRepository(database, livingTheses)
+    reviewSessions,
+    thesisRevisions: createSqliteThesisRevisionRepository(database, livingTheses, reviewSessions, mbsScoreSnapshots)
   };
 }
 

@@ -9,7 +9,7 @@ import {
 } from '@thesis-investing/core';
 import { Button, DraftLeaveDialog, ReviewStepNavigation } from '@thesis-investing/ui';
 import { cloneElement, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import type { ResumedReviewSession, ReviewSessionsStorageApi } from '../../shared/reviewSessionsStorage';
+import type { CompletedReviewSession, ResumedReviewSession, ReviewSessionsStorageApi } from '../../shared/reviewSessionsStorage';
 import './reviewSession.css';
 
 const steps: readonly { id: LivingThesisReviewWorkflowStepId; label: string; description: string }[] = [
@@ -32,10 +32,11 @@ const fieldLabels: Record<keyof LivingThesisReviewDraft, string> = {
 };
 export type ReviewNavigationRequest = { destination: string; onLeave: () => void; onStay: () => void };
 
-export function ReviewSessionScreen({ initialReview, client, onReturn, navigationRequest }: {
+export function ReviewSessionScreen({ initialReview, client, onReturn, onComplete, navigationRequest }: {
   initialReview: ResumedReviewSession;
   client: ReviewSessionsStorageApi;
   onReturn: () => void;
+  onComplete: (completed: CompletedReviewSession) => void;
   navigationRequest?: ReviewNavigationRequest;
 }): JSX.Element {
   const [review, setReview] = useState(initialReview);
@@ -45,6 +46,11 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, navigatio
   const [leaving, setLeaving] = useState(false);
   const [reloading, setReloading] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [completing, setCompleting] = useState(false);
+  const [completionFailed, setCompletionFailed] = useState(false);
+  const [completionUncertain, setCompletionUncertain] = useState(false);
+  const completionRequest = useRef<{ workflow: LivingThesisReviewWorkflow; version: number } | null>(null);
   const inFlight = useRef(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const dirty = JSON.stringify(workflow) !== JSON.stringify(review.session.workflow);
@@ -55,17 +61,19 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, navigatio
 
   useEffect(() => { headingRef.current?.focus(); }, [workflow.activeStep]);
   useEffect(() => {
-    if (navigationRequest && !dirty && !busy) navigationRequest.onLeave();
-  }, [navigationRequest, dirty, busy]);
+    if (!navigationRequest) return;
+    if (confirming || completing) { navigationRequest.onStay(); return; }
+    if (!dirty && !busy) navigationRequest.onLeave();
+  }, [navigationRequest, dirty, busy, confirming, completing]);
   useEffect(() => {
-    if (!dirty && !busy) return;
+    if (!dirty && !busy && !completionUncertain) return;
     const protect = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
     window.addEventListener('beforeunload', protect);
     return () => window.removeEventListener('beforeunload', protect);
-  }, [dirty, busy]);
+  }, [dirty, busy, completionUncertain]);
 
   function apply(result: LivingThesisReviewResult<LivingThesisReviewWorkflow>): void {
-    if (inFlight.current) return;
+    if (inFlight.current || confirming || completionUncertain) return;
     if (result.ok) { setWorkflow(result.value); setErrors([]); }
     else setErrors(result.errors);
   }
@@ -88,9 +96,9 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, navigatio
     else onReturn();
   }
   async function save(after?: () => void): Promise<void> {
-    if (inFlight.current) return;
+    if (inFlight.current || confirming || completionUncertain) return;
     inFlight.current = true;
-    setBusy(true); setErrors([]); setSaveFailed(false);
+    setBusy(true); setErrors([]); setSaveFailed(false); setCompletionFailed(false);
     try {
       const result = await client.saveDraft(review.session.id, workflow, review.session.version);
       if (result.ok) {
@@ -101,12 +109,38 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, navigatio
     } catch { setErrors(['Your draft was not saved. Your edits are still here. Try saving again.']); setSaveFailed(true); }
     finally { inFlight.current = false; setBusy(false); }
   }
+  async function complete(): Promise<void> {
+    if (inFlight.current || review.baselineStatus !== 'current') return;
+    const confirmed = completionUncertain && completionRequest.current
+      ? { ok: true as const, value: completionRequest.current.workflow }
+      : workflow.activeStep === 'complete_review'
+      ? { ok: true as const, value: workflow }
+      : completeLivingThesisReviewWorkflowStep(workflow, 'preview_changes');
+    if (!confirmed.ok) { setErrors(confirmed.errors); return; }
+    const version = completionUncertain && completionRequest.current ? completionRequest.current.version : review.session.version;
+    completionRequest.current = { workflow: confirmed.value, version };
+    inFlight.current = true;
+    setBusy(true); setCompleting(true); setErrors([]); setCompletionFailed(false);
+    try {
+      const result = await client.complete(review.session.id, confirmed.value, version);
+      if (result.ok) { onComplete(result.value); return; }
+      setErrors(result.errors); setCompletionFailed(true); setCompletionUncertain(false);
+      // Refresh the warning without replacing this window's unsaved work or version.
+      try {
+        const latest = await client.resume(review.session.id);
+        if (latest.ok) setReview((current) => ({ ...current, baselineStatus: latest.value.baselineStatus, currentThesis: latest.value.currentThesis }));
+      } catch { /* Keep the original completion error and the full local draft. */ }
+    } catch {
+      setErrors(['Completion could not be confirmed. Your draft is still here. Editing is paused until the result is known. Try Complete review again to safely check or finish the same review.']);
+      setCompletionFailed(true); setCompletionUncertain(true);
+    } finally { inFlight.current = false; setBusy(false); setCompleting(false); }
+  }
   async function reloadSaved(): Promise<void> {
     if (inFlight.current) return;
     inFlight.current = true; setBusy(true); setErrors([]);
     try {
       const result = await client.resume(review.session.id);
-      if (result.ok) { setReview(result.value); setWorkflow(result.value.session.workflow); setReloading(false); setSaveFailed(false); }
+      if (result.ok) { setReview(result.value); setWorkflow(result.value.session.workflow); setReloading(false); setSaveFailed(false); setCompletionFailed(false); }
       else setErrors(result.errors);
     } catch { setErrors(['The saved draft could not be opened. Your current edits are still here.']); }
     finally { inFlight.current = false; setBusy(false); }
@@ -123,7 +157,7 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, navigatio
     <div className="guided-review">
       <header className="review-heading">
         <div><p className="review-eyebrow">Thesis Board</p><h1>Guided review</h1><p>One section at a time. Save your progress whenever you need a break.</p></div>
-        <Button type="button" variant="ghost" onClick={returnToBoard}>Return to Board</Button>
+        <Button type="button" variant="ghost" disabled={completing || confirming} onClick={returnToBoard}>Return to Board</Button>
       </header>
       <section className="review-context" aria-label="Review context">
         <div><strong>{workflow.baseline.entityName}{workflow.baseline.ticker ? ` (${workflow.baseline.ticker})` : ''}</strong><p>{workflow.baseline.title}</p></div>
@@ -133,10 +167,10 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, navigatio
       </section>
       {review.baselineStatus !== 'current' ? <div className="review-notice" role="status">
         <strong>{review.baselineStatus === 'archived' ? 'This thesis has been archived.' : 'The saved thesis has changed since this review began.'}</strong>
-        <p>Your review uses the earlier thesis. You can keep saving this draft; the current thesis stays unchanged.</p>
+        <p>Your review uses the earlier thesis. You can keep saving or copy this draft, but it cannot be completed against the earlier thesis. The current thesis stays unchanged.</p>
       </div> : null}
       <div className="review-layout">
-        <ReviewStepNavigation steps={steps} currentIndex={activeIndex} disabled={busy} onSelect={backTo} />
+        <ReviewStepNavigation steps={steps} currentIndex={activeIndex} disabled={busy || confirming || completionUncertain} onSelect={backTo} />
         <section className="review-editor" aria-labelledby="review-section-heading">
           <div className="review-editor-body">
             <h2 id="review-section-heading" tabIndex={-1} ref={headingRef}>{['Why are you reviewing?', 'Update your thesis', 'What could change?', 'Update your business score', 'How do you see the thesis now?', 'Read your review draft'][activeIndex]}</h2>
@@ -146,11 +180,11 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, navigatio
               'Risks could weaken your thesis. Catalysts are events that could change it.',
               'MBS means Manual Business Score. You can continue without a new score.',
               'Record your confidence, risks, and when you would like to check again.',
-              'These are proposed changes. Saving this draft keeps your current thesis unchanged.'
+              'Check the changes below. Complete review applies them; Save draft keeps them for later.'
             ][activeIndex]}</p>
-            {errors.length > 0 ? <div className="review-notice review-error" role="alert"><strong>{saveFailed ? 'Your changes have not been saved' : 'Please check the following'}</strong><ul>{errors.map((error) => <li key={error}>{friendlyError(error)}</li>)}</ul>
-              {saveFailed ? <Button type="button" variant="secondary" size="sm" disabled={busy} onClick={() => setReloading(true)}>Open saved draft…</Button> : null}</div> : null}
-            <fieldset disabled={busy} className="review-fields" aria-label={activeStep.label}>
+            {errors.length > 0 && !confirming ? <div className="review-notice review-error" role="alert"><strong>{completionFailed ? 'Your draft is still here' : saveFailed ? 'Your changes have not been saved' : 'Please check the following'}</strong><ul>{errors.map((error) => <li key={error}>{friendlyError(error)}</li>)}</ul>
+              {saveFailed || completionFailed ? <Button type="button" variant="secondary" size="sm" disabled={busy} onClick={() => setReloading(true)}>Open saved draft…</Button> : null}</div> : null}
+            <fieldset disabled={busy || completionUncertain} className="review-fields" aria-label={activeStep.label}>
               {activeIndex === 0 ? <>
                 <Field label="Review reason" hint="For example: Quarterly check-in, new evidence, or a change in your thinking."><input value={workflow.reviewReason} onChange={(event) => updateText('reason', event.target.value)} placeholder="Why are you taking another look?" /></Field>
                 <p className="review-inline-help">You can save an unfinished draft. Add a reason before moving to the next section.</p>
@@ -207,14 +241,20 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, navigatio
             </fieldset>
           </div>
           <footer className="review-actions">
-            <div role="status" aria-live="polite"><strong className={dirty || saveFailed ? 'review-unsaved' : 'review-saved'}>{busy ? (reloading ? 'Opening saved draft…' : 'Saving draft…') : saveFailed ? 'Not saved' : dirty ? 'Unsaved changes' : 'Draft saved locally'}</strong><small>Saving keeps this review in progress.</small></div>
-            <div className="review-action-buttons"><Button type="button" disabled={busy || !dirty} onClick={() => void save()}>{busy ? 'Saving…' : 'Save draft'}</Button>
-              {activeIndex < 5 ? <Button type="button" variant="ghost" disabled={busy} onClick={next}>Next: {steps[activeIndex + 1].label}</Button> : <Button type="button" variant="ghost" onClick={returnToBoard}>Return to Board</Button>}
+            <div role="status" aria-live="polite"><strong className={dirty || saveFailed || completionFailed ? 'review-unsaved' : 'review-saved'}>{busy ? (completing ? 'Completing review…' : reloading ? 'Opening saved draft…' : 'Saving draft…') : completionFailed ? 'Completion not confirmed' : saveFailed ? 'Not saved' : dirty ? 'Unsaved changes' : 'Draft saved locally'}</strong><small>Saving keeps this review in progress.</small></div>
+            <div className="review-action-buttons"><Button type="button" variant={activeIndex === 5 ? "secondary" : "primary"} disabled={busy || confirming || completionUncertain || !dirty} onClick={() => void save()}>{busy && !completing ? 'Saving…' : 'Save draft'}</Button>
+              {activeIndex < 5 ? <Button type="button" variant="ghost" disabled={busy} onClick={next}>Next: {steps[activeIndex + 1].label}</Button> : <Button type="button" disabled={busy || review.baselineStatus !== 'current'} onClick={() => { setErrors([]); setConfirming(true); }}>{completing ? 'Completing review…' : 'Complete review'}</Button>}
             </div>
           </footer>
         </section>
       </div>
-      {request && (dirty || busy) ? <DraftLeaveDialog title="Save your review before leaving?" description={`Save your progress before opening ${request.destination}. Discarding removes only edits made since your last draft save.`} errors={errors} busy={busy} onSave={() => void save(request.onLeave)} onDiscard={request.onLeave} onStay={request.onStay} /> : null}
+      {request && !confirming && !completing && (dirty || busy) ? <DraftLeaveDialog title="Save your review before leaving?" description={`Save your progress before opening ${request.destination}. Discarding removes only edits made since your last draft save.`} errors={errors} busy={busy} onSave={() => void save(request.onLeave)} onDiscard={request.onLeave} onStay={request.onStay} /> : null}
+      {confirming ? <DraftLeaveDialog title="Complete this review?"
+        description={review.baselineStatus !== 'current'
+          ? 'The saved thesis changed or was archived. Keep editing to save or copy your draft; completion is blocked so newer research is preserved.'
+          : `This applies the changes you just reviewed to your saved thesis and records the review in its history.${workflow.scoreDraft.kind === 'score' ? ' Your new business score is saved with this review.' : ' No new business score will be added.'} Everything is saved together. Your draft will no longer be in progress.`}
+        errors={errors.map(friendlyError)} busy={busy} onSave={() => void complete()} onStay={() => setConfirming(false)}
+        saveLabel="Complete review" busyLabel="Completing review…" stayLabel="Keep editing" stayDisabled={completionUncertain} saveDisabled={review.baselineStatus !== 'current'} /> : null}
       {reloading ? <DraftLeaveDialog title="Open the saved draft?" description="This replaces your unsaved edits with the latest saved draft. Continue editing if you want to keep or copy your current text first." errors={errors} busy={busy} onSave={() => void reloadSaved()} onStay={() => setReloading(false)} saveLabel="Open saved draft" /> : null}
     </div>
   );
@@ -244,10 +284,10 @@ function ReviewPreview({ workflow }: { workflow: LivingThesisReviewWorkflow }): 
     <div><h3>Review reason</h3><p>{workflow.reviewReason}</p></div>
     {workflow.notes ? <div><h3>Your notes</h3><p>{workflow.notes}</p></div> : null}
     <h3>Proposed thesis changes</h3>
-    {preview.changedFields.length === 0 ? <p>No thesis fields changed. Your review reason and notes can still be saved.</p> : null}
+    {preview.changedFields.length === 0 ? <p>No thesis fields changed. Completing still records your review reason, notes, and review date in history.</p> : null}
     {preview.changedFields.map((field) => <section className="review-comparison" key={field} aria-label={fieldLabels[field]}><h4>{fieldLabels[field]}</h4><div><span>Saved thesis</span><p>{display(preview.before[field])}</p></div><div><span>Review draft</span><p>{display(preview.after[field])}</p></div></section>)}
     <h3>Business score</h3>
     {workflow.scoreDraft.kind === 'score' ? <><dl>{MBS_CATEGORIES.map((category) => <div key={category}><dt>{scoreLabels[category]}</dt><dd>{workflow.scoreDraft.kind === 'score' ? workflow.scoreDraft.input[category] ?? 'Not rated' : ''} / 10</dd></div>)}</dl>{workflow.scoreDraft.input.notes ? <p>{workflow.scoreDraft.input.notes}</p> : null}</> : <p>{workflow.scoreDraft.kind === 'skip' ? 'Continue without a new score.' : 'No score choice made yet.'}</p>}
-    <p className="review-inline-help">Save this draft to keep it for later. It stays in progress and does not update your current thesis or score history.</p>
+    <p className="review-inline-help">Save draft keeps this work for later. Complete review applies these changes and records the finished review in your thesis history.</p>
   </div>;
 }

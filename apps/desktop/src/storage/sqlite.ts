@@ -4,6 +4,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type { LocalStorageRepositories } from "./repositories";
 import { runMigrations } from "./schema";
 import { createSqliteRepositories } from "./sqliteRepositories";
+import { runSqliteTransaction } from './sqliteTransactions';
 
 export interface SqliteStorageOptions {
   filename?: string;
@@ -24,18 +25,7 @@ export async function createSqliteStorage(
   return {
     repositories: createSqliteRepositories(database),
     close: () => database.close(),
-    runInTransaction: <T>(operation: () => T): T => {
-      database.exec("BEGIN IMMEDIATE;");
-
-      try {
-        const result = operation();
-        database.exec("COMMIT;");
-        return result;
-      } catch (error) {
-        database.exec("ROLLBACK;");
-        throw error;
-      }
-    }
+    runInTransaction: <T>(operation: () => T): T => runSqliteTransaction(database, operation)
   };
 }
 

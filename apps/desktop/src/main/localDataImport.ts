@@ -1,11 +1,15 @@
+import { completedReviewIntegrityErrors } from '../storage/completedReviewIntegrity';
 import { reviewChildOwnershipErrors, reviewSessionParentErrors } from '../storage/reviewSessionIntegrity';
 import {
   validateLivingThesis,
   validateLivingThesisReviewSession,
+  validateLivingThesisRevision,
   getLivingThesisChildReferences,
   getLivingThesisReviewSessionChildReferences,
+  getLivingThesisRevisionChildReferences,
   type LivingThesis,
   type LivingThesisReviewSession,
+  type LivingThesisRevision,
   validateLivingThesisCatalyst,
   validateLivingThesisRisk,
   validateMbsScoreSnapshot,
@@ -34,7 +38,8 @@ const COUNT_KEYS: Array<keyof LocalDataExportCounts> = [
   'portfolioRankerItems',
   'mbsScoreSnapshots',
   'livingTheses',
-  'reviewSessions'
+  'reviewSessions',
+  'thesisRevisions'
 ];
 
 export function parseLocalDataImportDocument(
@@ -58,7 +63,7 @@ export function parseLocalDataImportDocument(
     ]);
   }
 
-  if (parsed.formatVersion !== 1 && parsed.formatVersion !== 2 && parsed.formatVersion !== LOCAL_DATA_EXPORT_FORMAT_VERSION) {
+  if (parsed.formatVersion !== 1 && parsed.formatVersion !== 2 && parsed.formatVersion !== 3 && parsed.formatVersion !== LOCAL_DATA_EXPORT_FORMAT_VERSION) {
     return failure([
       `Unsupported local data export format version: ${String(
         parsed.formatVersion
@@ -66,10 +71,12 @@ export function parseLocalDataImportDocument(
     ]);
   }
 
+  const formatVersion = parsed.formatVersion;
   const errors = validateExportMetadata(parsed);
   const countKeys = COUNT_KEYS.filter(
     (key) => (parsed.formatVersion !== 1 || key !== 'livingTheses') &&
-      (parsed.formatVersion === 3 || key !== 'reviewSessions')
+      (formatVersion >= 3 || key !== 'reviewSessions') &&
+      (formatVersion >= 4 || key !== 'thesisRevisions')
   );
 
   if (!isRecord(parsed.counts)) {
@@ -109,10 +116,15 @@ export function parseLocalDataImportDocument(
     errors.push('Living Theses require export format version 2.');
   }
 
-  if (parsed.formatVersion !== 3 &&
+  if (parsed.formatVersion < 3 &&
     ((isRecord(counts) && 'reviewSessions' in counts) ||
       (isRecord(data) && 'reviewSessions' in data))) {
     errors.push('Review sessions require export format version 3.');
+  }
+  if (parsed.formatVersion < 4 &&
+    ((isRecord(counts) && 'thesisRevisions' in counts) ||
+      (isRecord(data) && 'thesisRevisions' in data))) {
+    errors.push('Thesis revisions require export format version 4.');
   }
   if (errors.length > 0) return failure(errors);
 
@@ -120,9 +132,11 @@ export function parseLocalDataImportDocument(
   const document: LocalDataImportDocument = {
     ...source,
     counts: { ...source.counts, ...(source.formatVersion === 1 ? { livingTheses: 0 } : {}),
-      ...(source.formatVersion !== 3 ? { reviewSessions: 0 } : {}) },
+      ...(source.formatVersion < 3 ? { reviewSessions: 0 } : {}),
+      ...(source.formatVersion < 4 ? { thesisRevisions: 0 } : {}) },
     data: { ...source.data, ...(source.formatVersion === 1 ? { livingTheses: [] } : {}),
-      ...(source.formatVersion !== 3 ? { reviewSessions: [] } : {}) }
+      ...(source.formatVersion < 3 ? { reviewSessions: [] } : {}),
+      ...(source.formatVersion < 4 ? { thesisRevisions: [] } : {}) }
   };
 
   const childIds = new Set<string>();
@@ -147,6 +161,7 @@ export function parseLocalDataImportDocument(
     }
   }
   errors.push(...reviewChildOwnershipErrors(allChildReferences(document.data)));
+  errors.push(...validateCompletedReviewLinks(document));
   return errors.length > 0 ? failure(errors) : success(document);
 }
 
@@ -182,15 +197,19 @@ export function getLocalDataImportWarnings(
     countCollisions(
       document.data.livingTheses,
       storage.repositories.livingTheses.getById
-    ) + countCollisions(document.data.reviewSessions, storage.repositories.reviewSessions.getById);
+    ) + countCollisions(document.data.reviewSessions, storage.repositories.reviewSessions.getById) +
+    countCollisions(document.data.thesisRevisions, storage.repositories.thesisRevisions.getById);
   const warnings: string[] = [];
 
   if (document.formatVersion === 1) {
     warnings.push('This older backup does not include Living Theses. Existing Living Theses on this computer will remain unchanged.');
   }
 
-  if (document.formatVersion !== 3) {
+  if (document.formatVersion < 3) {
     warnings.push('This older backup does not include review sessions. Existing review sessions will remain unchanged.');
+  }
+  if (document.formatVersion < 4) {
+    warnings.push('This older backup does not include completed review history. Existing review history will remain unchanged.');
   }
   if (document.data.reviewSessions.some((session) => {
     const parent = document.data.livingTheses.find((thesis) => thesis.id === session.thesisId)!;
@@ -211,7 +230,8 @@ export function getLocalDataImportWarnings(
 
   const existingChildIds = new Set(allChildReferences({
     livingTheses: storage.repositories.livingTheses.list(),
-    reviewSessions: storage.repositories.reviewSessions.list()
+    reviewSessions: storage.repositories.reviewSessions.list(),
+    thesisRevisions: storage.repositories.thesisRevisions.list()
   }).map(({ id }) => id));
   const childCollisions = uniqueChildReferences(document.data)
     .filter(({ id }) => existingChildIds.has(id)).length;
@@ -254,9 +274,13 @@ export function appendLocalDataImport(
     );
     const existingSessions = storage.repositories.reviewSessions.list();
     const reviewSessionIds = allocateImportIds(document.data.reviewSessions, existingSessions.map(({ id }) => id));
+    const existingRevisions = storage.repositories.thesisRevisions.list();
+    const revisionIds = allocateImportIds(document.data.thesisRevisions, existingRevisions.map(({ id }) => id));
+    const completedScoreIds = new Set(document.data.reviewSessions.flatMap((session) =>
+      session.scoreSnapshotId ? [session.scoreSnapshotId] : []));
     const livingChildIds = allocateImportIds(
       uniqueChildReferences(document.data),
-      allChildReferences({ livingTheses: existingLivingTheses, reviewSessions: existingSessions }).map(({ id }) => id)
+      allChildReferences({ livingTheses: existingLivingTheses, reviewSessions: existingSessions, thesisRevisions: existingRevisions }).map(({ id }) => id)
     );
     const remapChildren = <T extends Pick<LivingThesis, 'risks' | 'catalysts'>>(thesis: T, thesisId: string): T => ({
       ...thesis,
@@ -305,17 +329,6 @@ export function appendLocalDataImport(
       );
     }
 
-    for (const snapshot of document.data.mbsScoreSnapshots) {
-      requireCreated(
-        storage.repositories.mbsScoreSnapshots.create({
-          ...snapshot,
-          id: mbsSnapshotIds.get(snapshot.id) ?? snapshot.id,
-          thesisId: remapReference(snapshot.thesisId, thesisIds)
-        }),
-        'MBS score snapshot'
-      );
-    }
-
     for (const thesis of document.data.livingTheses) {
       const thesisId = livingThesisIds.get(thesis.id) ?? thesis.id;
       requireCreated(
@@ -323,15 +336,38 @@ export function appendLocalDataImport(
         'Living Thesis'
       );
     }
+    for (const snapshot of document.data.mbsScoreSnapshots) {
+      requireCreated(
+        storage.repositories.mbsScoreSnapshots.create({
+          ...snapshot,
+          id: mbsSnapshotIds.get(snapshot.id) ?? snapshot.id,
+          thesisId: remapReference(snapshot.thesisId, completedScoreIds.has(snapshot.id) ? livingThesisIds : thesisIds)
+        }),
+        'MBS score snapshot'
+      );
+    }
+
     for (const session of document.data.reviewSessions) {
       const thesisId = livingThesisIds.get(session.thesisId)!;
       requireCreated(storage.repositories.reviewSessions.restore({
         ...session, id: reviewSessionIds.get(session.id)!, thesisId,
+        revisionId: remapReference(session.revisionId, revisionIds),
+        scoreSnapshotId: remapReference(session.scoreSnapshotId, mbsSnapshotIds),
         workflow: { ...session.workflow,
           baseline: remapChildren({ ...session.workflow.baseline, id: thesisId }, thesisId),
           draft: remapChildren(session.workflow.draft, thesisId)
         }
       }), 'review session');
+    }
+    for (const revision of document.data.thesisRevisions) {
+      const thesisId = livingThesisIds.get(revision.thesisId)!;
+      requireCreated(storage.repositories.thesisRevisions.restore({
+        ...revision, id: revisionIds.get(revision.id)!, thesisId,
+        reviewSessionId: reviewSessionIds.get(revision.reviewSessionId)!,
+        scoreSnapshotId: remapReference(revision.scoreSnapshotId, mbsSnapshotIds),
+        before: remapChildren({ ...revision.before, id: thesisId }, thesisId),
+        after: remapChildren({ ...revision.after, id: thesisId }, thesisId)
+      }), 'thesis revision');
     }
     return { ...document.counts };
   });
@@ -411,9 +447,18 @@ function validateDataArrays(
       errors
     );
   }
-  if (formatVersion === 3) {
+  if (formatVersion >= 3) {
     validateRecordArray<LivingThesisReviewSession>(data.reviewSessions, 'reviewSessions',
-      (record) => validateLivingThesisReviewSession(record).errors,
+      (record) => [
+        ...validateLivingThesisReviewSession(record).errors,
+        ...(formatVersion < 4 && record.schemaVersion !== 1
+          ? ['Review session schema 2 requires export format version 4.'] : [])
+      ],
+      () => ({ valid: true, errors: [] }), errors);
+  }
+  if (formatVersion >= 4) {
+    validateRecordArray<LivingThesisRevision>(data.thesisRevisions, 'thesisRevisions',
+      (record) => validateLivingThesisRevision(record).errors,
       () => ({ valid: true, errors: [] }), errors);
   }
 }
@@ -703,13 +748,53 @@ function failure<T>(errors: string[]): LocalDataStorageResult<T> {
   return { ok: false, errors };
 }
 
-function allChildReferences(data: Pick<LocalDataImportDocument['data'], 'livingTheses' | 'reviewSessions'>) {
+function allChildReferences(data: Pick<LocalDataImportDocument['data'], 'livingTheses' | 'reviewSessions' | 'thesisRevisions'>) {
   return [
     ...data.livingTheses.flatMap(getLivingThesisChildReferences),
-    ...data.reviewSessions.flatMap(getLivingThesisReviewSessionChildReferences)
+    ...data.reviewSessions.flatMap(getLivingThesisReviewSessionChildReferences),
+    ...data.thesisRevisions.flatMap(getLivingThesisRevisionChildReferences)
   ];
 }
 
-function uniqueChildReferences(data: Pick<LocalDataImportDocument['data'], 'livingTheses' | 'reviewSessions'>) {
+function uniqueChildReferences(data: Pick<LocalDataImportDocument['data'], 'livingTheses' | 'reviewSessions' | 'thesisRevisions'>) {
   return [...new Map(allChildReferences(data).map((child) => [child.id, child])).values()];
+}
+
+function validateCompletedReviewLinks(document: LocalDataImportDocument): string[] {
+  const errors: string[] = [];
+  const { livingTheses, reviewSessions, thesisRevisions, mbsScoreSnapshots } = document.data;
+  const parents = new Map(livingTheses.map((item) => [item.id, item]));
+  const sessions = new Map(reviewSessions.map((item) => [item.id, item]));
+  const revisions = new Map(thesisRevisions.map((item) => [item.id, item]));
+  const snapshots = new Map(mbsScoreSnapshots.map((item) => [item.id, item]));
+  const usedSessions = new Set<string>();
+  const usedSnapshots = new Set<string>();
+  const usedParentVersions = new Map<string, Set<number>>();
+  for (const revision of thesisRevisions) {
+    const versions = usedParentVersions.get(revision.thesisId) ?? new Set<number>();
+    if (versions.has(revision.after.version)) errors.push('Only one completed review may produce a given thesis version.');
+    versions.add(revision.after.version);
+    usedParentVersions.set(revision.thesisId, versions);
+    const session = sessions.get(revision.reviewSessionId);
+    const parent = parents.get(revision.thesisId);
+    if (!session || session.workflow.status !== 'completed' || !parent) {
+      errors.push('Every thesis revision requires its completed review and parent thesis in the backup.');
+      continue;
+    }
+    if (usedSessions.has(session.id)) errors.push('Each completed review can have only one thesis revision.');
+    usedSessions.add(session.id);
+    if (revision.scoreSnapshotId) {
+      if (usedSnapshots.has(revision.scoreSnapshotId)) errors.push('Each completed review must own its own score snapshot.');
+      usedSnapshots.add(revision.scoreSnapshotId);
+    }
+    errors.push(...completedReviewIntegrityErrors(session, revision, parent,
+      revision.scoreSnapshotId ? snapshots.get(revision.scoreSnapshotId) : undefined));
+  }
+  for (const session of reviewSessions) {
+    if (session.workflow.status === 'completed' &&
+      (!session.revisionId || revisions.get(session.revisionId)?.reviewSessionId !== session.id)) {
+      errors.push('Every completed review requires its matching thesis revision in the backup.');
+    }
+  }
+  return errors;
 }

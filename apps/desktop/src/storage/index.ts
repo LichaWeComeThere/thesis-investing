@@ -2,6 +2,7 @@ export type {
   HoldingRepository,
   LivingThesisRepository,
   LivingThesisReviewSessionRepository,
+  LivingThesisRevisionRepository,
   LocalStorageRepositories,
   PortfolioRankerItemRepository,
   ReminderRepository,

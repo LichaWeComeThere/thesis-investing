@@ -60,7 +60,7 @@ function service(storage: SqliteStorage, id = 'review') {
   return createReviewSessionStorageService(async () => storage, { createId: () => id, now: () => later });
 }
 function document(livingTheses: LivingThesis[], reviewSessions: LivingThesisReviewSession[]): LocalDataExportDocument {
-  return buildLocalDataExportDocument({ exportedAt: later, livingTheses, reviewSessions,
+  return buildLocalDataExportDocument({ exportedAt: later, livingTheses, reviewSessions, thesisRevisions: [],
     watchlistItems: [], thesisNotes: [], reminders: [], portfolioRankerItems: [], mbsScoreSnapshots: [] });
 }
 function snapshot(storage: SqliteStorage) {
@@ -179,7 +179,7 @@ describe('durable review session storage', () => {
         VALUES ('existing', 3, 'Example', 'Research', 'Evidence', 'active', 'medium', 'medium', ?, ?)`)
         .run(timestamp, timestamp);
       runMigrations(database); runMigrations(database);
-      expect(database.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map((row) => row.version)).toEqual([1, 2, 3, 4, 5]);
+      expect(database.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map((row) => row.version)).toEqual([1, 2, 3, 4, 5, 6]);
     } finally { database.close(); }
     const storage = await open(filename);
     expect(storage.repositories.livingTheses.getById('existing')).toMatchObject({ version: 3, summary: 'Evidence' });
@@ -199,7 +199,7 @@ describe('durable review session storage', () => {
 });
 
 describe('review session backups', () => {
-  it('exports, imports, reopens, and resumes incomplete drafts from a version 3 JSON file', async () => {
+  it('exports, imports, reopens, and resumes incomplete drafts from a version 4 JSON file', async () => {
     const directory = await folder();
     const source = await open(join(directory, 'source.sqlite'));
     value(source.repositories.livingTheses.create(thesis()));
@@ -212,7 +212,7 @@ describe('review session backups', () => {
     expect(await exporter.get()).toMatchObject({ ok: true, value: { recordCounts: { reviewSessions: 1 } } });
     expect((await exporter.exportToJson()).ok).toBe(true);
     const exported = JSON.parse(await readFile(backup, 'utf8')) as LocalDataExportDocument;
-    expect(exported.formatVersion).toBe(3);
+    expect(exported.formatVersion).toBe(4);
     expect(exported.data.reviewSessions).toEqual([saved]);
     close(source);
     const filename = join(directory, 'target.sqlite');
@@ -287,7 +287,7 @@ describe('review session backups', () => {
     const cases = [
       { ...good, data: { ...good.data, reviewSessions: undefined } },
       { ...good, counts: { ...good.counts, reviewSessions: 2 } },
-      { ...good, formatVersion: 2 }, { ...good, formatVersion: 1 }, { ...good, formatVersion: 4 },
+      { ...good, formatVersion: 2 }, { ...good, formatVersion: 1 }, { ...good, formatVersion: 5 },
       document([], [session()]), document([thesis()], [session(), session()]),
       document([thesis()], [session(), session(thesis(), 'second')]),
       document([{ ...thesis(), summary: 'Changed without a new version' }], [session()]),

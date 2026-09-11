@@ -1,4 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
+import { isInSqliteTransaction, runSqliteTransaction } from './sqliteTransactions';
 import {
   getLivingThesisChildReferences,
   getLivingThesisReviewSessionChildReferences,
@@ -55,25 +56,17 @@ export function createSqliteReviewSessionRepository(
         throw new ReviewSessionError('A new review must start at version 1 from the current saved thesis.');
       }
       database.prepare(`INSERT INTO living_thesis_review_sessions
-        (id, thesis_id, schema_version, version, status, started_at, updated_at, abandoned_at, workflow_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        (id, thesis_id, schema_version, version, status, started_at, updated_at, abandoned_at, completed_at, revision_id, score_snapshot_id, workflow_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .run(session.id, session.thesisId, session.schemaVersion, session.version, session.workflow.status,
-          session.startedAt, session.updatedAt, session.abandonedAt ?? null, JSON.stringify(session.workflow));
+          session.startedAt, session.updatedAt, session.abandonedAt ?? null, session.completedAt ?? null,
+          session.revisionId ?? null, session.scoreSnapshotId ?? null, JSON.stringify(session.workflow));
       return session;
     });
   }
-  return {
-    create: (session) => insert(session, false),
-    restore: (session) => insert(session, true),
-    getById,
-    getInProgressByThesisId,
-    list(thesisId) {
-      const rows = thesisId === undefined
-        ? database.prepare('SELECT * FROM living_thesis_review_sessions ORDER BY updated_at DESC, id ASC').all()
-        : database.prepare('SELECT * FROM living_thesis_review_sessions WHERE thesis_id = ? ORDER BY updated_at DESC, id ASC').all(thesisId);
-      return rows.map(readReviewSessionRow);
-    },
-    update(input, expectedVersion) {
+  function updateSession(input: LivingThesisReviewSession, expectedVersion: number, completing: boolean): RepositoryResult<LivingThesisReviewSession> {
+      if (completing && !isInSqliteTransaction(database)) return { ok: false, errors: ['Completion requires its enclosing transaction.'] };
+      if ((input.workflow.status === 'completed') !== completing) return { ok: false, errors: ['Use the completion operation to finish a review.'] };
       if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1) {
         return { ok: false, errors: ['Expected review version must be a positive safe integer.'] };
       }
@@ -87,9 +80,9 @@ export function createSqliteReviewSessionRepository(
         const current = getById(session.id);
         if (!current) throw new ReviewSessionError('The review session was not found.');
         if (current.version !== expectedVersion) throw new ReviewSessionError('Review version conflict. Reload the saved draft before trying again.');
-        if (current.workflow.status !== 'in_progress') throw new ReviewSessionError('An abandoned review cannot be edited.');
+        if (current.workflow.status !== 'in_progress') throw new ReviewSessionError('An ended review cannot be edited.');
         if (session.thesisId !== current.thesisId || session.startedAt !== current.startedAt ||
-            session.schemaVersion !== current.schemaVersion || !sameReviewBaseline(session.workflow.baseline, current.workflow.baseline)) {
+            (session.schemaVersion !== current.schemaVersion && !(completing && current.schemaVersion === 1 && session.schemaVersion === 2)) || !sameReviewBaseline(session.workflow.baseline, current.workflow.baseline)) {
           throw new ReviewSessionError('Review identity, start time, schema, and baseline cannot be changed.');
         }
         if (session.updatedAt < current.updatedAt) throw new ReviewSessionError('Review update time cannot move backwards.');
@@ -97,29 +90,35 @@ export function createSqliteReviewSessionRepository(
         // Retain the exact original snapshot even if an equivalent reordered copy was supplied.
         const saved = { ...session, workflow: { ...session.workflow, baseline: current.workflow.baseline } };
         const result = database.prepare(`UPDATE living_thesis_review_sessions SET
-          version = ?, status = ?, updated_at = ?, abandoned_at = ?, workflow_json = ?
+          version = ?, schema_version = ?, status = ?, updated_at = ?, abandoned_at = ?, completed_at = ?, revision_id = ?, score_snapshot_id = ?, workflow_json = ?
           WHERE id = ? AND version = ?`)
-          .run(saved.version, saved.workflow.status, saved.updatedAt, saved.abandonedAt ?? null,
+          .run(saved.version, saved.schemaVersion, saved.workflow.status, saved.updatedAt, saved.abandonedAt ?? null,
+            saved.completedAt ?? null, saved.revisionId ?? null, saved.scoreSnapshotId ?? null,
             JSON.stringify(saved.workflow), saved.id, expectedVersion);
         if (Number(result.changes) !== 1) throw new ReviewSessionError('Review version conflict.');
         return saved;
       });
     }
+  return {
+    create: (session) => insert(session, false),
+    restore: (session) => insert(session, true),
+    getById,
+    getInProgressByThesisId,
+    list(thesisId) {
+      const rows = thesisId === undefined
+        ? database.prepare('SELECT * FROM living_thesis_review_sessions ORDER BY updated_at DESC, id ASC').all()
+        : database.prepare('SELECT * FROM living_thesis_review_sessions WHERE thesis_id = ? ORDER BY updated_at DESC, id ASC').all(thesisId);
+      return rows.map(readReviewSessionRow);
+    },
+    update: (session, version) => updateSession(session, version, false),
+    complete: (session, version) => updateSession(session, version, true)
   };
 }
 
 function transaction<T>(database: DatabaseSync, restore: boolean, operation: () => T): RepositoryResult<T> {
-  let started = false;
   try {
-    database.exec(restore ? 'SAVEPOINT review_session_restore' : 'BEGIN IMMEDIATE');
-    started = true;
-    const value = operation();
-    database.exec(restore ? 'RELEASE review_session_restore' : 'COMMIT');
-    return { ok: true, value };
+    return { ok: true, value: runSqliteTransaction(database, operation, restore) };
   } catch (error) {
-    if (started) {
-      database.exec(restore ? 'ROLLBACK TO review_session_restore; RELEASE review_session_restore' : 'ROLLBACK');
-    }
     return { ok: false, errors: [error instanceof ReviewSessionError ? error.message : 'Could not save the review session. Try again.'] };
   }
 }

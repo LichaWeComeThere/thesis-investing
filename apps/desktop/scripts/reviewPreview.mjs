@@ -32,7 +32,7 @@ const server = await createServer({
         let body = '';
         for await (const part of request) { body += part; if (body.length > 2000000) throw new Error('Too large'); }
         const { method, args } = JSON.parse(body);
-        const handlers = { 'theses.list': () => theses.list(), 'theses.getById': (...input) => theses.getById(...input), 'theses.create': (...input) => theses.create(...input), 'theses.update': (...input) => theses.update(...input), 'reviews.getActive': (...input) => reviews.getActive(...input), 'reviews.start': (...input) => reviews.start(...input), 'reviews.resume': (...input) => reviews.resume(...input), 'reviews.saveDraft': (...input) => reviews.saveDraft(...input) };
+        const handlers = { 'theses.list': () => theses.list(), 'theses.getById': (...input) => theses.getById(...input), 'theses.create': (...input) => theses.create(...input), 'theses.update': (...input) => theses.update(...input), 'reviews.getActive': (...input) => reviews.getActive(...input), 'reviews.start': (...input) => reviews.start(...input), 'reviews.resume': (...input) => reviews.resume(...input), 'reviews.saveDraft': (...input) => reviews.saveDraft(...input), 'reviews.complete': (...input) => reviews.complete(...input) };
         if (!Object.hasOwn(handlers, method) || !Array.isArray(args)) throw new Error('Invalid');
         const result = await handlers[method](...args);
         response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify(result));

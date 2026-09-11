@@ -38,8 +38,11 @@ the renderer retains its draft until the user chooses to reload saved state.
 
 Phase 3, Stage 6 part 1 adds durable review session storage with independent
 draft versions, original thesis baselines, restart recovery, and abandonment.
-Saved sessions are included in format 3 backups. The review screen and typed IPC
-remain later work; draft persistence does not modify the current thesis. See
+Part 2 connects guided review through typed IPC. Stage 6 completion now saves
+the updated thesis, completed session, immutable revision, and optional linked
+score in one transaction, with exact retry protection. Draft saves still leave
+the current thesis unchanged. Migration 6 retains schema 1 sessions, while new
+sessions and completions use schema 2. Format 4 backups include this history. See
 [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md).
 
 ## Package Boundary
@@ -52,7 +55,7 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and MBS Scorer screens read and write through the local persistence boundary.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
-- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS Score Snapshots, Living Theses (including archived records), and saved review sessions (including abandoned records). Static Theme Library content is excluded.
+- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS Score Snapshots, Living Theses (including archived records), saved review sessions (including abandoned/completed records), and thesis revisions. Static Theme Library content is excluded.
 - Thesis Board uses `window.thesisInvesting.livingTheses` for only `list`,
   `getById`, `create`, and expected-version `update`. No repository, raw SQL,
   database handle, filesystem method, or arbitrary path crosses preload.
@@ -148,14 +151,16 @@ update and are retired by status rather than deleted. No Living Thesis
 hard-delete API exists.
 
 The existing `mbs_score_snapshots.thesis_id` column is unchanged. Legacy values
-are not inferred, migrated, or automatically reinterpreted. A future explicit
-relationship stage will apply the formal `thesisId -> LivingThesis.id`
-semantics without duplicating score history in `living_theses`.
+are not inferred, migrated, or automatically reinterpreted. Stage 6 review
+completion explicitly links its new snapshots to `LivingThesis.id`; their
+completed session/revision references distinguish them from legacy values.
+Scores remain canonical snapshots rather than fields duplicated on the thesis.
 
-Current backups use format 3, including Living Theses and saved review sessions.
-Versions 1 and 2 remain readable without inventing later record types or
-reinterpreting legacy MBS references. Import validates the entire backup,
-remaps parent/session/child IDs together, and restores all seven record types
+Current backups use format 4, including Living Theses, saved review sessions,
+and immutable thesis revisions. Formats 1–3 remain readable without inventing
+later record types or reinterpreting legacy MBS references. Import validates
+the entire backup and completion links, remaps parent/session/revision/score/
+child IDs together, and restores all eight record types
 in one transaction. Internal append-only restore methods retain saved versions
 and use savepoints without committing the outer import. See the
 [export guide](LOCAL_DATA_EXPORT.md) and [import guide](LOCAL_DATA_IMPORT.md).

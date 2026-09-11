@@ -46,6 +46,20 @@ function reason() { fireEvent.change(screen.getByRole('textbox', { name: /Review
 async function toSummary() { reason(); fireEvent.click(screen.getByRole('button', { name: 'Next: Thesis' })); await screen.findByRole('heading', { name: 'Update your thesis' }); }
 function editSummary(value = 'Recheck customer retention next quarter.') { fireEvent.change(screen.getByRole('textbox', { name: /^Summary/ }), { target: { value } }); }
 async function saved() { fireEvent.click(screen.getByRole('button', { name: 'Save draft' })); await screen.findByText('Draft saved locally'); }
+async function toPreview() {
+  await toSummary(); editSummary();
+  fireEvent.click(screen.getByRole('button', { name: 'Next: Risks & catalysts' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Next: Business score' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Continue without a new score' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Next: Your assessment' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Next: Review draft' }));
+}
+async function confirmCompletion() {
+  fireEvent.click(screen.getByRole('button', { name: 'Complete review' }));
+  const dialog = await screen.findByRole('dialog', { name: 'Complete this review?' });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Complete review' }));
+  return dialog;
+}
 async function current() { const result = await reviews.getActive(thesis.id); if (!result.ok || !result.value) throw new Error('Review missing'); return result.value; }
 
 describe('guided review with real draft storage', () => {
@@ -138,7 +152,7 @@ describe('guided review with real draft storage', () => {
     await screen.findByText('The saved thesis has changed since this review began.');
     expect(screen.getByDisplayValue('Quarterly thesis check-in.')).toBeTruthy();
   });
-  it('walks through risks, an explicit score skip, assessment, and a draft-only preview', async () => {
+  it('walks through risks, an explicit score skip, assessment, and a preview without applying changes', async () => {
     await start(); await toSummary(); editSummary();
     fireEvent.click(screen.getByRole('button', { name: 'Next: Risks & catalysts' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add risk' }));
@@ -150,7 +164,7 @@ describe('guided review with real draft storage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next: Review draft' }));
     expect(screen.getByRole('heading', { name: 'Read your review draft' })).toBeTruthy();
     expect(screen.getByText('Customer concentration · open · unrated')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Complete review|Finish|Publish/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Complete review' })).toBeTruthy();
     await saved();
     const { session } = await current();
     expect(session.workflow.status).toBe('in_progress'); expect(session.workflow.scoreDraft.kind).toBe('skip');
@@ -170,10 +184,133 @@ describe('guided review with real draft storage', () => {
     for (const name of ['Competitive advantage', 'Management', 'Balance sheet', 'Growth', 'Valuation', 'Risk resilience']) {
       fireEvent.change(screen.getByRole('spinbutton', { name }), { target: { value: '8' } });
     }
+    fireEvent.change(screen.getByRole('textbox', { name: 'Score notes (optional)' }), { target: { value: 'Temporary score notes' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Score notes (optional)' }), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Next: Your assessment' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next: Review draft' }));
     expect(screen.getByText('0 / 10')).toBeTruthy();
     await saved(); expect((await current()).session.workflow.scoreDraft.kind).toBe('score');
+    const scoreCompletion = vi.spyOn(reviews, 'complete');
+    await confirmCompletion();
+    const scoreResult = await scoreCompletion.mock.results[0].value;
+    expect(scoreResult.ok, JSON.stringify(scoreResult)).toBe(true);
+    await screen.findByText('Review completed. Your thesis and review history are saved. The new business score is saved too.');
+    const storage = await createSqliteStorage({ filename });
+    const scores = storage.repositories.mbsScoreSnapshots.list();
+    expect(scores).toHaveLength(1); expect(scores[0].thesisId).toBe(thesis.id);
+    expect(scores[0].input.businessQuality).toBe(0);
+    expect(scores[0].input.notes).toBe(''); expect(scores[0].notes).toBeUndefined();
+    expect(storage.repositories.thesisRevisions.list(thesis.id)).toHaveLength(1);
+    storage.close();
+  });
+  it('applies the latest unsaved review only after confirmation and refreshes the Board version', async () => {
+    await start(); await toPreview();
+    fireEvent.click(screen.getByRole('button', { name: /^Your assessment/ }));
+    fireEvent.change(screen.getByLabelText('Next review date (optional)'), { target: { value: '2026-12-11' } });
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Review every (days, optional)' }), { target: { value: '91' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Next: Review draft' }));
+    expect(within(screen.getByRole('region', { name: 'Next review date' })).getByText('2026-12-11')).toBeTruthy();
+    expect(within(screen.getByRole('region', { name: 'Review frequency (days)' })).getByText('91')).toBeTruthy();
+    const id = (await current()).session.id;
+    const completeSpy = vi.spyOn(reviews, 'complete');
+    fireEvent.click(screen.getByRole('button', { name: 'Complete review' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Complete this review?' });
+    expect(within(dialog).getByRole('button', { name: 'Keep editing' })).toBe(document.activeElement);
+    expect(completeSpy).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Keep editing' }));
+    expect(screen.getByText('Recheck customer retention next quarter.')).toBeTruthy();
+    expect(await theses.getById(thesis.id)).toEqual({ ok: true, value: thesis });
+    await confirmCompletion();
+    await screen.findByText('Review completed. Your thesis and review history are saved.');
+    expect(screen.getByRole('textbox', { name: 'Thesis summary' })).toHaveProperty('value', 'Recheck customer retention next quarter.');
+    expect(await reviews.getActive(thesis.id)).toEqual({ ok: true, value: null });
+    expect((await reviews.resume(id)).ok).toBe(false);
+    const after = await theses.getById(thesis.id);
+    expect(after.ok && after.value.version).toBe(2);
+    expect(after.ok && after.value.nextReviewAt).toBe('2026-12-11');
+    expect(after.ok && after.value.reviewCadenceDays).toBe(91);
+    expect(completeSpy).toHaveBeenCalledWith(id, expect.objectContaining({ draft: expect.objectContaining({ nextReviewAt: '2026-12-11', reviewCadenceDays: 91 }) }), 1);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Thesis summary' }), { target: { value: 'Edit after completed review' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await screen.findByText('Changes saved locally. Version 3 is current.');
+    const storage = await createSqliteStorage({ filename });
+    expect(storage.repositories.thesisRevisions.list(thesis.id)).toHaveLength(1);
+    expect(storage.repositories.thesisRevisions.list(thesis.id)[0].after.summary).toBe('Recheck customer retention next quarter.');
+    expect(storage.repositories.thesisRevisions.list(thesis.id)[0].after.nextReviewAt).toBe('2026-12-11');
+    expect(storage.repositories.thesisRevisions.list(thesis.id)[0].after.reviewCadenceDays).toBe(91);
+    storage.close();
+  });
+  it('retains all draft changes after a rejected completion and retries explicitly', async () => {
+    await start(); await toPreview();
+    vi.spyOn(reviews, 'complete').mockResolvedValueOnce({ ok: false, errors: ['Storage is temporarily unavailable. Try again.'] });
+    const dialog = await confirmCompletion();
+    await within(dialog).findByText('Storage is temporarily unavailable. Try again.');
+    expect(await theses.getById(thesis.id)).toEqual({ ok: true, value: thesis });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Keep editing' }));
+    expect(screen.getByText('Recheck customer retention next quarter.')).toBeTruthy();
+    await confirmCompletion();
+    await screen.findByText('Review completed. Your thesis and review history are saved.');
+  });
+  it('blocks repeated completion, editing, window close, and sidebar navigation while completing', async () => {
+    await start(); await toPreview();
+    const original = reviews.complete.bind(reviews);
+    let finish!: () => void;
+    const gate = new Promise<void>((resolve) => { finish = resolve; });
+    const spy = vi.spyOn(reviews, 'complete').mockImplementationOnce(async (...args) => { await gate; return original(...args); });
+    const dialog = await confirmCompletion();
+    const pending = within(dialog).getByRole('button', { name: 'Completing review…' });
+    expect(pending.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(pending);
+    expect(within(dialog).getByRole('button', { name: 'Keep editing' }).hasAttribute('disabled')).toBe(true);
+    expect(document.querySelector('.review-fields')?.hasAttribute('disabled')).toBe(true);
+    const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); expect(event.defaultPrevented).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    expect(screen.getByRole('dialog', { name: 'Complete this review?' })).toBeTruthy();
+    expect(spy).toHaveBeenCalledTimes(1);
+    finish(); await screen.findByText('Review completed. Your thesis and review history are saved.');
+    expect(screen.getByRole('heading', { name: 'Thesis Board' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Dashboard' })).toBeNull();
+  });
+  it('recovers a lost completion response by retrying the same review without duplicate history', async () => {
+    await start(); await toPreview();
+    const original = reviews.complete.bind(reviews);
+    const spy = vi.spyOn(reviews, 'complete').mockImplementationOnce(async (...args) => {
+      const result = await original(...args); expect(result.ok).toBe(true); throw new Error('Response lost');
+    });
+    const dialog = await confirmCompletion();
+    await within(dialog).findByText(/Completion could not be confirmed/);
+    expect(screen.getByText('Completion not confirmed')).toBeTruthy();
+    const keepEditing = within(dialog).getByRole('button', { name: 'Keep editing' });
+    expect(keepEditing.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(keepEditing); fireEvent(dialog, new Event('cancel', { cancelable: true }));
+    expect(screen.getByRole('dialog', { name: 'Complete this review?' })).toBeTruthy();
+    expect(document.querySelector('.review-fields')?.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    expect(screen.getByRole('dialog', { name: 'Complete this review?' })).toBeTruthy();
+    const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); expect(event.defaultPrevented).toBe(true);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Complete review' }));
+    await screen.findByText('Review completed. Your thesis and review history are saved.');
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy.mock.calls[1]).toEqual(spy.mock.calls[0]);
+    const storage = await createSqliteStorage({ filename });
+    expect(storage.repositories.thesisRevisions.list(thesis.id)).toHaveLength(1);
+    expect(storage.repositories.livingTheses.getById(thesis.id)?.version).toBe(2);
+    storage.close();
+  });
+  it.each(['active', 'archived'] as const)('blocks completion when the source thesis changes to %s and retains the draft', async (lifecycle) => {
+    await start(); await toPreview();
+    const storage = await createSqliteStorage({ filename });
+    expect(storage.repositories.livingTheses.update({ ...thesis, lifecycle, summary: 'Newer saved research' }, 1).ok).toBe(true); storage.close();
+    const dialog = await confirmCompletion();
+    await within(dialog).findByRole('alert');
+    expect(within(dialog).getByRole('button', { name: 'Complete review' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Keep editing' }));
+    expect(screen.getByText('Recheck customer retention next quarter.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Complete review' }).hasAttribute('disabled')).toBe(true);
+    await saved();
+    const stored = await theses.getById(thesis.id);
+    expect(stored.ok && stored.value.summary).toBe('Newer saved research');
+    expect((await current()).session.workflow.draft.summary).toBe('Recheck customer retention next quarter.');
   });
   it('requires saved Board edits before starting a review', async () => {
     render(<App />); await openBoard();
