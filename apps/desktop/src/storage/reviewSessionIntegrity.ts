@@ -50,6 +50,9 @@ export function readReviewSessionRow(row: Record<string, unknown>): LivingThesis
     id: row.id, thesisId: row.thesis_id, schemaVersion: row.schema_version,
     version: row.version, startedAt: row.started_at, updatedAt: row.updated_at,
     abandonedAt: row.abandoned_at ?? undefined,
+    completedAt: row.completed_at ?? undefined,
+    revisionId: row.revision_id ?? undefined,
+    scoreSnapshotId: row.score_snapshot_id ?? undefined,
     workflow: JSON.parse(String(row.workflow_json)) as unknown
   });
   if (!parsed.ok || parsed.value.workflow.status !== row.status) {

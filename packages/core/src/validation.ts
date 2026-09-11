@@ -269,8 +269,8 @@ export function validateMbsScoreSnapshot(
     errors.push('MBS snapshot notes cannot be blank when provided.');
   }
 
-  if (snapshot.createdAt !== undefined && !isValidIsoDate(snapshot.createdAt)) {
-    errors.push('MBS snapshot created date must use YYYY-MM-DD format.');
+  if (snapshot.createdAt !== undefined && !isValidIsoDate(snapshot.createdAt) && !isValidIsoTimestamp(snapshot.createdAt)) {
+    errors.push('MBS snapshot creation time must be a YYYY-MM-DD date or canonical UTC timestamp.');
   }
 
   return toValidationResult(errors);

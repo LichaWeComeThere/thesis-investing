@@ -15,17 +15,20 @@ import {
 import { MBS_CATEGORIES } from './scoring';
 import { isValidIsoTimestamp, type ValidationResult } from './validation';
 
-export const LIVING_THESIS_REVIEW_SESSION_SCHEMA_VERSION = 1 as const;
+export const LIVING_THESIS_REVIEW_SESSION_SCHEMA_VERSION = 2 as const;
 
 /** Version counts draft saves independently from workflow.baseline.version. */
 export type LivingThesisReviewSession = {
   readonly id: EntityId;
   readonly thesisId: EntityId;
-  readonly schemaVersion: typeof LIVING_THESIS_REVIEW_SESSION_SCHEMA_VERSION;
+  readonly schemaVersion: 1 | typeof LIVING_THESIS_REVIEW_SESSION_SCHEMA_VERSION;
   readonly version: number;
   readonly startedAt: IsoTimestampString;
   readonly updatedAt: IsoTimestampString;
   readonly abandonedAt?: IsoTimestampString;
+  readonly completedAt?: IsoTimestampString;
+  readonly revisionId?: EntityId;
+  readonly scoreSnapshotId?: EntityId;
   readonly workflow: LivingThesisReviewWorkflow;
 };
 
@@ -60,7 +63,7 @@ export function parseLivingThesisReviewSession(
   const errors: string[] = [];
   checkFields(input, {
     strings: ['id', 'thesisId', 'startedAt', 'updatedAt'],
-    optionalStrings: ['abandonedAt'], numbers: ['schemaVersion', 'version'],
+    optionalStrings: ['abandonedAt', 'completedAt', 'revisionId', 'scoreSnapshotId'], numbers: ['schemaVersion', 'version'],
     nested: ['workflow']
   }, 'Review session', errors);
   if (!isRecord(input)) return { ok: false, errors };
@@ -90,7 +93,7 @@ export function parseLivingThesisReviewSession(
   if (errors.length > 0) return { ok: false, errors };
 
   const session = input as unknown as LivingThesisReviewSession;
-  if (session.schemaVersion !== LIVING_THESIS_REVIEW_SESSION_SCHEMA_VERSION) {
+  if (session.schemaVersion !== 1 && session.schemaVersion !== LIVING_THESIS_REVIEW_SESSION_SCHEMA_VERSION) {
     errors.push('Unsupported review session schema version.');
   }
   if (!Number.isSafeInteger(session.version) || session.version < 1) {
@@ -104,17 +107,32 @@ export function parseLivingThesisReviewSession(
   }
   for (const [label, time] of [
     ['startedAt', session.startedAt], ['updatedAt', session.updatedAt],
-    ...(session.abandonedAt !== undefined ? [['abandonedAt', session.abandonedAt]] : [])
+    ...(session.abandonedAt !== undefined ? [['abandonedAt', session.abandonedAt]] : []),
+    ...(session.completedAt !== undefined ? [['completedAt', session.completedAt]] : [])
   ]) {
     if (!isValidIsoTimestamp(time)) errors.push(`Review session ${label} must be a canonical UTC timestamp.`);
   }
   if (session.updatedAt < session.startedAt) errors.push('Review update cannot precede its start.');
+  if (session.workflow.status === 'completed') {
+    if (session.schemaVersion !== 2 || session.completedAt !== session.updatedAt ||
+        !session.revisionId?.trim() || session.abandonedAt !== undefined) {
+      errors.push('A completed review requires schema 2, its final completion time, and a revision ID.');
+    }
+    if (session.workflow.scoreDraft.kind === 'score'
+      ? !session.scoreSnapshotId?.trim()
+      : session.scoreSnapshotId !== undefined) {
+      errors.push('A completed review requires a score snapshot ID exactly when a new score was chosen.');
+    }
+  } else if (session.completedAt !== undefined || session.revisionId !== undefined ||
+      session.scoreSnapshotId !== undefined) {
+    errors.push('An unfinished or abandoned review cannot contain completion metadata.');
+  }
   if (session.workflow.status === 'abandoned') {
     if (session.abandonedAt !== session.updatedAt) {
       errors.push('An abandoned review requires its abandonment time to equal its final update.');
     }
-  } else if (session.workflow.status !== 'in_progress' || session.abandonedAt !== undefined) {
-    errors.push('This session schema supports only in-progress and abandoned reviews.');
+  } else if (!['in_progress', 'completed'].includes(session.workflow.status) || session.abandonedAt !== undefined) {
+    errors.push('Review session status or abandonment metadata is not supported.');
   }
   errors.push(...validateLivingThesisReviewWorkflowState(session.workflow).errors);
 

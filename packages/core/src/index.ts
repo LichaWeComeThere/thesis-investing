@@ -128,3 +128,12 @@ export {
   validateWatchlistItem
 } from './validation';
 export type { ValidationResult } from './validation';
+
+export {
+  LIVING_THESIS_REVISION_SCHEMA_VERSION,
+  buildLivingThesisReviewAfter,
+  getLivingThesisRevisionChildReferences,
+  parseLivingThesisRevision,
+  validateLivingThesisRevision
+} from './livingThesisRevision';
+export type { LivingThesisRevision } from './livingThesisRevision';

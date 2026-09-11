@@ -1,4 +1,5 @@
 import { readStoredReviewChildReferences, reviewChildOwnershipErrors } from './reviewSessionIntegrity';
+import { runSqliteTransaction } from './sqliteTransactions';
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -160,21 +161,9 @@ function runTransaction<T>(
   operation: () => T,
   useSavepoint = false
 ): RepositoryResult<T> {
-  let transactionStarted = false;
-
   try {
-    database.exec(useSavepoint ? "SAVEPOINT living_thesis_restore;" : "BEGIN IMMEDIATE;");
-    transactionStarted = true;
-    const value = operation();
-    database.exec(useSavepoint ? "RELEASE living_thesis_restore;" : "COMMIT;");
-    return success(value);
+    return success(runSqliteTransaction(database, operation, useSavepoint));
   } catch (error) {
-    if (transactionStarted) {
-      database.exec(useSavepoint
-        ? "ROLLBACK TO living_thesis_restore; RELEASE living_thesis_restore;"
-        : "ROLLBACK;");
-    }
-
     const message =
       error instanceof LivingThesisRepositoryError
         ? error.message

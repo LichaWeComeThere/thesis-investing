@@ -58,8 +58,8 @@ describe('Living Thesis backups', () => {
       ok: true, value: { status: 'completed', counts: { livingTheses: 2 } }
     });
     const exported = JSON.parse(await readFile(backupPath, 'utf8')) as LocalDataExportDocument;
-    expect(exported.formatVersion).toBe(3);
-    expect(exported.counts).toEqual({ ...legacyDocument.counts, reviewSessions: 0, livingTheses: 2 });
+    expect(exported.formatVersion).toBe(4);
+    expect(exported.counts).toEqual({ ...legacyDocument.counts, reviewSessions: 0, thesisRevisions: 0, livingTheses: 2 });
     expect(exported.data.livingTheses).toEqual(source.repositories.livingTheses.list());
     closeStorage(source);
 
@@ -73,7 +73,7 @@ describe('Living Thesis backups', () => {
     });
     expect(await importer.previewImportFromJson()).toMatchObject({
       ok: true,
-      value: { status: 'ready', preview: { formatVersion: 3, counts: exported.counts } }
+      value: { status: 'ready', preview: { formatVersion: 4, counts: exported.counts } }
     });
     expect(snapshot(target).counts.livingTheses).toBe(0);
     expect(await importer.importFromJson('preview')).toMatchObject({
@@ -98,18 +98,19 @@ describe('Living Thesis backups', () => {
       ok: true,
       value: { preview: {
         formatVersion: 1,
-        counts: { ...legacyDocument.counts, reviewSessions: 0, livingTheses: 0 },
+        counts: { ...legacyDocument.counts, reviewSessions: 0, thesisRevisions: 0, livingTheses: 0 },
         warnings: [expect.stringContaining('older backup does not include Living Theses'),
-          expect.stringContaining('older backup does not include review sessions')]
+          expect.stringContaining('older backup does not include review sessions'),
+          expect.stringContaining('older backup does not include completed review history')]
       } }
     });
     expect(await importer.importFromJson('preview')).toMatchObject({
-      ok: true, value: { imported: { ...legacyDocument.counts, reviewSessions: 0, livingTheses: 0 } }
+      ok: true, value: { imported: { ...legacyDocument.counts, reviewSessions: 0, thesisRevisions: 0, livingTheses: 0 } }
     });
     expect(storage.repositories.livingTheses.list()).toEqual([existing]);
     expect(storage.repositories.watchlistItems.getById('watch-one')?.thesisNoteId).toBe('note-one');
     expect(storage.repositories.mbsScoreSnapshots.getById('score-one')?.thesisId).toBe('note-one');
-    expect(snapshot(storage).counts).toEqual({ ...legacyDocument.counts, reviewSessions: 0, livingTheses: 1 });
+    expect(snapshot(storage).counts).toEqual({ ...legacyDocument.counts, reviewSessions: 0, thesisRevisions: 0, livingTheses: 1 });
   });
 
   it('remaps repeated imports and reserves unused parent and child IDs from the backup', async () => {
@@ -244,7 +245,7 @@ describe('Living Thesis backups', () => {
       { ...valid, data: { ...valid.data, livingTheses: undefined } },
       { ...valid, counts: { ...valid.counts, livingTheses: 0 } },
       { ...valid, counts: { ...valid.counts, livingTheses: '1' } },
-      { ...valid, formatVersion: 4 },
+      { ...valid, formatVersion: 5 },
       { ...valid, formatVersion: 1 }
     ];
     for (const document of cases) {
@@ -280,6 +281,7 @@ function snapshot(storage: SqliteStorage): LocalDataExportDocument {
     exportedAt: timestamp,
     livingTheses: storage.repositories.livingTheses.list(),
     reviewSessions: storage.repositories.reviewSessions.list(),
+    thesisRevisions: storage.repositories.thesisRevisions.list(),
     watchlistItems: storage.repositories.watchlistItems.list(),
     thesisNotes: storage.repositories.thesisNotes.list(),
     reminders: storage.repositories.reminders.list(),
@@ -289,7 +291,7 @@ function snapshot(storage: SqliteStorage): LocalDataExportDocument {
 }
 
 function makeDocument(livingTheses: LivingThesis[]): LocalDataExportDocument {
-  return buildLocalDataExportDocument({ exportedAt: timestamp, ...legacyDocument.data, livingTheses, reviewSessions: [] });
+  return buildLocalDataExportDocument({ exportedAt: timestamp, ...legacyDocument.data, livingTheses, reviewSessions: [], thesisRevisions: [] });
 }
 
 function makeThesis(id: string, overrides: Partial<LivingThesis> = {}): LivingThesis {

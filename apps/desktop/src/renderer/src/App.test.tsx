@@ -24,7 +24,7 @@ const localDataInfo = {
   ],
   recordCounts: {
     livingTheses: 6,
-    reviewSessions: 0,
+    reviewSessions: 0, thesisRevisions: 0,
     mbsScoreSnapshots: 5,
     portfolioRankerItems: 4,
     reminders: 3,
@@ -40,7 +40,7 @@ const zeroLocalDataInfo = {
   databaseFileExists: false,
   recordCounts: {
     livingTheses: 0,
-    reviewSessions: 0,
+    reviewSessions: 0, thesisRevisions: 0,
     mbsScoreSnapshots: 0,
     portfolioRankerItems: 0,
     reminders: 0,
@@ -144,7 +144,7 @@ describe('SettingsAboutScreen', () => {
             status: 'completed',
             counts: {
               livingTheses: 2,
-              reviewSessions: 0,
+              reviewSessions: 0, thesisRevisions: 0,
               mbsScoreSnapshots: 1,
               portfolioRankerItems: 1,
               reminders: 1,
@@ -259,7 +259,7 @@ describe('SettingsAboutScreen', () => {
           preview: {
             counts: {
               livingTheses: 6,
-              reviewSessions: 2,
+              reviewSessions: 2, thesisRevisions: 0,
               mbsScoreSnapshots: 5,
               portfolioRankerItems: 4,
               reminders: 3,
@@ -302,7 +302,7 @@ describe('SettingsAboutScreen', () => {
             status: 'completed',
             imported: {
               livingTheses: 2,
-              reviewSessions: 0,
+              reviewSessions: 0, thesisRevisions: 0,
               mbsScoreSnapshots: 1,
               portfolioRankerItems: 1,
               reminders: 1,

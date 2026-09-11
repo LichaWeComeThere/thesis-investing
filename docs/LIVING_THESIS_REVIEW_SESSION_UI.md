@@ -1,6 +1,6 @@
 # Guided Review UI
 
-Phase 3 Stage 6, part 2 makes the saved review-session foundation available from
+Phase 3 Stage 6 makes saved drafts and completed reviews available from
 Thesis Board. It follows the selected Guided Review design, with plain labels,
 one section at a time, optional details, and explicit save status.
 
@@ -17,6 +17,11 @@ one section at a time, optional details, and explicit save status.
    Save and leave, Discard edits and leave, or Continue editing. Discard removes
    only changes since the last draft save; it does not abandon the review.
 6. After restarting the app, select the same thesis and choose Resume review.
+7. When the final preview is ready, choose **Complete review**. The confirmation
+   explains that it applies the changes and saves the review history, plus any
+   new business score. Choose **Keep editing** to return, or **Complete review**
+   to save everything together. Success returns to the Board with the updated
+   thesis and a saved confirmation.
 
 | Section | Purpose |
 | --- | --- |
@@ -27,9 +32,11 @@ one section at a time, optional details, and explicit save status.
 | Your assessment | Record confidence, risk level, thesis status, and optional review scheduling. |
 | Review draft | Read the proposed changes beside the saved thesis and check any new score inputs. |
 
-This stage saves unfinished reviews. It does not offer **Complete review** or
-apply proposed changes to the current thesis. Atomic completion and the minimum
-revision/linked-score storage are the next separate Stage 6 task.
+**Save draft** means “continue later”; **Complete review** means “apply these
+changes.” Completion requires every section and the final preview to be valid.
+It records the chosen review date and cadence as entered; it does not invent a
+new date. Decision Log and a history/timeline browsing interface remain later
+stages.
 
 ## Save and recovery behavior
 
@@ -45,12 +52,20 @@ revision/linked-score storage are the next separate Stage 6 task.
   stored draft. The user can stay and copy their text first.
 - Resume warns if the parent thesis has changed or been archived since the
   review began. It preserves the original baseline and the saved draft.
+  Completion is blocked for a changed or archived parent. You can still save
+  or copy the draft; newer research is never overwritten or silently rebased.
 - Sidebar navigation and Return to Board use the same review leave guard.
   Window reload/close uses the browser/Electron `beforeunload` guard while
   edits are unsaved or storage is busy. Unsaved keystrokes are not crash recovery;
   only explicit successful saves are durable.
-- Saved sessions continue to use the existing format 3 export/import coverage.
-  This stage does not change backup formats or database schema.
+- Completion checks both the saved draft version and the original thesis
+  version again in storage. A rejected write leaves the saved draft intact.
+- If the completion response is lost, editing pauses and **Complete review**
+  retries the exact same request. Storage either finishes it once or returns
+  the existing result; it cannot create duplicate revisions or scores.
+- Format 4 exports include drafts, completed sessions, immutable revisions, and
+  linked scores. Older formats 1–3 remain readable. Database migration 6 retains
+  existing schema 1 sessions; completion upgrades those sessions to schema 2.
 
 ## Implementation boundary
 
@@ -60,7 +75,7 @@ domain/scoring logic moves into React. Shared `ReviewStepNavigation` and
 `DraftLeaveDialog` components live in `packages/ui`.
 
 The shared `ReviewSessionsStorageApi` exposes only `getActive`, `start`,
-`resume`, and `saveDraft`. Preload maps these to four named channels. Main
+`resume`, `saveDraft`, and `complete`. Preload maps these to five named channels. Main
 validates unknown IDs/versions and delegates workflow parsing and owned
 baseline/metadata checks to the existing storage service. The renderer has no
 general-purpose IPC bridge or direct database access.
@@ -85,12 +100,16 @@ a production web deployment or a supported multi-user service.
 
 ## Verification
 
-Thirteen new tests exercise actual storage and the app integration: start,
+Automated coverage exercises actual storage and the app integration: start,
 save/restart/resume, partial text and score recovery (including zero ratings),
 step validation, proposed-change preview, duplicate/pending saves, retry after
 failure, version conflicts and confirmed reload, changed-parent warnings,
 navigation/discard protection, dirty Board gating, and malformed IPC requests.
-They also check that review saves do not change the parent thesis.
+Draft tests check that saving does not change the parent thesis. Completion
+coverage checks confirmation, applying changes once, optional scores, immutable
+history, stale/forged submissions, rollback, restart, and exact retry after an
+uncertain response. Backup coverage checks formats 1–4, linked history, ID
+remapping, and all-or-nothing import.
 
 Browser verification covers the six-section flow, explicit saves, saved-draft
 resume, keyboard Enter/Escape, and the three desktop frame sizes. The

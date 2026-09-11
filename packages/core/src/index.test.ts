@@ -276,6 +276,23 @@ describe('validateMbsScoreSnapshot', () => {
     });
   });
 
+  it('accepts legacy dates and exact UTC review times without changing saved values', () => {
+    for (const createdAt of [undefined, '2026-05-24', '2024-02-29', '2026-09-11T12:34:56.789Z']) {
+      const snapshot = { ...validSnapshot, createdAt };
+      const before = JSON.stringify(snapshot);
+      expect(validateMbsScoreSnapshot(snapshot)).toEqual({ valid: true, errors: [] });
+      expect(JSON.stringify(snapshot)).toBe(before);
+    }
+  });
+
+  it('rejects malformed dates, offsets, and noncanonical snapshot times', () => {
+    for (const createdAt of [
+      '', '2026-02-30', '2026-02-30T12:34:56.789Z', '2026-09-11T12:34:56Z',
+      '2026-09-11T12:34:56.789+00:00', '2026-09-11T08:34:56.789-04:00',
+      '2026-09-11T12:34:56.7890Z', '2026-09-11 12:34:56.789Z', '2026-09-11T24:00:00.000Z'
+    ]) expect(validateMbsScoreSnapshot({ ...validSnapshot, createdAt }).valid).toBe(false);
+  });
+
   it('rejects incomplete or invalid snapshot values', () => {
     const result = validateMbsScoreSnapshot({
       ...validSnapshot,
@@ -303,7 +320,7 @@ describe('validateMbsScoreSnapshot', () => {
       'MBS snapshot must include every scoring criterion.',
       'MBS snapshot risk must be a finite number from 0 to 10.',
       'MBS snapshot notes cannot be blank when provided.',
-      'MBS snapshot created date must use YYYY-MM-DD format.'
+      'MBS snapshot creation time must be a YYYY-MM-DD date or canonical UTC timestamp.'
     ]);
   });
 });

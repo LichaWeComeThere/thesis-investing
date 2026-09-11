@@ -84,19 +84,21 @@ and no snapshot is written or inferred from a ticker or legacy relationship.
 ## Stage 6 integration boundary
 
 A core `completed` value is an in-memory result, not a committed Review Session.
-The future main-process completion service must load the current thesis inside
-the same transaction that checks the baseline version and performs all writes.
-Only a successful transaction may be reported by the UI as saved completion.
-On failure, keep the durable session in progress and retain its proposed edits.
+Stage 6 now implements the main-process transaction that reloads the current
+thesis, checks the original baseline and independent draft version, and performs
+all completion writes. Only a successful transaction is reported as saved.
+Failed writes roll back together; an exact retry after a lost response returns
+the existing completion without creating duplicate history or scores.
 
-That transaction must apply normalized current-state changes, assign parent and
-changed-child timestamps and the next saved version, append the revision and
-completed-session record, and create the linked MBS snapshot or explicit
-decision entry when applicable. Bring forward the minimum history/link storage
-needed for these writes in Stage 6; the later history and decision interfaces
-can follow in their planned stages. Review scheduling policy and session
-export/import coverage also belong to Stage 6; the draft-storage part already
-includes format 3 session backups.
+The transaction applies normalized changes, assigns parent and changed-child
+timestamps and the next saved version, records the completed session and full
+before/after revision, and creates a linked MBS snapshot when new ratings are
+chosen. The user's review date/cadence are preserved as entered. Format 4
+backups cover these relationships and retain formats 1–3 compatibility. Schema 1
+drafts remain readable and upgrade to schema 2 on completion. Decision Log
+entries remain Stage 7 work; history browsing remains Stage 8. See
+[Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md) and
+[Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md) for the current contract.
 
 Stage 5 adds no migrations, repository writes, IPC, renderer screen, backup
 format, or live data integration. Existing Board saves and backup behavior

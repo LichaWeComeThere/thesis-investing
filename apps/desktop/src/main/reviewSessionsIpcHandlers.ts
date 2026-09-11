@@ -10,6 +10,12 @@ export function createReviewSessionsIpcHandlers(service: Service) {
     getActive: (id: unknown) => isId(id) ? service.getActive(id) : Promise.resolve(invalid()),
     start: (id: unknown) => isId(id) ? service.start(id) : Promise.resolve(invalid()),
     resume: (id: unknown) => isId(id) ? service.resume(id) : Promise.resolve(invalid()),
+    complete: (id: unknown, workflow: unknown, version: unknown) => {
+      if (!isId(id) || typeof version !== 'number' || !Number.isSafeInteger(version) || version < 1) {
+        return Promise.resolve(invalid());
+      }
+      return service.complete(id, workflow, version);
+    },
     saveDraft: (id: unknown, workflow: unknown, version: unknown) => {
       if (!isId(id) || typeof version !== 'number' || !Number.isSafeInteger(version) || version < 1) {
         return Promise.resolve(invalid());

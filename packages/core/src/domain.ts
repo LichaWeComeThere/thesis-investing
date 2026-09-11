@@ -162,7 +162,8 @@ export type MbsScoreSnapshot = {
   completedCriteria: number;
   input: ManualBusinessScoreInput;
   notes?: string;
-  createdAt?: IsoDateString;
+  /** Legacy scores use a date; completed reviews retain their exact UTC completion time. */
+  createdAt?: IsoDateString | IsoTimestampString;
 };
 
 export type ThemeBasketExample = {

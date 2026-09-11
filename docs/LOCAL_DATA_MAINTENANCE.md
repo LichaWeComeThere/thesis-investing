@@ -36,12 +36,14 @@ The status view shows counts for persisted local records:
 - Portfolio Ranker Inputs
 - MBS Score Snapshots
 - Living Theses (all saved lifecycles, including archived records)
-- Saved review sessions (in-progress and abandoned records)
+- Saved review sessions (in-progress, abandoned, and completed records)
+- Thesis revisions from completed reviews
 
 Living Thesis counts represent parent records. Risks and catalysts are included
-inside their thesis in version 2 and 3 backups and are not counted as separate
-theses. Format 3 also includes saved review sessions and their complete draft
-state; session counts do not imply that unsaved form edits have been saved.
+inside their thesis in formats 2–4 and are not counted as separate theses.
+Format 4 includes saved review sessions and immutable before/after revisions;
+formats 1–3 remain readable. Session and revision counts describe stored
+records and do not imply that unsaved form edits have been saved.
 
 Counts are read through the same Electron main/storage boundary used by export
 and Dashboard summaries. If the SQLite database file does not exist yet, the

@@ -183,6 +183,69 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX idx_review_sessions_parent_updated
         ON living_thesis_review_sessions(thesis_id, updated_at DESC, id ASC);
     `
+  },
+  {
+    version: 6,
+    name: "complete_reviews_with_immutable_history",
+    sql: `
+      ALTER TABLE living_thesis_review_sessions RENAME TO living_thesis_review_sessions_v1;
+      CREATE TABLE living_thesis_review_sessions (
+        id TEXT PRIMARY KEY,
+        thesis_id TEXT NOT NULL REFERENCES living_theses(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+        schema_version INTEGER NOT NULL CHECK (schema_version IN (1, 2)),
+        version INTEGER NOT NULL CHECK (version > 0),
+        status TEXT NOT NULL CHECK (status IN ('in_progress', 'abandoned', 'completed')),
+        started_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        abandoned_at TEXT,
+        completed_at TEXT,
+        revision_id TEXT UNIQUE,
+        score_snapshot_id TEXT UNIQUE REFERENCES mbs_score_snapshots(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+        workflow_json TEXT NOT NULL,
+        CHECK (
+          (status = 'in_progress' AND abandoned_at IS NULL AND completed_at IS NULL AND revision_id IS NULL AND score_snapshot_id IS NULL) OR
+          (status = 'abandoned' AND abandoned_at = updated_at AND abandoned_at IS NOT NULL AND completed_at IS NULL AND revision_id IS NULL AND score_snapshot_id IS NULL) OR
+          (status = 'completed' AND schema_version = 2 AND abandoned_at IS NULL AND completed_at = updated_at AND completed_at IS NOT NULL AND revision_id IS NOT NULL)
+        )
+      );
+      INSERT INTO living_thesis_review_sessions
+        (id, thesis_id, schema_version, version, status, started_at, updated_at, abandoned_at, workflow_json)
+        SELECT id, thesis_id, schema_version, version, status, started_at, updated_at, abandoned_at, workflow_json
+        FROM living_thesis_review_sessions_v1;
+      DROP TABLE living_thesis_review_sessions_v1;
+      CREATE UNIQUE INDEX idx_one_in_progress_review_per_thesis
+        ON living_thesis_review_sessions(thesis_id) WHERE status = 'in_progress';
+      CREATE INDEX idx_review_sessions_parent_updated
+        ON living_thesis_review_sessions(thesis_id, updated_at DESC, id ASC);
+      CREATE TABLE living_thesis_revisions (
+        id TEXT PRIMARY KEY,
+        thesis_id TEXT NOT NULL REFERENCES living_theses(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+        review_session_id TEXT NOT NULL UNIQUE REFERENCES living_thesis_review_sessions(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+        schema_version INTEGER NOT NULL CHECK (schema_version = 1),
+        created_at TEXT NOT NULL,
+        after_version INTEGER NOT NULL CHECK (after_version > 1),
+        before_json TEXT NOT NULL,
+        after_json TEXT NOT NULL,
+        score_snapshot_id TEXT UNIQUE REFERENCES mbs_score_snapshots(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+        UNIQUE (thesis_id, after_version)
+      );
+      CREATE INDEX idx_thesis_revisions_parent_created
+        ON living_thesis_revisions(thesis_id, created_at DESC, id ASC);
+      CREATE TRIGGER immutable_completed_review_update BEFORE UPDATE ON living_thesis_review_sessions
+        WHEN OLD.status IN ('completed', 'abandoned') BEGIN
+          SELECT RAISE(ABORT, 'Ended reviews are immutable');
+        END;
+      CREATE TRIGGER immutable_ended_review_delete BEFORE DELETE ON living_thesis_review_sessions
+        WHEN OLD.status IN ('completed', 'abandoned') BEGIN
+          SELECT RAISE(ABORT, 'Ended reviews are immutable');
+        END;
+      CREATE TRIGGER immutable_thesis_revision_update BEFORE UPDATE ON living_thesis_revisions BEGIN
+        SELECT RAISE(ABORT, 'Thesis revisions are immutable');
+      END;
+      CREATE TRIGGER immutable_thesis_revision_delete BEFORE DELETE ON living_thesis_revisions BEGIN
+        SELECT RAISE(ABORT, 'Thesis revisions are immutable');
+      END;
+    `
   }
 ];
 

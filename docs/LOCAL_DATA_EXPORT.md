@@ -2,9 +2,10 @@
 
 Phase 2, Stage 2 adds a safe local JSON export from Settings/About.
 
-New backups use format version 3. They include Living Theses with structured
-risks and catalysts, plus saved review sessions. The importer also accepts the
-original version 1 and version 2 formats.
+New backups use format version 4. They include Living Theses with structured
+risks and catalysts, saved and completed review sessions, revision history, and
+any score snapshots created when completing reviews. The importer also accepts
+the original version 1, 2, and 3 formats.
 
 The export is non-destructive. It reads persisted local records through the
 Electron main/storage layer, asks the user where to save a `.json` file, and
@@ -34,17 +35,20 @@ The export includes user-entered persisted records from:
 - MBS Score Snapshots
 - Living Theses, including archived records, saved versions, timestamps,
   review scheduling, and nested risks and catalysts
-- Saved review sessions, including in-progress and abandoned reviews, original
+- Saved review sessions, including in-progress, completed, and abandoned reviews, original
   thesis baselines, proposed edits, notes, step progress, and partial score inputs
+- Thesis revisions, including the before and after thesis records, the completed
+  review link, and an optional link to the score snapshot created with that review
 
 `livingTheses` counts parent thesis records; each record carries its complete
 `risks` and `catalysts` arrays. `reviewSessions` counts saved session records,
-including abandoned sessions. Export reads all seven record types in one SQLite
+including completed and abandoned sessions. `thesisRevisions` counts completed
+review history entries. Export reads all eight record types in one SQLite
 transaction so the backup represents a consistent saved state.
 
-Review-session storage is implemented, but review controls are not yet exposed
-in the app. Only explicitly saved sessions are included; exporting does not
-automatically capture unsaved Board forms or other transient edits. See
+Use **Save draft** to preserve work for later, or **Complete review** to apply
+the changes and save a history entry. Only persisted work is included in backups;
+exporting does not capture unsaved Board forms or transient review edits. See
 [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md).
 
 The export also includes metadata:
@@ -74,7 +78,7 @@ The export does not include:
 ```json
 {
   "format": "thesis-investing-local-data-export",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "appName": "Thesis Investing",
   "appVersion": "0.0.0",
   "exportedAt": "2026-09-10T12:00:00.000Z",
@@ -86,7 +90,8 @@ The export does not include:
     "portfolioRankerItems": 0,
     "mbsScoreSnapshots": 0,
     "livingTheses": 0,
-    "reviewSessions": 0
+    "reviewSessions": 0,
+    "thesisRevisions": 0
   },
   "data": {
     "watchlistItems": [],
@@ -95,7 +100,8 @@ The export does not include:
     "portfolioRankerItems": [],
     "mbsScoreSnapshots": [],
     "livingTheses": [],
-    "reviewSessions": []
+    "reviewSessions": [],
+    "thesisRevisions": []
   }
 }
 ```
@@ -122,9 +128,9 @@ trusted app data folder without changing workflow records. See
 
 ## Current Limitations
 
-Import accepts valid version 1, 2, and 3 export files after a preview and
-explicit confirmation. Older app builds that support only version 1 or 2 cannot
-read version 3 backups; update the destination app before transferring them.
+Import accepts valid version 1, 2, 3, and 4 export files after a preview and
+explicit confirmation. Older app builds cannot read version 4 backups; update
+the destination app before transferring them.
 Import is not a destructive restore or merge:
 it does not replace the database, overwrite records, or delete existing data.
 See [Local Data Import](LOCAL_DATA_IMPORT.md) for validation and collision rules.

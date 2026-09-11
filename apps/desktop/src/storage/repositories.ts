@@ -3,6 +3,7 @@ import type {
   Holding,
   LivingThesis,
   LivingThesisReviewSession,
+  LivingThesisRevision,
   MbsScoreSnapshot,
   PortfolioRankerItem,
   Reminder,
@@ -85,6 +86,15 @@ export interface LivingThesisReviewSessionRepository {
   getInProgressByThesisId(thesisId: EntityId): LivingThesisReviewSession | undefined;
   list(thesisId?: EntityId): LivingThesisReviewSession[];
   update(session: LivingThesisReviewSession, expectedVersion: number): RepositoryResult<LivingThesisReviewSession>;
+  /** Only called inside the enclosing completion transaction. */
+  complete(session: LivingThesisReviewSession, expectedVersion: number): RepositoryResult<LivingThesisReviewSession>;
+}
+
+export interface LivingThesisRevisionRepository {
+  create(revision: LivingThesisRevision): RepositoryResult<LivingThesisRevision>;
+  restore(revision: LivingThesisRevision): RepositoryResult<LivingThesisRevision>;
+  getById(id: EntityId): LivingThesisRevision | undefined;
+  list(thesisId?: EntityId): LivingThesisRevision[];
 }
 
 export interface LocalStorageRepositories {
@@ -96,4 +106,5 @@ export interface LocalStorageRepositories {
   mbsScoreSnapshots: MbsScoreSnapshotRepository;
   livingTheses: LivingThesisRepository;
   reviewSessions: LivingThesisReviewSessionRepository;
+  thesisRevisions: LivingThesisRevisionRepository;
 }
