@@ -38,11 +38,12 @@ The status view shows counts for persisted local records:
 - Living Theses (all saved lifecycles, including archived records)
 - Saved review sessions (in-progress, abandoned, and completed records)
 - Thesis revisions from completed reviews
+- Thesis decisions, with or without a completed-review link
 
 Living Thesis counts represent parent records. Risks and catalysts are included
-inside their thesis in formats 2–4 and are not counted as separate theses.
-Format 4 includes saved review sessions and immutable before/after revisions;
-formats 1–3 remain readable. Session and revision counts describe stored
+inside their thesis in formats 2–5 and are not counted as separate theses.
+Format 5 includes saved review sessions, immutable before/after revisions, and
+saved thesis decisions; formats 1–4 remain readable. These counts describe stored
 records and do not imply that unsaved form edits have been saved.
 
 Counts are read through the same Electron main/storage boundary used by export

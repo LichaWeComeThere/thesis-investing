@@ -3,11 +3,12 @@ import { Button } from '@thesis-investing/ui';
 import { useEffect, useRef, useState } from 'react';
 import type { ResumedReviewSession, ReviewSessionsStorageApi } from '../../shared/reviewSessionsStorage';
 
-export function ReviewSessionLauncher({ thesis, client, disabled, onOpen }: {
+export function ReviewSessionLauncher({ thesis, client, disabled, onOpen, onOpeningChange }: {
   thesis: LivingThesis;
   client: ReviewSessionsStorageApi | null;
   disabled: boolean;
   onOpen: (review: ResumedReviewSession) => void;
+  onOpeningChange?: (opening: boolean) => void;
 }): JSX.Element {
   const [active, setActive] = useState<ResumedReviewSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +16,7 @@ export function ReviewSessionLauncher({ thesis, client, disabled, onOpen }: {
   const [reload, setReload] = useState(0);
   const opening = useRef(false);
   const mounted = useRef(true);
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; onOpeningChange?.(false); }; }, [onOpeningChange]);
   useEffect(() => {
     let disposed = false;
     setLoading(true);
@@ -34,6 +35,7 @@ export function ReviewSessionLauncher({ thesis, client, disabled, onOpen }: {
   async function open(): Promise<void> {
     if (!client || opening.current || disabled) return;
     opening.current = true;
+    onOpeningChange?.(true);
     setLoading(true);
     setErrors([]);
     try {
@@ -47,13 +49,13 @@ export function ReviewSessionLauncher({ thesis, client, disabled, onOpen }: {
         else if (mounted.current) setErrors(result.errors);
       }
     } catch { setErrors(['Your review could not be opened. Try again.']); }
-    finally { opening.current = false; setLoading(false); }
+    finally { opening.current = false; if (mounted.current) { setLoading(false); onOpeningChange?.(false); } }
   }
 
   return (
     <section className="review-launcher" aria-label="Review this thesis">
       <div><strong>{active ? 'You have a review in progress' : 'Take a fresh look at your thesis'}</strong>
-        <p>{disabled ? 'Save or cancel your thesis edits before opening a review.' : 'Review one section at a time. Save a draft and continue later.'}</p>
+        <p>{disabled ? 'Save or cancel your open edits before opening a review.' : 'Review one section at a time. Save a draft and continue later.'}</p>
         {!client ? <p>Open the desktop app to start or resume a saved review.</p> : null}
         {thesis.lifecycle === 'archived' && !active ? <p>Unarchive this thesis before starting a review.</p> : null}
         {errors.length > 0 ? <div role="alert">{errors.map((error) => <p key={error}>{error}</p>)}</div> : null}

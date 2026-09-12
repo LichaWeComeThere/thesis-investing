@@ -12,10 +12,13 @@ narrow typed main, IPC, preload, and renderer boundaries.
 Phase 3 Stage 5 adds the pure review workflow, proposed-edit preview, and
 guarded completion validation in core. Stage 6 part 1 adds durable review session
 storage and backup support. Part 2 adds the guided review UI and typed IPC.
-Stage 6 now also implements explicit atomic completion, immutable before/after
-revisions, optional linked scores, and format 4 history backups. Manual Windows
-UI verification remains pending; Decision Log is the next separate Stage 7 task. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md)
-and [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md).
+Stage 6 implements explicit atomic completion, immutable before/after revisions,
+optional linked scores, and history backups. Stage 7 adds the append-only
+Decision Log, optional links to completed reviews, and format 5 backup coverage.
+Manual Windows UI verification remains pending; Score History / Thesis Timeline
+is the next separate Stage 8 task. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
+[Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md), and
+[Decision Log](LIVING_THESIS_DECISION_LOG.md).
 
 Sections describing later entities and workflows remain architectural plans,
 not claims that those features are implemented.
@@ -272,14 +275,15 @@ without making opaque JSON mutation a persistence contract.
 | `living_thesis_risks` | Mutable current state with retirement | Structured current risks. |
 | `living_thesis_catalysts` | Mutable current state with retirement | Structured current catalysts. |
 | `living_thesis_review_sessions` | Mutable only while in progress; immutable after completion | Review draft, baseline version, reason, notes, proposed changes, and completion metadata. |
-| Planned `living_thesis_decisions` (Stage 7) | Append-only | Documentary reasoning linked to a thesis and optionally a review session. |
+| `living_thesis_decisions` | Append-only | Documentary reasoning linked to a thesis and optionally a completed review session. |
 | `living_thesis_revisions` | Append-only | Full before/after snapshots for completed reviews. Broader edit-history coverage remains later work. |
 | Existing `mbs_score_snapshots` | Append-only | Canonical MBS score history, optionally linked to a Living Thesis. |
 
 Conceptually, one Living Thesis owns many risk items, catalyst items, Review
 Sessions, decisions, revisions, and MBS snapshots. A Review Session belongs to
-one thesis and may be referenced by the revision, decision, and MBS snapshot
-created when it completes. Current and previous MBS values are derived from
+one thesis and is referenced by its completion revision and optional MBS
+snapshot. A decision recorded later may reference that completed session;
+completion does not create decisions automatically. Current and previous MBS values are derived from
 ordered linked snapshots; the Living Thesis row has no authoritative snapshot
 pointer or numeric score.
 
@@ -448,15 +452,18 @@ when chosen. Failure rolls back the whole operation. An exact retry after a lost
 response returns the saved result without duplicating history or scores.
 
 The original plan also anticipated explicit Decision Log entries and automatic
-review-date calculation. Decision Log remains Stage 7 work. Current completion
-saves the user's chosen review date and cadence; it does not generate either a
-decision or a new date.
+review-date calculation. Stage 7 lets users record a decision separately and
+optionally link the completed review. Current completion saves the user's
+chosen review date and cadence; it does not generate either a decision or a
+new date.
 
 ## Review Session
 
 The current schema 2 Review Session has the fields below. Schema 1 unfinished
 and abandoned sessions remain readable; completion upgrades an older session.
-The linked decision field remains a future Stage 7 extension.
+Stage 7 stores the optional review link on the decision itself. Completed
+sessions are not rewritten; decisions for a review can be found through that
+link without adding a decision field to the session.
 
 A Review Session has:
 
@@ -481,20 +488,29 @@ save draft, and complete; abandonment remains a storage-service operation.
 
 ## Decision Log
 
-Decision Log entries are append-only documentary records. A proposed shape is:
+Stage 7 implements append-only documentary entries in `living_thesis_decisions`:
 
-- `id` and `thesisId`;
-- optional `reviewSessionId`;
-- entry type such as `review_conclusion`, `status_change`,
-  `conviction_change`, `risk_assessment`, or `research_note`;
-- short title and rationale;
-- optional references to the prior and resulting thesis revision;
-- `createdAt`.
+- `id`, `thesisId`, and decision `schemaVersion: 1`;
+- required `title` and `rationale`;
+- optional `reviewSessionId` pointing to a completed review of the same thesis;
+- `kind`, derived as `research_note` without a link or `review_conclusion` with one;
+- `createdAt`, assigned in Electron main when the entry is saved.
 
-The log records the user's analytical reasoning. It must not provide or encode
-buy, sell, hold, trim, add, allocation, or position-sizing instructions. If the
-product later needs a broader investment journal, that requires separate scope
-and safety review.
+**Add decision** opens a short **Decision** / **Reason** form inside the saved
+thesis. A completed-review link is optional. The log shows the newest entries
+first, including for archived theses. Adding an entry changes no thesis fields,
+version, score, or review session. Users record new thinking as a new entry;
+there is no edit/delete action for saved decisions.
+
+The typed `decisions` API exposes only `list`, `listCompletedReviews`, and
+`create`. A stable request UUID makes an exact save retry return the original
+entry rather than create another. Database migration 7 enforces immutable
+entries and valid parent/review relationships. Links live on decisions, so
+completed sessions and revisions remain unchanged. See the
+[Decision Log contract](LIVING_THESIS_DECISION_LOG.md).
+
+The log records the user's analytical reasoning and provides no trading-action
+categories, transaction execution, or generated investment recommendations.
 
 ## Score History And Thesis Timeline
 
@@ -613,14 +629,17 @@ version 1 and 2 compatibility. Session IDs, parent IDs, baseline child IDs, and
 draft child IDs are remapped together. Stale baselines remain unchanged and are
 flagged on resume; malformed progress and orphaned sessions are rejected.
 
-Stage 6 completion now writes format version 4 with eight arrays, adding
+Stage 6 completion introduced format version 4 with eight arrays, adding
 `thesisRevisions` and completed session/score relationships. Formats 1–3 remain
 readable. Import validates both sides of each completion, rejects orphaned or
 duplicate history transitions, and remaps parent/session/revision/score/child
 references consistently. The original score arrays remain in place; formally
 linked review scores are distinguished from legacy Thesis Note references.
-Later format extensions will add Decision Log entries when Stage 7 implements
-them.
+Stage 7 now writes format version 5 with the ninth array, `thesisDecisions`.
+Formats 1–4 remain readable without inventing decision entries. Import validates
+each decision's thesis and optional completed-review link, preserves dates, and
+remaps decision, thesis, and review IDs consistently. All nine arrays are
+restored within the same append-only transaction.
 Relationship-aware import must continue to:
 
 1. fully validate the document and all relationships before writing;
@@ -679,8 +698,9 @@ boundary and the atomic restore behavior.
    pending. Durable drafts, guided UI, validated IPC, navigation protection,
    atomic completion, immutable revisions, optional linked scores, exact retry,
    and format 4 backups are implemented. Later stages add the history interfaces.
-7. **Stage 7 - Decision Log.** Add documentary append-only entries and their
-   review/session links.
+7. **Stage 7 - Decision Log.** Complete, with manual Windows UI verification
+   pending. A simple entry form, immutable history, optional completed-review
+   links, exact save retries, and format 5 backups are implemented.
 8. **Stage 8 - Score History / Timeline.** Build history browsing and a derived
    unified timeline over the review revisions and linked scores introduced in
    Stage 6, extending event coverage where explicitly scoped.

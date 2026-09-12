@@ -1,5 +1,6 @@
 import type {
   LivingThesis,
+  LivingThesisDecision,
   LivingThesisReviewSession,
   LivingThesisRevision,
   MbsScoreSnapshot,
@@ -19,13 +20,14 @@ export const localDataStorageChannels = {
 
 export const LOCAL_DATA_EXPORT_FORMAT =
   'thesis-investing-local-data-export' as const;
-export const LOCAL_DATA_EXPORT_FORMAT_VERSION = 4 as const;
-export type LocalDataImportFormatVersion = 1 | 2 | 3 | typeof LOCAL_DATA_EXPORT_FORMAT_VERSION;
+export const LOCAL_DATA_EXPORT_FORMAT_VERSION = 5 as const;
+export type LocalDataImportFormatVersion = 1 | 2 | 3 | 4 | typeof LOCAL_DATA_EXPORT_FORMAT_VERSION;
 
 export type LocalDataExportCounts = {
   livingTheses: number;
   reviewSessions: number;
   thesisRevisions: number;
+  thesisDecisions: number;
   watchlistItems: number;
   thesisNotes: number;
   reminders: number;
@@ -61,6 +63,7 @@ export type LocalDataExportDocument = {
     livingTheses: LivingThesis[];
     reviewSessions: LivingThesisReviewSession[];
     thesisRevisions: LivingThesisRevision[];
+    thesisDecisions: LivingThesisDecision[];
     watchlistItems: WatchlistItem[];
     thesisNotes: ThesisNote[];
     reminders: Reminder[];

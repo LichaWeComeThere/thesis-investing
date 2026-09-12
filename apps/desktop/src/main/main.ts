@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { registerDashboardSummariesIpc } from './dashboardSummariesIpc';
+import { registerDecisionsIpc } from './decisionsIpc';
 import { registerLocalDataIpc } from './localDataIpc';
 import { registerLivingThesesIpc } from './livingThesesIpc';
 import { registerReviewSessionsIpc } from './reviewSessionsIpc';
@@ -39,6 +40,7 @@ function createWindow(): void {
 
 void app.whenReady().then(() => {
   registerDashboardSummariesIpc();
+  registerDecisionsIpc();
   registerLocalDataIpc();
   registerLivingThesesIpc();
   registerReviewSessionsIpc();

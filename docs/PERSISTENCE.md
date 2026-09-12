@@ -45,6 +45,13 @@ the current thesis unchanged. Migration 6 retains schema 1 sessions, while new
 sessions and completions use schema 2. Format 4 backups include this history. See
 [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md).
 
+Phase 3, Stage 7 adds immutable documentary decisions for saved Living Theses,
+including archived theses. A decision contains a title, reason, automatic save
+date, and optional link to a completed review of the same thesis. Migration 7
+adds the table; format 5 adds backup coverage. Saving a decision does not modify
+the current thesis or a completed session. See
+[Decision Log](LIVING_THESIS_DECISION_LOG.md).
+
 ## Package Boundary
 
 Local persistence currently lives in `apps/desktop/src/storage`.
@@ -55,10 +62,14 @@ Local persistence currently lives in `apps/desktop/src/storage`.
 - The Watchlist, Thesis Monitor, Reminders, Portfolio Ranker, and MBS Scorer screens read and write through the local persistence boundary.
 - The Dashboard reads local persisted summaries through the same main/preload/renderer boundary, but it does not write or delete records.
 - The Settings/About local data status view reads app data path and database file status through a read-only main/preload/renderer boundary, and the local JSON export action reads persisted records through the same Electron main/storage boundary.
-- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS Score Snapshots, Living Theses (including archived records), saved review sessions (including abandoned/completed records), and thesis revisions. Static Theme Library content is excluded.
+- The Settings/About maintenance view can refresh status and counts through the same read-only local data API. Counts cover persisted Watchlist items, Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS Score Snapshots, Living Theses (including archived records), saved review sessions (including abandoned/completed records), thesis revisions, and saved decisions. Static Theme Library content is excluded.
 - Thesis Board uses `window.thesisInvesting.livingTheses` for only `list`,
   `getById`, `create`, and expected-version `update`. No repository, raw SQL,
   database handle, filesystem method, or arbitrary path crosses preload.
+- Decision Log uses `window.thesisInvesting.decisions` for `list`,
+  `listCompletedReviews`, and `create`. The renderer supplies the title, reason,
+  optional review link, and a stable UUID for retrying the same request. Electron
+  main assigns the save timestamp and derives the stored ID and entry kind.
 - The renderer can request a local JSON export through `window.thesisInvesting.localData.exportToJson()`, but the save dialog, SQLite reads, and file write happen in the Electron main process.
 - The renderer can request import preview and confirmation through `window.thesisInvesting.localData.previewImportFromJson()` and `window.thesisInvesting.localData.importFromJson(previewId)`. Electron main owns file reading, parsing, validation, pending preview data, and transactional repository writes.
 - The renderer can request `window.thesisInvesting.localData.openDataFolder()` without passing a path. Electron main opens only the trusted app data folder from `app.getPath('userData')`.
@@ -125,7 +136,23 @@ Sessions reference a saved Living Thesis and store a validated workflow with its
 original baseline. A partial unique index permits one in-progress review per
 thesis. Session versions advance independently of the parent thesis version.
 
-The domain tables include local created/updated date columns where appropriate, but repositories do not generate timestamps as side effects. Dates are accepted as inputs from future application workflows.
+Migration v6 (Phase 3 Stage 6 completion) adds `living_thesis_revisions`,
+completed-session metadata, and immutability checks. It preserves schema 1
+sessions; new sessions and completed sessions use schema 2. Each completed
+review has one immutable revision and an optional linked MBS snapshot, saved
+with the thesis update in one transaction.
+
+Migration v7 (Phase 3 Stage 7) adds `living_thesis_decisions`, using decision
+schema version 1. Foreign keys and insert validation require a saved parent
+thesis and, when linked, a completed review of that same thesis. The decision
+date cannot precede the thesis or linked review. Update/delete triggers protect
+saved entries. An index supports ordering by thesis, newest timestamp, then ID.
+No fields or version counters on existing theses or sessions are rewritten.
+
+The domain tables include local created/updated date columns where appropriate,
+but repositories do not generate timestamps as side effects. Electron main
+assigns timestamps for interactive writes; validated imports preserve saved
+timestamps.
 
 ## Repositories
 
@@ -139,6 +166,8 @@ The storage module defines repository interfaces for:
 - MBS score snapshots
 - Living Theses with normalized current risk and catalyst children
 - Living Thesis review sessions with immutable baselines and version-checked drafts
+- immutable Living Thesis review revisions
+- immutable Living Thesis decisions with optional completed-review links
 
 Repository implementations validate core domain data before writing to SQLite and normalize ticker symbols consistently with `packages/core`.
 
@@ -156,11 +185,18 @@ completion explicitly links its new snapshots to `LivingThesis.id`; their
 completed session/revision references distinguish them from legacy values.
 Scores remain canonical snapshots rather than fields duplicated on the thesis.
 
-Current backups use format 4, including Living Theses, saved review sessions,
-and immutable thesis revisions. Formats 1–3 remain readable without inventing
-later record types or reinterpreting legacy MBS references. Import validates
-the entire backup and completion links, remaps parent/session/revision/score/
-child IDs together, and restores all eight record types
+Decision creation runs in a transaction and is idempotent for an exact request
+retry: `decision_<request UUID>` identifies the saved result. Reusing that
+request with different content is rejected. Repository reads order entries by
+creation timestamp descending, then ID ascending. An archived parent remains
+eligible for a documentary entry; no thesis version check is needed because
+the entry does not change current state.
+
+Current backups use format 5, including Living Theses, saved review sessions,
+immutable thesis revisions, and `thesisDecisions`. Formats 1–4 remain readable
+without inventing later record types or reinterpreting legacy MBS references.
+Import validates the entire backup and completion/decision links, remaps
+parent/session/revision/score/child/decision IDs together, and restores all nine record types
 in one transaction. Internal append-only restore methods retain saved versions
 and use savepoints without committing the outer import. See the
 [export guide](LOCAL_DATA_EXPORT.md) and [import guide](LOCAL_DATA_IMPORT.md).

@@ -15,6 +15,7 @@ describe("SQLite local storage", () => {
       "portfolioRankerItems",
       "reminders",
       "reviewSessions",
+      "thesisDecisions",
       "thesisNotes",
       "thesisRevisions",
       "watchlistItems"
@@ -49,6 +50,7 @@ describe("SQLite local storage", () => {
       "holdings",
       "living_theses",
       "living_thesis_catalysts",
+      "living_thesis_decisions",
       "living_thesis_review_sessions",
       "living_thesis_revisions",
       "living_thesis_risks",
@@ -59,7 +61,7 @@ describe("SQLite local storage", () => {
       "thesis_notes",
       "watchlist_items"
     ]);
-    expect(readAppliedMigrationVersions(database)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(readAppliedMigrationVersions(database)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(
       Number(
         (

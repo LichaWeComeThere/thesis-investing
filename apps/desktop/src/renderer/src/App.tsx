@@ -1142,6 +1142,10 @@ export function SettingsAboutScreen({
                         <dt>Thesis revisions</dt>
                         <dd>{recordCounts.thesisRevisions}</dd>
                       </div>
+                      <div>
+                        <dt>Thesis decisions</dt>
+                        <dd>{recordCounts.thesisDecisions}</dd>
+                      </div>
                     </dl>
                     <p className="local-data-status-message">
                       Living Thesis counts include active and archived records.
@@ -1227,7 +1231,8 @@ export function SettingsAboutScreen({
                       {localDataExportState.outcome.counts.livingTheses} Living
                       Theses (including risks and catalysts), and{' '}
                       {localDataExportState.outcome.counts.reviewSessions} saved review sessions and{' '}
-                      {localDataExportState.outcome.counts.thesisRevisions} thesis revisions.
+                      {localDataExportState.outcome.counts.thesisRevisions} thesis revisions and{' '}
+                      {localDataExportState.outcome.counts.thesisDecisions} thesis decisions.
                     </p>
                     <p>
                       Export generated{' '}
@@ -1338,6 +1343,10 @@ export function SettingsAboutScreen({
                         <dt>Thesis revisions</dt>
                         <dd>{activeImportPreview.counts.thesisRevisions}</dd>
                       </div>
+                      <div>
+                        <dt>Thesis decisions</dt>
+                        <dd>{activeImportPreview.counts.thesisDecisions}</dd>
+                      </div>
                     </dl>
                     {activeImportPreview.warnings.length > 0 ? (
                       <ul className="local-data-import-warnings">
@@ -1400,7 +1409,8 @@ export function SettingsAboutScreen({
                       {localDataImportState.outcome.imported.livingTheses} Living
                       Theses (including risks and catalysts), and{' '}
                       {localDataImportState.outcome.imported.reviewSessions} saved review sessions and{' '}
-                      {localDataImportState.outcome.imported.thesisRevisions} thesis revisions.
+                      {localDataImportState.outcome.imported.thesisRevisions} thesis revisions and{' '}
+                      {localDataImportState.outcome.imported.thesisDecisions} thesis decisions.
                     </p>
                     {localDataImportState.outcome.warnings.length > 0 ? (
                       <ul className="local-data-import-warnings">

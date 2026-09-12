@@ -93,10 +93,13 @@ the existing completion without creating duplicate history or scores.
 The transaction applies normalized changes, assigns parent and changed-child
 timestamps and the next saved version, records the completed session and full
 before/after revision, and creates a linked MBS snapshot when new ratings are
-chosen. The user's review date/cadence are preserved as entered. Format 4
-backups cover these relationships and retain formats 1–3 compatibility. Schema 1
-drafts remain readable and upgrade to schema 2 on completion. Decision Log
-entries remain Stage 7 work; history browsing remains Stage 8. See
+chosen. The user's review date/cadence are preserved as entered. Stage 6
+introduced format 4 backups for these relationships. Current format 5 adds
+decisions and retains formats 1–4 compatibility. Schema 1 drafts remain readable
+and upgrade to schema 2 on completion. Stage 7 adds explicit, separate
+[Decision Log entries](LIVING_THESIS_DECISION_LOG.md) that may reference a
+completed review; completion does not create them automatically. Unified
+history browsing remains Stage 8. See
 [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md) and
 [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md) for the current contract.
 
