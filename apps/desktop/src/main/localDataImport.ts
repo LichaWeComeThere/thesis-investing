@@ -1,7 +1,10 @@
+import { decisionIntegrityErrors } from '../storage/decisionIntegrity';
 import { completedReviewIntegrityErrors } from '../storage/completedReviewIntegrity';
 import { reviewChildOwnershipErrors, reviewSessionParentErrors } from '../storage/reviewSessionIntegrity';
 import {
   validateLivingThesis,
+  validateLivingThesisDecision,
+  type LivingThesisDecision,
   validateLivingThesisReviewSession,
   validateLivingThesisRevision,
   getLivingThesisChildReferences,
@@ -39,7 +42,8 @@ const COUNT_KEYS: Array<keyof LocalDataExportCounts> = [
   'mbsScoreSnapshots',
   'livingTheses',
   'reviewSessions',
-  'thesisRevisions'
+  'thesisRevisions',
+  'thesisDecisions'
 ];
 
 export function parseLocalDataImportDocument(
@@ -63,7 +67,7 @@ export function parseLocalDataImportDocument(
     ]);
   }
 
-  if (parsed.formatVersion !== 1 && parsed.formatVersion !== 2 && parsed.formatVersion !== 3 && parsed.formatVersion !== LOCAL_DATA_EXPORT_FORMAT_VERSION) {
+  if (parsed.formatVersion !== 1 && parsed.formatVersion !== 2 && parsed.formatVersion !== 3 && parsed.formatVersion !== 4 && parsed.formatVersion !== LOCAL_DATA_EXPORT_FORMAT_VERSION) {
     return failure([
       `Unsupported local data export format version: ${String(
         parsed.formatVersion
@@ -76,7 +80,8 @@ export function parseLocalDataImportDocument(
   const countKeys = COUNT_KEYS.filter(
     (key) => (parsed.formatVersion !== 1 || key !== 'livingTheses') &&
       (formatVersion >= 3 || key !== 'reviewSessions') &&
-      (formatVersion >= 4 || key !== 'thesisRevisions')
+      (formatVersion >= 4 || key !== 'thesisRevisions') &&
+      (formatVersion >= 5 || key !== 'thesisDecisions')
   );
 
   if (!isRecord(parsed.counts)) {
@@ -126,6 +131,11 @@ export function parseLocalDataImportDocument(
       (isRecord(data) && 'thesisRevisions' in data))) {
     errors.push('Thesis revisions require export format version 4.');
   }
+  if (parsed.formatVersion < 5 &&
+    ((isRecord(counts) && 'thesisDecisions' in counts) ||
+      (isRecord(data) && 'thesisDecisions' in data))) {
+    errors.push('Thesis decisions require export format version 5.');
+  }
   if (errors.length > 0) return failure(errors);
 
   const source = parsed as unknown as LocalDataImportDocument;
@@ -133,10 +143,12 @@ export function parseLocalDataImportDocument(
     ...source,
     counts: { ...source.counts, ...(source.formatVersion === 1 ? { livingTheses: 0 } : {}),
       ...(source.formatVersion < 3 ? { reviewSessions: 0 } : {}),
-      ...(source.formatVersion < 4 ? { thesisRevisions: 0 } : {}) },
+      ...(source.formatVersion < 4 ? { thesisRevisions: 0 } : {}),
+      ...(source.formatVersion < 5 ? { thesisDecisions: 0 } : {}) },
     data: { ...source.data, ...(source.formatVersion === 1 ? { livingTheses: [] } : {}),
       ...(source.formatVersion < 3 ? { reviewSessions: [] } : {}),
-      ...(source.formatVersion < 4 ? { thesisRevisions: [] } : {}) }
+      ...(source.formatVersion < 4 ? { thesisRevisions: [] } : {}),
+      ...(source.formatVersion < 5 ? { thesisDecisions: [] } : {}) }
   };
 
   const childIds = new Set<string>();
@@ -162,6 +174,13 @@ export function parseLocalDataImportDocument(
   }
   errors.push(...reviewChildOwnershipErrors(allChildReferences(document.data)));
   errors.push(...validateCompletedReviewLinks(document));
+  const sessions = new Map(document.data.reviewSessions.map((session) => [session.id, session]));
+  for (const decision of document.data.thesisDecisions) {
+    const parent = parents.get(decision.thesisId);
+    if (!parent) errors.push('Every thesis decision requires its parent Living Thesis in the backup.');
+    else errors.push(...decisionIntegrityErrors(decision, parent,
+      decision.reviewSessionId ? sessions.get(decision.reviewSessionId) : undefined));
+  }
   return errors.length > 0 ? failure(errors) : success(document);
 }
 
@@ -198,7 +217,8 @@ export function getLocalDataImportWarnings(
       document.data.livingTheses,
       storage.repositories.livingTheses.getById
     ) + countCollisions(document.data.reviewSessions, storage.repositories.reviewSessions.getById) +
-    countCollisions(document.data.thesisRevisions, storage.repositories.thesisRevisions.getById);
+    countCollisions(document.data.thesisRevisions, storage.repositories.thesisRevisions.getById) +
+    countCollisions(document.data.thesisDecisions, storage.repositories.thesisDecisions.getById);
   const warnings: string[] = [];
 
   if (document.formatVersion === 1) {
@@ -210,6 +230,9 @@ export function getLocalDataImportWarnings(
   }
   if (document.formatVersion < 4) {
     warnings.push('This older backup does not include completed review history. Existing review history will remain unchanged.');
+  }
+  if (document.formatVersion < 5) {
+    warnings.push('This older backup does not include thesis decisions. Existing decisions will remain unchanged.');
   }
   if (document.data.reviewSessions.some((session) => {
     const parent = document.data.livingTheses.find((thesis) => thesis.id === session.thesisId)!;
@@ -276,6 +299,8 @@ export function appendLocalDataImport(
     const reviewSessionIds = allocateImportIds(document.data.reviewSessions, existingSessions.map(({ id }) => id));
     const existingRevisions = storage.repositories.thesisRevisions.list();
     const revisionIds = allocateImportIds(document.data.thesisRevisions, existingRevisions.map(({ id }) => id));
+    const decisionIds = allocateImportIds(document.data.thesisDecisions,
+      storage.repositories.thesisDecisions.list().map(({ id }) => id));
     const completedScoreIds = new Set(document.data.reviewSessions.flatMap((session) =>
       session.scoreSnapshotId ? [session.scoreSnapshotId] : []));
     const livingChildIds = allocateImportIds(
@@ -369,6 +394,13 @@ export function appendLocalDataImport(
         after: remapChildren({ ...revision.after, id: thesisId }, thesisId)
       }), 'thesis revision');
     }
+    for (const decision of document.data.thesisDecisions) {
+      requireCreated(storage.repositories.thesisDecisions.restore({
+        ...decision, id: decisionIds.get(decision.id)!,
+        thesisId: livingThesisIds.get(decision.thesisId)!,
+        reviewSessionId: remapReference(decision.reviewSessionId, reviewSessionIds)
+      }), 'thesis decision');
+    }
     return { ...document.counts };
   });
 }
@@ -459,6 +491,11 @@ function validateDataArrays(
   if (formatVersion >= 4) {
     validateRecordArray<LivingThesisRevision>(data.thesisRevisions, 'thesisRevisions',
       (record) => validateLivingThesisRevision(record).errors,
+      () => ({ valid: true, errors: [] }), errors);
+  }
+  if (formatVersion >= 5) {
+    validateRecordArray<LivingThesisDecision>(data.thesisDecisions, 'thesisDecisions',
+      (record) => validateLivingThesisDecision(record).errors,
       () => ({ valid: true, errors: [] }), errors);
   }
 }

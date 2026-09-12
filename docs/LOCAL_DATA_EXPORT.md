@@ -2,10 +2,11 @@
 
 Phase 2, Stage 2 adds a safe local JSON export from Settings/About.
 
-New backups use format version 4. They include Living Theses with structured
+New backups use format version 5. They include Living Theses with structured
 risks and catalysts, saved and completed review sessions, revision history, and
-any score snapshots created when completing reviews. The importer also accepts
-the original version 1, 2, and 3 formats.
+any score snapshots created when completing reviews. They also preserve thesis
+decisions, reasons, dates, and optional completed-review links. The importer also accepts
+the original version 1, 2, 3, and 4 formats.
 
 The export is non-destructive. It reads persisted local records through the
 Electron main/storage layer, asks the user where to save a `.json` file, and
@@ -39,11 +40,14 @@ The export includes user-entered persisted records from:
   thesis baselines, proposed edits, notes, step progress, and partial score inputs
 - Thesis revisions, including the before and after thesis records, the completed
   review link, and an optional link to the score snapshot created with that review
+- Thesis decisions, including the decision, reason, date, and optional completed
+  review link
 
 `livingTheses` counts parent thesis records; each record carries its complete
 `risks` and `catalysts` arrays. `reviewSessions` counts saved session records,
 including completed and abandoned sessions. `thesisRevisions` counts completed
-review history entries. Export reads all eight record types in one SQLite
+review history entries. `thesisDecisions` counts saved decision records. Export
+reads all nine record types in one SQLite
 transaction so the backup represents a consistent saved state.
 
 Use **Save draft** to preserve work for later, or **Complete review** to apply
@@ -78,7 +82,7 @@ The export does not include:
 ```json
 {
   "format": "thesis-investing-local-data-export",
-  "formatVersion": 4,
+  "formatVersion": 5,
   "appName": "Thesis Investing",
   "appVersion": "0.0.0",
   "exportedAt": "2026-09-10T12:00:00.000Z",
@@ -91,7 +95,8 @@ The export does not include:
     "mbsScoreSnapshots": 0,
     "livingTheses": 0,
     "reviewSessions": 0,
-    "thesisRevisions": 0
+    "thesisRevisions": 0,
+    "thesisDecisions": 0
   },
   "data": {
     "watchlistItems": [],
@@ -101,7 +106,8 @@ The export does not include:
     "mbsScoreSnapshots": [],
     "livingTheses": [],
     "reviewSessions": [],
-    "thesisRevisions": []
+    "thesisRevisions": [],
+    "thesisDecisions": []
   }
 }
 ```
@@ -128,8 +134,8 @@ trusted app data folder without changing workflow records. See
 
 ## Current Limitations
 
-Import accepts valid version 1, 2, 3, and 4 export files after a preview and
-explicit confirmation. Older app builds cannot read version 4 backups; update
+Import accepts valid version 1, 2, 3, 4, and 5 export files after a preview and
+explicit confirmation. Older app builds cannot read version 5 backups; update
 the destination app before transferring them.
 Import is not a destructive restore or merge:
 it does not replace the database, overwrite records, or delete existing data.

@@ -2,6 +2,7 @@ import type {
   EntityId,
   Holding,
   LivingThesis,
+  LivingThesisDecision,
   LivingThesisReviewSession,
   LivingThesisRevision,
   MbsScoreSnapshot,
@@ -107,4 +108,13 @@ export interface LocalStorageRepositories {
   livingTheses: LivingThesisRepository;
   reviewSessions: LivingThesisReviewSessionRepository;
   thesisRevisions: LivingThesisRevisionRepository;
+  thesisDecisions: LivingThesisDecisionRepository;
+}
+
+/** Documentary entries are immutable; corrections are new entries. */
+export interface LivingThesisDecisionRepository {
+  create(decision: LivingThesisDecision): RepositoryResult<LivingThesisDecision>;
+  restore(decision: LivingThesisDecision): RepositoryResult<LivingThesisDecision>;
+  getById(id: EntityId): LivingThesisDecision | undefined;
+  list(thesisId?: EntityId): LivingThesisDecision[];
 }

@@ -35,8 +35,10 @@ one section at a time, optional details, and explicit save status.
 **Save draft** means “continue later”; **Complete review** means “apply these
 changes.” Completion requires every section and the final preview to be valid.
 It records the chosen review date and cadence as entered; it does not invent a
-new date. Decision Log and a history/timeline browsing interface remain later
-stages.
+new date or a decision. Stage 7 adds a separate
+[Decision Log](LIVING_THESIS_DECISION_LOG.md) in the saved thesis, where users
+can explicitly record an entry and optionally link this completed review.
+A unified history/timeline browsing interface remains Stage 8 work.
 
 ## Save and recovery behavior
 
@@ -63,8 +65,9 @@ stages.
 - If the completion response is lost, editing pauses and **Complete review**
   retries the exact same request. Storage either finishes it once or returns
   the existing result; it cannot create duplicate revisions or scores.
-- Format 4 exports include drafts, completed sessions, immutable revisions, and
-  linked scores. Older formats 1–3 remain readable. Database migration 6 retains
+- Current format 5 exports include drafts, completed sessions, immutable
+  revisions, linked scores, and decisions. Older formats 1–4 remain readable.
+  Stage 6 introduced the review history in format 4. Database migration 6 retains
   existing schema 1 sessions; completion upgrades those sessions to schema 2.
 
 ## Implementation boundary
@@ -86,12 +89,12 @@ Run `pnpm preview:review` after installing dependencies. The Vite preview uses
 the real app, core workflow, and storage services with a separate example file:
 `node_modules/.cache/review-preview/example.sqlite`. It seeds a fictional
 Acme Research thesis only when that example database is empty. It never opens
-the Electron `userData` database. Only Board/review storage is bridged in this
+the Electron `userData` database. Only Board/review/decision storage is bridged in this
 preview; other screens retain their existing browser fallback behavior.
 
 The development server listens on port 4173. Its `/sizes.html` page labels the
 workspace as fictional and offers 1487×1058, 1100×720, and 860×560 desktop frames
-for reproducible visual checks. The bridge permits only named Board/review
+for reproducible visual checks. The bridge permits only named Board/review/decision
 operations through same-origin JSON requests. It is development tooling, not
 a production web deployment or a supported multi-user service.
 
@@ -108,7 +111,7 @@ navigation/discard protection, dirty Board gating, and malformed IPC requests.
 Draft tests check that saving does not change the parent thesis. Completion
 coverage checks confirmation, applying changes once, optional scores, immutable
 history, stale/forged submissions, rollback, restart, and exact retry after an
-uncertain response. Backup coverage checks formats 1–4, linked history, ID
+uncertain response. Backup coverage checks formats 1–5, linked history and decisions, ID
 remapping, and all-or-nothing import.
 
 Browser verification covers the six-section flow, explicit saves, saved-draft

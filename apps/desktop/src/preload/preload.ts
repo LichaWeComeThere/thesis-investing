@@ -3,6 +3,7 @@ import { dashboardSummariesStorageChannels } from '../shared/dashboardSummariesS
 import { localDataStorageChannels } from '../shared/localDataStorage';
 import { createLivingThesesPreloadApi } from './livingThesesPreload';
 import { createReviewSessionsPreloadApi } from './reviewSessionsPreload';
+import { createDecisionsPreloadApi } from './decisionsPreload';
 import { mbsScoreSnapshotsStorageChannels } from '../shared/mbsScoreSnapshotsStorage';
 import { portfolioRankerStorageChannels } from '../shared/portfolioRankerStorage';
 import { remindersStorageChannels } from '../shared/remindersStorage';
@@ -13,6 +14,7 @@ import {
 } from '../shared/watchlistStorage';
 
 const thesisInvestingApi: ThesisInvestingApi = {
+  decisions: createDecisionsPreloadApi((channel, ...args) => ipcRenderer.invoke(channel, ...args)),
   reviewSessions: createReviewSessionsPreloadApi((channel, ...args) => ipcRenderer.invoke(channel, ...args)),
   dashboardSummaries: {
     get: () => ipcRenderer.invoke(dashboardSummariesStorageChannels.get)

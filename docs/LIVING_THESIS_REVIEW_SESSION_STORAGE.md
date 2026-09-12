@@ -3,8 +3,10 @@
 Phase 3 Stage 6 implements durable drafts, guided review, and atomic completion.
 The [guided UI](LIVING_THESIS_REVIEW_SESSION_UI.md) exposes this contract through
 validated typed IPC. **Save draft** keeps progress for later. **Complete review**
-applies the confirmed changes and records their history. Decision Log remains
-Stage 7 work; manual Windows UI verification remains pending.
+applies the confirmed changes and records their history. Stage 7 adds a separate
+[Decision Log](LIVING_THESIS_DECISION_LOG.md) with optional completed-review
+links; completion never creates a decision automatically. Manual Windows UI
+verification remains pending.
 
 ## Persisted contract
 
@@ -102,11 +104,12 @@ sessions.
 
 ## Backups
 
-New exports use format 4 with eight record arrays and matching counts:
+Stage 6 introduced format 4 with review history. Current exports use format 5
+with nine record arrays and matching counts:
 `watchlistItems`, `thesisNotes`, `reminders`, `portfolioRankerItems`,
-`mbsScoreSnapshots`, `livingTheses`, `reviewSessions`, and `thesisRevisions`.
-Export reads them in one transaction. Settings includes review and revision
-counts. Formats 1–3 retain their historical shapes and normalize absent later
+`mbsScoreSnapshots`, `livingTheses`, `reviewSessions`, `thesisRevisions`, and
+`thesisDecisions`. Export reads them in one transaction. Settings includes
+review, revision, and decision counts. Formats 1–4 retain their historical shapes and normalize absent later
 record types to empty arrays after validation. New record types in older
 formats are rejected instead of silently omitted.
 
@@ -117,11 +120,11 @@ agree; duplicate transitions and orphaned history are rejected. Older/stale
 baselines remain preserved and are flagged when an unfinished review resumes.
 
 Import reserves incoming IDs before allocating collision suffixes. Separate
-maps cover parents, sessions, revisions, and scores; one shared child map covers
+maps cover parents, sessions, revisions, scores, and decisions; one shared child map covers
 current, baseline, draft, and revision snapshots. Every reference is remapped
 consistently. Explicitly linked review scores use the Living Thesis map;
 legacy score references retain their existing Thesis Note remapping behavior.
-Parents, scores, sessions, and revisions restore in dependency order within one
+Parents, scores, sessions, revisions, and decisions restore in dependency order within one
 append-only transaction. A later failure rolls back the full import and leaves
 its preview retryable. See [Export](LOCAL_DATA_EXPORT.md) and
 [Import](LOCAL_DATA_IMPORT.md) for user-facing backup guidance.
@@ -133,8 +136,9 @@ metadata, canonical revisions, child identity/timestamps, and legacy date/UTC
 score compatibility. Storage and app integration coverage includes restart,
 stale versions, forged baselines, duplicate requests, exact retry, immutable
 history, migration, and rollback after failed writes. Backup coverage includes
-formats 1–4, completed-review links, collision remapping, and import rollback.
+formats 1–5, completed-review and decision links, collision remapping, and import rollback.
 
 Stage 6 implementation is complete. Manual Windows UI/installer testing remains
 deferred; automated packaging does not establish interactive behavior. Stage 7
-adds Decision Log. A history/timeline browsing interface remains Stage 8 work.
+adds explicit, separate Decision Log entries without rewriting completed
+sessions. A history/timeline browsing interface remains Stage 8 work.

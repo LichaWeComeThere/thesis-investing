@@ -359,7 +359,7 @@ describe('atomic review completion against file SQLite', () => {
       runMigrations(database);
       runMigrations(database);
       expect(database.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map((row) => row.version))
-        .toEqual([1, 2, 3, 4, 5, 6]);
+        .toEqual([1, 2, 3, 4, 5, 6, 7]);
     } finally { database.close(); }
     const storage = await open(path);
     expect(storage.repositories.reviewSessions.getById(legacy.id)).toEqual(legacy);

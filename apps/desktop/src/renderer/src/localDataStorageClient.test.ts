@@ -21,7 +21,7 @@ describe('localDataStorageClient', () => {
           persistedWorkflows: [],
           recordCounts: {
             livingTheses: 0,
-            reviewSessions: 0, thesisRevisions: 0,
+            reviewSessions: 0, thesisRevisions: 0, thesisDecisions: 0,
             mbsScoreSnapshots: 0,
             portfolioRankerItems: 0,
             reminders: 0,
@@ -38,7 +38,7 @@ describe('localDataStorageClient', () => {
           status: 'completed',
           imported: {
             livingTheses: 0,
-            reviewSessions: 0, thesisRevisions: 0,
+            reviewSessions: 0, thesisRevisions: 0, thesisDecisions: 0,
             mbsScoreSnapshots: 0,
             portfolioRankerItems: 0,
             reminders: 0,

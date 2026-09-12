@@ -1,7 +1,45 @@
-# Guided Review design QA
+# Living Thesis design QA
 
-Current completion QA is recorded below. The earlier draft UI assessment is
-preserved as historical evidence.
+Current Decision Log QA is recorded first. Earlier review assessments remain
+below as historical evidence.
+
+## Decision Log — Stage 7
+
+Date: 2026-09-12. A simple inline form on the saved Thesis Board records a
+decision, its reason, and an optional completed-review link. Saved entries
+are dated, read-only history. No new navigation tab or external API is added.
+
+| Evidence | View |
+| --- | --- |
+| [Desktop form](docs/screenshots/decision-log-desktop.jpg) | 1100×720; readable fields and both save/cancel actions |
+| [Small desktop form](docs/screenshots/decision-log-small.jpg) | 860×560; all three fields and both actions fit after ordinary scrolling |
+| [Saved decision](docs/screenshots/decision-log-saved.jpg) | 1100×720; dated reason and linked completed review after reload |
+
+Screenshots contain fictional Acme Research data from the isolated browser
+preview. Captures use one pixel per CSS pixel and crop the development size
+selector. Different example drafts demonstrate optional and linked reviews.
+
+- Verified Add decision, entering a reason, selecting a completed review,
+  Save and leave through the sidebar guard, and recovering the saved entry
+  after reloading. Saving the decision left the thesis at version 2.
+- Verified Escape keeps the draft in both navigation and cancellation
+  dialogs. Explicit Discard decision closes the form and retains saved history.
+- Fields use 16px normal-weight text; the empty-state prompt is hidden while
+  the form is open. The existing Board layout and visual language are retained.
+- Fixed an HTTP-preview UUID compatibility issue with a cryptographically
+  random UUID v4 fallback. The production path and fallback are covered by tests.
+- Added regression coverage for a pending review launch racing with a new
+  decision and for a thesis switch requested during an existing decision save.
+- 467 tests pass: 160 core, 5 shared UI, and 302 desktop. Real SQLite coverage
+  includes migration, immutable entries, exact retry after a lost reply,
+  parent/review integrity, restart recovery, backup remapping, and rollback.
+  Lint, typecheck, and production build pass. The final helper-copy correction
+  also passed the 24 Board and Decision Log interaction tests. GitHub CI and
+  Windows Build results are recorded with the pull request.
+
+Manual Windows UI, installer interaction, native window-close behavior, and
+assistive-technology checks remain deferred. This browser pass does not replace
+those checks. A combined history timeline remains a separate Stage 8 task.
 
 ## Complete review — Stage 6 part 3
 

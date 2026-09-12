@@ -137,3 +137,13 @@ export {
   validateLivingThesisRevision
 } from './livingThesisRevision';
 export type { LivingThesisRevision } from './livingThesisRevision';
+
+export {
+  LIVING_THESIS_DECISION_SCHEMA_VERSION,
+  LIVING_THESIS_DECISION_KINDS,
+  LIVING_THESIS_DECISION_TITLE_MAX_LENGTH,
+  LIVING_THESIS_DECISION_RATIONALE_MAX_LENGTH,
+  parseLivingThesisDecision,
+  validateLivingThesisDecision
+} from './livingThesisDecision';
+export type { LivingThesisDecision, LivingThesisDecisionKind } from './livingThesisDecision';

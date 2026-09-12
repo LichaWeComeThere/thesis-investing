@@ -69,9 +69,12 @@ storage, restart recovery, and format 3 backups. Stage 6 part 2 connects a guide
 review screen through typed IPC, with explicit draft saves, resume, and edit
 protection. Stage 6 is now implemented through explicit completion: the thesis,
 completed session, immutable revision, and optional score save together, with
-conflict protection and safe retries. Format 4 backups include that history and
-retain formats 1–3 compatibility. Manual Windows UI verification remains
-pending; Decision Log is the next separate Stage 7 task.
+conflict protection and safe retries. Stage 7 adds an append-only Decision Log
+inside each saved thesis, with a decision, reason, automatic date, and optional
+completed-review link. Current format 5 backups include decisions alongside
+review history and retain formats 1–4 compatibility. Manual Windows UI
+verification remains pending; Stage 8, Score History / Thesis Timeline, is the
+next separate task.
 
 The shared Living Thesis current-state model and validation are implemented in
 `packages/core` using the decisions for optional ticker metadata, dedicated
@@ -88,7 +91,7 @@ labeled shared mock data until their own future adoption stages.
 - Stage 4: Thesis Board adopts Living Thesis model - complete
 - Stage 5: [Review Workflow](LIVING_THESIS_REVIEW_WORKFLOW.md) - complete
 - Stage 6: [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md) and [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md) - complete; draft storage, guided UI, atomic completion, and history backups implemented; manual Windows UI check pending
-- Stage 7: Decision Log
+- Stage 7: [Decision Log](LIVING_THESIS_DECISION_LOG.md) - complete; simple entry form, immutable history, optional completed-review links, safe retries, and backup coverage implemented; manual Windows UI check pending
 - Stage 8: Score History / Thesis Timeline
 - Stage 9: Thesis Health Engine
 - Stage 10: Review Queue

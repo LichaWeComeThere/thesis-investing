@@ -1,5 +1,6 @@
 import type { WatchlistItem } from '@thesis-investing/core';
 import type { DashboardSummariesStorageApi } from './dashboardSummariesStorage';
+import type { DecisionsStorageApi } from './decisionsStorage';
 import type { LocalDataStorageApi } from './localDataStorage';
 import type { LivingThesesStorageApi } from './livingThesesStorage';
 import type { MbsScoreSnapshotsStorageApi } from './mbsScoreSnapshotsStorage';
@@ -31,6 +32,7 @@ export type WatchlistStorageApi = {
 };
 
 export type ThesisInvestingApi = {
+  decisions: DecisionsStorageApi;
   reviewSessions: ReviewSessionsStorageApi;
   dashboardSummaries: DashboardSummariesStorageApi;
   localData: LocalDataStorageApi;

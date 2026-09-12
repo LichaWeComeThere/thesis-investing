@@ -18,6 +18,9 @@ import { ReviewSessionLauncher } from './ReviewSessionLauncher';
 import { ReviewSessionScreen } from './ReviewSessionScreen';
 import { getDefaultReviewSessionsStorageClient } from './reviewSessionsStorageClient';
 import type { ResumedReviewSession, ReviewSessionsStorageApi } from '../../shared/reviewSessionsStorage';
+import type { DecisionsStorageApi } from '../../shared/decisionsStorage';
+import { DecisionLogPanel, type DecisionNavigationRequest } from './DecisionLogPanel';
+import { getDefaultDecisionsStorageClient } from './decisionsStorageClient';
 
 import type {
   LivingThesisCatalystWriteInput,
@@ -34,6 +37,7 @@ import {
 } from './livingThesesStorageClient';
 
 type ThesisBoardScreenProps = {
+  decisionClient?: DecisionsStorageApi | null;
   reviewClient?: ReviewSessionsStorageApi | null;
   client?: LivingThesesStorageClient | null;
   initialFeedback?: BoardFeedback | null;
@@ -113,6 +117,7 @@ const emptyDraft: BoardDraft = {
 export function ThesisBoardScreen({
   client = getDefaultLivingThesesStorageClient(),
   reviewClient = getDefaultReviewSessionsStorageClient(),
+  decisionClient = getDefaultDecisionsStorageClient(),
   initialFeedback = null,
   initialLoadState,
   initialTheses,
@@ -130,16 +135,26 @@ export function ThesisBoardScreen({
   const [isCreating, setIsCreating] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [decisionGuarded, setDecisionGuarded] = useState(false);
+  const [reviewOpening, setReviewOpening] = useState(false);
+  const [decisionNavigation, setDecisionNavigation] = useState<DecisionNavigationRequest>();
   const [feedback, setFeedback] = useState<BoardFeedback | null>(initialFeedback);
   const [filter, setFilter] = useState<BoardFilter>('all');
   const [sort, setSort] = useState<BoardSort>('recently-updated');
   const editorFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (navigationRequest && !review && !isDirty && !isSaving) {
+    if (navigationRequest && !review && !isDirty && !isSaving && !decisionGuarded) {
       navigationRequest.onLeave();
     }
-  }, [isDirty, isSaving, navigationRequest, review]);
+  }, [isDirty, isSaving, navigationRequest, review, decisionGuarded]);
+
+  useEffect(() => {
+    if (decisionNavigation && !decisionGuarded && !review) {
+      setDecisionNavigation(undefined);
+      decisionNavigation.onLeave();
+    }
+  }, [decisionNavigation, decisionGuarded, review]);
 
   const loadTheses = useCallback(async (preferredId = ''): Promise<void> => {
     if (!client) {
@@ -191,7 +206,15 @@ export function ThesisBoardScreen({
   const selectedThesis = theses.find((thesis) => thesis.id === selectedId);
 
   function selectThesis(thesis: LivingThesis): void {
-    if (isSaving) return;
+    if (isSaving || reviewOpening) return;
+    if (thesis.id === selectedId && !isCreating) return;
+    if (decisionGuarded) {
+      setDecisionNavigation({ destination: thesis.entityName, onStay: () => setDecisionNavigation(undefined), onLeave: () => {
+        setDecisionNavigation(undefined); setDecisionGuarded(false);
+        setSelectedId(thesis.id); setDraft(thesisToDraft(thesis)); setIsCreating(false); setFeedback(null);
+      } });
+      return;
+    }
     if (isDirty) {
       setFeedback({
         message: 'Save or cancel the current changes before opening another thesis.',
@@ -207,7 +230,14 @@ export function ThesisBoardScreen({
   }
 
   function beginCreate(): void {
-    if (isSaving) return;
+    if (isSaving || reviewOpening) return;
+    if (decisionGuarded) {
+      setDecisionNavigation({ destination: 'a new thesis', onStay: () => setDecisionNavigation(undefined), onLeave: () => {
+        setDecisionNavigation(undefined); setDecisionGuarded(false);
+        setDraft(emptyDraft); setIsCreating(true); setSelectedId(''); setFeedback(null);
+      } });
+      return;
+    }
     if (isDirty) {
       setFeedback({
         message: 'Save or cancel the current changes before creating a thesis.',
@@ -365,7 +395,7 @@ export function ThesisBoardScreen({
       ) : null}
 
       {selectedThesis && !isCreating && loadState === 'loaded' ? <ReviewSessionLauncher
-        key={selectedThesis.id} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving} onOpen={setReview}
+        key={selectedThesis.id} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving || decisionGuarded} onOpen={setReview} onOpeningChange={setReviewOpening}
       /> : null}
 
       <div className="living-thesis-board-layout">
@@ -398,7 +428,7 @@ export function ThesisBoardScreen({
                 <option value="next-review">Next review</option>
               </select>
             </label>
-            <Button disabled={isSaving} onClick={beginCreate} size="sm" type="button">
+            <Button disabled={isSaving || reviewOpening} onClick={beginCreate} size="sm" type="button">
               New thesis
             </Button>
           </div>
@@ -433,7 +463,7 @@ export function ThesisBoardScreen({
                 <button
                   aria-pressed={thesis.id === selectedId}
                   className={`living-thesis-list-item${thesis.id === selectedId ? ' living-thesis-list-item--selected' : ''}`}
-                  disabled={isSaving}
+                  disabled={isSaving || reviewOpening}
                   key={thesis.id}
                   onClick={() => selectThesis(thesis)}
                   type="button"
@@ -465,16 +495,24 @@ export function ThesisBoardScreen({
         </Card>
 
         {(isCreating || selectedThesis) && loadState !== 'error' ? (
+          <div className="living-thesis-detail-column">
+          {selectedThesis && !isCreating && loadState === 'loaded' ? <DecisionLogPanel key={selectedThesis.id}
+            thesisId={selectedThesis.id} entityName={selectedThesis.entityName} client={decisionClient}
+            disabled={isDirty || isSaving || reviewOpening} onGuardChange={setDecisionGuarded}
+            navigationRequest={navigationRequest ?? decisionNavigation}
+          /> : null}
           <LivingThesisEditor
             draft={draft}
             formRef={editorFormRef}
             isCreating={isCreating}
             isDirty={isDirty}
             isSaving={isSaving}
+            disabled={decisionGuarded || reviewOpening}
             onCancel={cancelEditing}
             onChange={updateDraft}
             onSubmit={saveDraft}
           />
+          </div>
         ) : (
           <Card className="living-thesis-editor-card" title="Thesis details">
             <BoardState title="Select or create a Living Thesis.">
@@ -559,12 +597,13 @@ function UnsavedThesisDialog({ destination, feedback, isSaving, onDiscard, onSav
   );
 }
 
-function LivingThesisEditor({ draft, formRef, isCreating, isDirty, isSaving, onCancel, onChange, onSubmit }: {
+function LivingThesisEditor({ draft, formRef, isCreating, isDirty, isSaving, disabled = false, onCancel, onChange, onSubmit }: {
   draft: BoardDraft;
   formRef: RefObject<HTMLFormElement>;
   isCreating: boolean;
   isDirty: boolean;
   isSaving: boolean;
+  disabled?: boolean;
   onCancel: () => void;
   onChange: <K extends keyof BoardDraft>(field: K, value: BoardDraft[K]) => void;
   onSubmit: () => Promise<void>;
@@ -572,7 +611,7 @@ function LivingThesisEditor({ draft, formRef, isCreating, isDirty, isSaving, onC
   return (
     <Card className="living-thesis-editor-card" title={isCreating ? 'Create Living Thesis' : 'Thesis details'}>
       <form ref={formRef} onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
-        <fieldset className="living-thesis-form" disabled={isSaving}>
+        <fieldset className="living-thesis-form" disabled={isSaving || disabled}>
           <div className="living-thesis-form-heading">
             <div>
               <span>{isCreating ? 'New local record' : `Version ${draft.version}`}</span>

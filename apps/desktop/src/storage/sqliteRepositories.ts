@@ -30,6 +30,7 @@ import type {
 import { createSqliteLivingThesisRepository } from "./sqliteLivingThesisRepository";
 import { createSqliteReviewSessionRepository } from "./sqliteReviewSessionRepository";
 import { createSqliteThesisRevisionRepository } from './sqliteThesisRevisionRepository';
+import { createSqliteThesisDecisionRepository } from './sqliteThesisDecisionRepository';
 
 type SqlParam = string | number | null;
 type SqlRow = Record<string, unknown>;
@@ -49,7 +50,8 @@ export function createSqliteRepositories(
     mbsScoreSnapshots,
     livingTheses,
     reviewSessions,
-    thesisRevisions: createSqliteThesisRevisionRepository(database, livingTheses, reviewSessions, mbsScoreSnapshots)
+    thesisRevisions: createSqliteThesisRevisionRepository(database, livingTheses, reviewSessions, mbsScoreSnapshots),
+    thesisDecisions: createSqliteThesisDecisionRepository(database, livingTheses, reviewSessions)
   };
 }
 

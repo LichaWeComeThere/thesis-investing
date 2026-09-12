@@ -246,6 +246,41 @@ export const migrations: readonly Migration[] = [
         SELECT RAISE(ABORT, 'Thesis revisions are immutable');
       END;
     `
+  },
+  {
+    version: 7,
+    name: "add_immutable_thesis_decisions",
+    sql: `
+      CREATE TABLE living_thesis_decisions (
+        id TEXT PRIMARY KEY,
+        thesis_id TEXT NOT NULL REFERENCES living_theses(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+        schema_version INTEGER NOT NULL CHECK (schema_version = 1),
+        kind TEXT NOT NULL CHECK (kind IN ('research_note', 'review_conclusion')),
+        title TEXT NOT NULL CHECK (length(trim(title)) BETWEEN 1 AND 160),
+        rationale TEXT NOT NULL CHECK (length(trim(rationale)) BETWEEN 1 AND 10000),
+        review_session_id TEXT REFERENCES living_thesis_review_sessions(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+        created_at TEXT NOT NULL,
+        CHECK ((kind = 'research_note' AND review_session_id IS NULL) OR
+          (kind = 'review_conclusion' AND review_session_id IS NOT NULL))
+      );
+      CREATE INDEX idx_thesis_decisions_parent_created
+        ON living_thesis_decisions(thesis_id, created_at DESC, id ASC);
+      CREATE TRIGGER valid_thesis_decision_relationships BEFORE INSERT ON living_thesis_decisions BEGIN
+        SELECT CASE WHEN NOT EXISTS (
+          SELECT 1 FROM living_theses WHERE id = NEW.thesis_id AND created_at <= NEW.created_at
+        ) THEN RAISE(ABORT, 'Decision requires its thesis and a valid date') END;
+        SELECT CASE WHEN NEW.review_session_id IS NOT NULL AND NOT EXISTS (
+          SELECT 1 FROM living_thesis_review_sessions WHERE id = NEW.review_session_id
+            AND thesis_id = NEW.thesis_id AND status = 'completed' AND completed_at <= NEW.created_at
+        ) THEN RAISE(ABORT, 'Decision requires a completed review from the same thesis') END;
+      END;
+      CREATE TRIGGER immutable_thesis_decision_update BEFORE UPDATE ON living_thesis_decisions BEGIN
+        SELECT RAISE(ABORT, 'Saved decisions are immutable');
+      END;
+      CREATE TRIGGER immutable_thesis_decision_delete BEFORE DELETE ON living_thesis_decisions BEGIN
+        SELECT RAISE(ABORT, 'Saved decisions are immutable');
+      END;
+    `
   }
 ];
 
