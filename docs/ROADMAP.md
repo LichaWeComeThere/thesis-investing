@@ -71,10 +71,13 @@ protection. Stage 6 is now implemented through explicit completion: the thesis,
 completed session, immutable revision, and optional score save together, with
 conflict protection and safe retries. Stage 7 adds an append-only Decision Log
 inside each saved thesis, with a decision, reason, automatic date, and optional
-completed-review link. Current format 5 backups include decisions alongside
+completed-review link. Stage 8 adds a read-only History card with completed
+reviews, decisions, and validated review-linked scores, including expandable
+details. The view derives from saved records; it introduces no migration or
+backup format change. Current format 5 backups include decisions alongside
 review history and retain formats 1–4 compatibility. Manual Windows UI
-verification remains pending; Stage 8, Score History / Thesis Timeline, is the
-next separate task.
+verification remains pending; Stage 9, Thesis Health Engine, is the next
+separate task.
 
 The shared Living Thesis current-state model and validation are implemented in
 `packages/core` using the decisions for optional ticker metadata, dedicated
@@ -92,7 +95,7 @@ labeled shared mock data until their own future adoption stages.
 - Stage 5: [Review Workflow](LIVING_THESIS_REVIEW_WORKFLOW.md) - complete
 - Stage 6: [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md) and [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md) - complete; draft storage, guided UI, atomic completion, and history backups implemented; manual Windows UI check pending
 - Stage 7: [Decision Log](LIVING_THESIS_DECISION_LOG.md) - complete; simple entry form, immutable history, optional completed-review links, safe retries, and backup coverage implemented; manual Windows UI check pending
-- Stage 8: Score History / Thesis Timeline
+- Stage 8: [Score History / Thesis Timeline](LIVING_THESIS_HISTORY.md) - complete; read-only History card, expandable review/decision/score details, validated formal score links, and deterministic ordering implemented; direct-edit history remains incomplete; manual Windows UI check pending
 - Stage 9: Thesis Health Engine
 - Stage 10: Review Queue
 - Stage 11: Thesis Library

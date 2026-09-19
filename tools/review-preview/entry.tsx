@@ -11,6 +11,7 @@ const invoke = async (method: string, ...args: unknown[]) => {
 };
 Object.assign(window, { thesisInvesting: {
   platform: 'preview',
+  thesisHistory: { get: (thesisId: string) => invoke('history.get', thesisId) },
   decisions: { list: (thesisId: string) => invoke('decisions.list', thesisId), listCompletedReviews: (thesisId: string) => invoke('decisions.listCompletedReviews', thesisId), create: (...args: unknown[]) => invoke('decisions.create', ...args) },
   livingTheses: { list: () => invoke('theses.list'), getById: (id: string) => invoke('theses.getById', id), create: (...args: unknown[]) => invoke('theses.create', ...args), update: (...args: unknown[]) => invoke('theses.update', ...args) },
   reviewSessions: { getActive: (id: string) => invoke('reviews.getActive', id), start: (id: string) => invoke('reviews.start', id), resume: (id: string) => invoke('reviews.resume', id), saveDraft: (...args: unknown[]) => invoke('reviews.saveDraft', ...args), complete: (...args: unknown[]) => invoke('reviews.complete', ...args) }

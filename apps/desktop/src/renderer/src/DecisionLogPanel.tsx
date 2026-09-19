@@ -1,6 +1,6 @@
 import type { LivingThesisDecision } from '@thesis-investing/core';
 import { Badge, Button, Card, DraftLeaveDialog } from '@thesis-investing/ui';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { CompletedDecisionReview, DecisionsStorageApi, DecisionWriteInput } from '../../shared/decisionsStorage';
 
 export type DecisionNavigationRequest = {
@@ -10,13 +10,17 @@ export type DecisionNavigationRequest = {
 };
 
 /** Append-only research notes; the containing Board owns the selected thesis. */
-export function DecisionLogPanel({ thesisId, entityName, client, disabled = false, navigationRequest, onGuardChange }: {
+export function DecisionLogPanel({ thesisId, entityName, client, disabled = false, navigationRequest, onGuardChange, embedded = false, showEntries = true, heading, onDecisionSaved }: {
   thesisId: string;
   entityName: string;
   client: DecisionsStorageApi | null;
   disabled?: boolean;
   navigationRequest?: DecisionNavigationRequest;
   onGuardChange: (guarded: boolean) => void;
+  embedded?: boolean;
+  showEntries?: boolean;
+  heading?: ReactNode;
+  onDecisionSaved?: () => void;
 }): JSX.Element {
   const [decisions, setDecisions] = useState<LivingThesisDecision[]>([]);
   const [reviews, setReviews] = useState<CompletedDecisionReview[]>([]);
@@ -46,7 +50,7 @@ export function DecisionLogPanel({ thesisId, entityName, client, disabled = fals
     if (!client) { setLoading(false); setLoadErrors(['Decision storage is unavailable in this window.']); return; }
     setLoading(true); setLoadErrors([]);
     try {
-      const [entries, completed] = await Promise.all([client.list(thesisId), client.listCompletedReviews(thesisId)]);
+      const [entries, completed] = await Promise.all([showEntries ? client.list(thesisId) : Promise.resolve({ ok: true as const, value: [] }), client.listCompletedReviews(thesisId)]);
       if (!isCurrent()) return;
       const nextErrors = [...(!entries.ok ? entries.errors : []), ...(!completed.ok ? completed.errors : [])];
       setLoadErrors(nextErrors);
@@ -55,7 +59,7 @@ export function DecisionLogPanel({ thesisId, entityName, client, disabled = fals
     } catch {
       if (isCurrent()) setLoadErrors(['The decision log could not be loaded. Try again.']);
     } finally { if (isCurrent()) setLoading(false); }
-  }, [client, thesisId]);
+  }, [client, thesisId, showEntries]);
 
   useEffect(() => { let current = true; void load(() => current); return () => { current = false; }; }, [load]);
   useEffect(() => { onGuardChange(guarded); }, [guarded, onGuardChange]);
@@ -107,6 +111,7 @@ export function DecisionLogPanel({ thesisId, entityName, client, disabled = fals
       }
       setDecisions((current) => [result.value, ...current.filter((entry) => entry.id !== result.value.id)].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id)));
       resetForm(); setSavedMessage('Decision saved. You can find it in this thesis’s history.');
+      onDecisionSaved?.();
       onSaved?.();
     } catch {
       setUncertain(true);
@@ -120,13 +125,13 @@ export function DecisionLogPanel({ thesisId, entityName, client, disabled = fals
   }
 
   const entries = showAll ? decisions : decisions.slice(0, 5);
-  return <Card className="decision-log-card" aria-label={`Decision log for ${entityName}`}>
+  const content = <>
     <div className="decision-log-heading" ref={headingRef}>
-      <div><h2>Decision Log</h2><p>What you decided about {entityName}, and why.</p></div>
+      {heading ?? <div><h2>Decision Log</h2><p>What you decided about {entityName}, and why.</p></div>}
       {!isOpen ? <Button disabled={disabled || loading || !client || loadErrors.length > 0} onClick={begin} size="sm" type="button">Add decision</Button> : null}
     </div>
     {disabled && !isOpen ? <p className="decision-log-hint">Save or cancel your thesis edits before adding a decision.</p> : null}
-    {loading ? <p role="status">Loading decisions…</p> : null}
+    {loading ? <p role="status">{showEntries ? 'Loading decisions…' : 'Loading review options…'}</p> : null}
     {loadErrors.length > 0 ? <div role="alert"><p>{loadErrors.join(' ')}</p>{client ? <Button type="button" variant="secondary" onClick={() => void load()}>Try loading again</Button> : null}</div> : null}
     {savedMessage ? <p className="decision-log-saved" role="status">{savedMessage}</p> : null}
     {isOpen ? <form className="decision-log-form" ref={formRef} onSubmit={(event) => { event.preventDefault(); void save(); }}>
@@ -139,15 +144,17 @@ export function DecisionLogPanel({ thesisId, entityName, client, disabled = fals
       {errors.length > 0 ? <div role="alert">{errors.map((error) => <p key={error}>{error}</p>)}</div> : null}
       <div className="decision-log-actions"><Button type="submit" disabled={busy}>{busy ? 'Saving…' : uncertain ? 'Retry save' : 'Save decision'}</Button><Button type="button" variant="secondary" disabled={busy || uncertain} onClick={cancel}>Cancel</Button></div>
     </form> : null}
-    {!isOpen && !loading && loadErrors.length === 0 && decisions.length === 0 ? <p className="decision-log-empty">No decisions yet. Add a decision to remember your reasoning over time.</p> : null}
-    {decisions.length > 0 ? <ol className="decision-log-list" aria-label="Saved decisions">{entries.map((decision) => {
+    {showEntries && !isOpen && !loading && loadErrors.length === 0 && decisions.length === 0 ? <p className="decision-log-empty">No decisions yet. Add a decision to remember your reasoning over time.</p> : null}
+    {showEntries && decisions.length > 0 ? <ol className="decision-log-list" aria-label="Saved decisions">{entries.map((decision) => {
       const linked = reviews.find((review) => review.id === decision.reviewSessionId);
       return <li key={decision.id}><article><div className="decision-log-entry-heading"><h3>{decision.title}</h3><time dateTime={decision.createdAt}>{formatDate(decision.createdAt)}</time></div><p className="decision-log-reason">{decision.rationale}</p>{decision.reviewSessionId ? <div className="decision-log-review"><Badge variant="accent">Linked review</Badge><span>{linked ? `${formatDate(linked.completedAt)} · ${linked.reviewReason}` : 'Completed thesis review'}</span></div> : null}</article></li>;
     })}</ol> : null}
-    {decisions.length > 5 ? <Button type="button" variant="ghost" size="sm" onClick={() => setShowAll(!showAll)}>{showAll ? 'Show recent decisions' : `Show all ${decisions.length} decisions`}</Button> : null}
+    {showEntries && decisions.length > 5 ? <Button type="button" variant="ghost" size="sm" onClick={() => setShowAll(!showAll)}>{showAll ? 'Show recent decisions' : `Show all ${decisions.length} decisions`}</Button> : null}
     {navigationRequest && isOpen && (dirty || busy || uncertain) ? <DraftLeaveDialog title="Unsaved decision" description={uncertain ? 'Confirm this save before leaving so your decision is recorded only once.' : `Save your decision before opening ${navigationRequest.destination}, or discard it and leave.`} errors={errors} busy={busy} onSave={() => void save(navigationRequest.onLeave)} saveLabel={uncertain ? 'Retry save and leave' : 'Save and leave'} onDiscard={uncertain ? undefined : () => { resetForm(); navigationRequest.onLeave(); }} onStay={navigationRequest.onStay} stayDisabled={uncertain} /> : null}
     {confirmCancel && !navigationRequest ? <DraftLeaveDialog title="Discard this decision?" description="This decision has not been saved. Discarding it removes the text you entered." errors={[]} busy={false} onSave={resetForm} saveLabel="Discard decision" onStay={() => setConfirmCancel(false)} stayLabel="Keep editing" /> : null}
-  </Card>;
+  </>;
+  return embedded ? <section className="decision-log-embedded" aria-label={`Decision log for ${entityName}`}>{content}</section>
+    : <Card className="decision-log-card" aria-label={`Decision log for ${entityName}`}>{content}</Card>;
 }
 
 function formatDate(value: string): string {

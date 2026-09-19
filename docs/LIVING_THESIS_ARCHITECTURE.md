@@ -15,10 +15,12 @@ storage and backup support. Part 2 adds the guided review UI and typed IPC.
 Stage 6 implements explicit atomic completion, immutable before/after revisions,
 optional linked scores, and history backups. Stage 7 adds the append-only
 Decision Log, optional links to completed reviews, and format 5 backup coverage.
-Manual Windows UI verification remains pending; Score History / Thesis Timeline
-is the next separate Stage 8 task. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
+Stage 8 adds the read-only History card with completed reviews, decisions, and
+validated review-linked scores. Manual Windows UI verification remains pending;
+Thesis Health Engine is the next separate Stage 9 task. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
 [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md), and
-[Decision Log](LIVING_THESIS_DECISION_LOG.md).
+[Decision Log](LIVING_THESIS_DECISION_LOG.md), plus the
+[History contract](LIVING_THESIS_HISTORY.md).
 
 Sections describing later entities and workflows remain architectural plans,
 not claims that those features are implemented.
@@ -323,32 +325,32 @@ Direct edits may update presentation and current-state fields such as title,
 summary, bull/bear cases, lifecycle, conviction, risk summary, review cadence,
 next review date, and active risks/catalysts.
 
-Each successful update should run in one transaction that:
+Each direct Board save validates the expected thesis version, updates the
+current-state aggregate transactionally, and increments its version and
+`updatedAt`. It does not append a revision. Stage 6 appends immutable
+before/after revisions only when a review completes, in the same transaction as
+the thesis update and any score snapshot.
 
-1. validates the expected thesis version;
-2. records an append-only revision containing the prior and resulting domain
-   state or an equivalent validated delta;
-3. updates the validated current-state storage;
-4. increments the thesis version and `updatedAt`.
-
-Stage 3 implements current-state version checking and transactional aggregate
-writes before the revision table exists. Appending the revision in that same
-transaction becomes mandatory when revision persistence is introduced; Stage
-3 does not fabricate historical records.
+The original architecture proposed revision coverage for every direct edit;
+that broader coverage is not implemented. Stage 8 presents the history actually
+stored and does not invent missing events from version gaps or `updatedAt`.
+Any future direct-edit revision support needs its own explicit contract.
 
 ### Historical records
 
-The following actions append records rather than overwrite prior evidence:
+The following implemented actions append records rather than overwrite prior
+evidence:
 
 - completing a review;
 - recording a documentary decision;
-- saving a completed MBS snapshot;
-- changing lifecycle, conviction, risks, catalysts, or review schedule;
-- correcting a prior record.
+- saving a completed MBS snapshot.
 
-Corrections should append a superseding/correction record with a reference to
-the original. Completed reviews, decisions, snapshots, and revisions should not
-be edited in place through ordinary product UI.
+Lifecycle, conviction, risk, catalyst, and scheduling changes are captured in
+before/after revisions when made through a completed review. Direct Board edits
+do not have equivalent revision coverage. Completed reviews, decisions,
+snapshots, and revisions are not edited in place through ordinary product UI.
+Users can record new reasoning as another decision; explicit correction or
+superseding relationships remain future work.
 
 ## MBS Integration
 
@@ -358,7 +360,18 @@ Its current score, previous score, and change are derived from eligible linked
 snapshots ordered by `createdAt` descending, then snapshot ID ascending as a
 deterministic tie-breaker.
 
-Future behavior should be explicit:
+Current formal score history has an explicit provenance boundary:
+
+- only a completed review with its matching revision and snapshot establishes
+  an eligible link for History;
+- session, revision, snapshot, thesis, and completion-time relationships must
+  validate together;
+- matching `snapshot.thesisId` or ticker alone never establishes eligibility;
+- the first eligible score has no previous comparison; skipping a score during
+  a review does not create a score event or reset the previous score;
+- current, previous, and each historical change use the same ordering above.
+
+Future standalone scorer adoption should preserve these rules:
 
 - saving a score without a thesis continues to create an unlinked snapshot;
 - the user may select a Living Thesis before saving;
@@ -392,12 +405,13 @@ Stage 4 completes the first production adoption of formal Living Thesis data:
   place until the user explicitly reloads the saved version;
 - risks and catalysts retain stable IDs and use statuses such as `retired`
   instead of ordinary destructive removal;
-- the Board does not display or fabricate MBS history, thesis health, review
-  priority, timeline, or Review Session state.
+- Stage 4 itself introduced no MBS history, thesis health, review priority,
+  timeline, or Review Session state. Stages 6–8 add persisted reviews, decisions,
+  and History; health and review priority remain later stages.
 
-Ordinary current-state edits persist immediately when the user saves. Proposed
-review conclusions and future score changes still belong to the later Review
-Workflow and Review Session stages. The Board consumes only `LivingThesis`,
+Ordinary current-state edits persist when the user saves. Review conclusions and
+linked score changes use the Review Workflow and Review Session completion
+contract. The Board consumes only `LivingThesis`,
 never a production `LivingThesis | MockThesis` union.
 
 ### Unsaved Thesis Board edits
@@ -514,22 +528,29 @@ categories, transaction execution, or generated investment recommendations.
 
 ## Score History And Thesis Timeline
 
-Use specialized records and derive a unified timeline at read time. Do not use
-one generic event table as the only persistence model.
+Stage 8 implements one read-only **History** card in the saved thesis workspace.
+It shows newest-first summaries with expandable details for completed reviews,
+decisions, and eligible scores. A completed session and its before/after revision
+form one review item, not two duplicate events. The revision supplies the
+recorded thesis changes; the review supplies its reason and notes.
 
-The timeline projection should combine:
+Score entries are admitted only through validated completed-review/revision
+links. Their current/previous comparisons follow `createdAt DESC`, then
+snapshot ID ascending for equal timestamps. The first score has no prior
+comparison, and a skipped score does not manufacture a change. Historical
+details use saved inputs and snapshots rather than current thesis content.
 
-- thesis creation and archival timestamps;
-- completed Review Sessions;
-- linked MBS Score Snapshots;
-- Decision Log entries;
-- thesis revisions, including risk, catalyst, lifecycle, conviction, and
-  scheduling changes.
+The timeline also provides the recorded thesis creation date and current
+archival marker. Direct Board edits are not fully recorded. Unarchiving clears
+the current `archivedAt`, so that marker cannot reconstruct earlier archive
+cycles; saved review revisions retain any lifecycle changes they captured.
+The UI describes this coverage instead of suggesting a complete audit trail.
 
-Specialized tables provide stronger validation, clearer repository APIs, and
-safer import relationships. A core timeline mapper can normalize them into a
-common read-only `ThesisTimelineItem` discriminated union and sort by timestamp.
-The original specialized record remains the source of truth.
+Main reads the related records consistently, and core derives the timeline
+without mutating them. Specialized sessions, revisions, decisions, and scores
+remain the source of truth. There is no persisted generic event table, new
+database migration, or backup format change; format 5 already contains the
+records used by History. See [Living Thesis History](LIVING_THESIS_HISTORY.md).
 
 ## Thesis Health
 
@@ -697,13 +718,15 @@ boundary and the atomic restore behavior.
 6. **Stage 6 - Review Session.** Complete, with manual Windows UI verification
    pending. Durable drafts, guided UI, validated IPC, navigation protection,
    atomic completion, immutable revisions, optional linked scores, exact retry,
-   and format 4 backups are implemented. Later stages add the history interfaces.
+   and format 4 backups are implemented. Stage 8 adds the History interface.
 7. **Stage 7 - Decision Log.** Complete, with manual Windows UI verification
    pending. A simple entry form, immutable history, optional completed-review
    links, exact save retries, and format 5 backups are implemented.
-8. **Stage 8 - Score History / Timeline.** Build history browsing and a derived
-   unified timeline over the review revisions and linked scores introduced in
-   Stage 6, extending event coverage where explicitly scoped.
+8. **Stage 8 - Score History / Timeline.** Complete, with manual Windows UI
+   verification pending. One derived History card shows completed reviews,
+   decisions, validated review-linked scores, and limited creation/current
+   archival markers. Direct-edit history remains incomplete; no schema or
+   format 5 backup change is introduced.
 9. **Stage 9 - Thesis Health Engine.** Add deterministic assessment and reason
    codes over persisted local evidence.
 10. **Stage 10 - Review Queue.** Build the explainable queue from schedules,

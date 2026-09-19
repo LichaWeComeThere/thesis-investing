@@ -147,3 +147,13 @@ export {
   validateLivingThesisDecision
 } from './livingThesisDecision';
 export type { LivingThesisDecision, LivingThesisDecisionKind } from './livingThesisDecision';
+
+export { buildLivingThesisHistory } from './livingThesisHistory';
+export type {
+  LivingThesisHistory,
+  LivingThesisHistoryChange,
+  LivingThesisHistoryCompletedReview,
+  LivingThesisHistoryInput,
+  LivingThesisHistoryItem,
+  LivingThesisHistoryScore
+} from './livingThesisHistory';
