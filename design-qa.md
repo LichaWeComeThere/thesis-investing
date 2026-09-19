@@ -1,7 +1,44 @@
 # Living Thesis design QA
 
-Current Decision Log QA is recorded first. Earlier review assessments remain
-below as historical evidence.
+Current History QA is recorded first. Earlier Decision Log and review
+assessments remain below as historical evidence.
+
+## History — Stage 8
+
+Date: 2026-09-19. A single History card on the saved Thesis Board combines
+completed reviews, decisions and formally linked business scores. The newest
+five entries appear first; details and older entries expand on request.
+
+| Evidence | View |
+| --- | --- |
+| [Desktop history](docs/screenshots/thesis-history-desktop.jpg) | 1100×720; concise recent entries, latest score and Add decision |
+| [Small desktop changes](docs/screenshots/thesis-history-small.jpg) | 860×560; expanded review with readable before/after text |
+| [Score details](docs/screenshots/thesis-history-score.jpg) | 1100×720; score change and the seven saved factor ratings |
+
+Screenshots use fictional Acme Research Lab data in the isolated preview
+SQLite database, at one pixel per CSS pixel, with the development size selector
+cropped. The overview precedes a further fictional decision saved during QA.
+
+- Verified review changes, decision reasoning and linked-review context,
+  Show all history, first-score labeling and a later +20-point comparison.
+- Verified Enter collapses and expands a native history disclosure. Review
+  details remain readable with ordinary scrolling at the minimum desktop size.
+- Verified adding a decision refreshes History immediately. Sidebar navigation
+  opens the existing unsaved-decision dialog; Escape preserves the draft.
+  Saving and reloading recovered the entry without changing thesis version 4.
+- History reads existing records without changing the schema or format-5
+  backup contract. Unlinked legacy scores are excluded. Direct Board edits and
+  earlier archive cycles are not invented; the UI explains this coverage limit.
+- 502 tests pass: 170 core, 5 shared UI and 327 desktop. The 35 new tests cover
+  deterministic ordering, material changes, score provenance/deltas, corruption
+  rejection, coherent read transactions, real backup remapping, restart,
+  refresh, navigation guards, load retry and delayed stale responses.
+- Lint, typecheck, production build and git diff checks pass. An independent
+  source review found no actionable issues in the new paths. GitHub CI and
+  Windows Build results are recorded on the pull request.
+
+Manual Windows UI, installer interaction, native window-close behavior and
+assistive-technology checks remain deferred.
 
 ## Decision Log — Stage 7
 

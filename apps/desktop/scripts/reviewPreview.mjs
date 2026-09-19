@@ -16,6 +16,7 @@ const filename = resolve(dataDirectory, 'example.sqlite');
 let reviews;
 let theses;
 let decisions;
+let history;
 const server = await createServer({
   configFile: false, root: previewRoot,
   resolve: { alias: {
@@ -33,7 +34,7 @@ const server = await createServer({
         let body = '';
         for await (const part of request) { body += part; if (body.length > 2000000) throw new Error('Too large'); }
         const { method, args } = JSON.parse(body);
-        const handlers = { 'theses.list': () => theses.list(), 'theses.getById': (...input) => theses.getById(...input), 'theses.create': (...input) => theses.create(...input), 'theses.update': (...input) => theses.update(...input), 'reviews.getActive': (...input) => reviews.getActive(...input), 'reviews.start': (...input) => reviews.start(...input), 'reviews.resume': (...input) => reviews.resume(...input), 'reviews.saveDraft': (...input) => reviews.saveDraft(...input), 'reviews.complete': (...input) => reviews.complete(...input), 'decisions.list': (...input) => decisions.list(...input), 'decisions.listCompletedReviews': (...input) => decisions.listCompletedReviews(...input), 'decisions.create': (...input) => decisions.create(...input) };
+        const handlers = { 'theses.list': () => theses.list(), 'theses.getById': (...input) => theses.getById(...input), 'theses.create': (...input) => theses.create(...input), 'theses.update': (...input) => theses.update(...input), 'reviews.getActive': (...input) => reviews.getActive(...input), 'reviews.start': (...input) => reviews.start(...input), 'reviews.resume': (...input) => reviews.resume(...input), 'reviews.saveDraft': (...input) => reviews.saveDraft(...input), 'reviews.complete': (...input) => reviews.complete(...input), 'decisions.list': (...input) => decisions.list(...input), 'decisions.listCompletedReviews': (...input) => decisions.listCompletedReviews(...input), 'decisions.create': (...input) => decisions.create(...input), 'history.get': (...input) => history.get(...input) };
         if (!Object.hasOwn(handlers, method) || !Array.isArray(args)) throw new Error('Invalid');
         const result = await handlers[method](...args);
         response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify(result));
@@ -48,6 +49,10 @@ const { createReviewSessionsIpcHandlers } = await server.ssrLoadModule(resolve(a
 const { createLivingThesesStorageService } = await server.ssrLoadModule(resolve(appRoot, 'src/main/livingThesesStorageService.ts'));
 const { createDecisionsStorageService } = await server.ssrLoadModule(resolve(appRoot, 'src/main/decisionsStorageService.ts'));
 const { createDecisionsIpcHandlers } = await server.ssrLoadModule(resolve(appRoot, 'src/main/decisionsIpcHandlers.ts'));
+const { createThesisHistoryStorageService } = await server.ssrLoadModule(resolve(appRoot, 'src/main/thesisHistoryStorageService.ts'));
+const { createThesisHistoryIpcHandlers } = await server.ssrLoadModule(resolve(appRoot, 'src/main/thesisHistoryIpcHandlers.ts'));
+const historyService = createThesisHistoryStorageService(() => createSqliteStorage({ filename }));
+history = createThesisHistoryIpcHandlers(historyService);
 const reviewService = createReviewSessionStorageService(() => createSqliteStorage({ filename }));
 const decisionService = createDecisionsStorageService(() => createSqliteStorage({ filename }));
 reviews = createReviewSessionsIpcHandlers(reviewService);
@@ -61,5 +66,5 @@ if (existing.value.length === 0) {
 }
 await server.listen();
 console.log('Guided review example workspace is ready.');
-async function close() { await server.close(); await reviewService.close(); await decisionService.close(); await theses.close(); process.exit(0); }
+async function close() { await server.close(); await reviewService.close(); await decisionService.close(); await historyService.close(); await theses.close(); process.exit(0); }
 process.on('SIGTERM', close); process.on('SIGINT', close);

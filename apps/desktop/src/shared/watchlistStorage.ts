@@ -8,6 +8,7 @@ import type { PortfolioRankerStorageApi } from './portfolioRankerStorage';
 import type { RemindersStorageApi } from './remindersStorage';
 import type { ReviewSessionsStorageApi } from './reviewSessionsStorage';
 import type { ThesisNotesStorageApi } from './thesisNotesStorage';
+import type { ThesisHistoryStorageApi } from './thesisHistoryStorage';
 
 export const watchlistStorageChannels = {
   list: 'watchlist:list',
@@ -32,6 +33,7 @@ export type WatchlistStorageApi = {
 };
 
 export type ThesisInvestingApi = {
+  thesisHistory: ThesisHistoryStorageApi;
   decisions: DecisionsStorageApi;
   reviewSessions: ReviewSessionsStorageApi;
   dashboardSummaries: DashboardSummariesStorageApi;

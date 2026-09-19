@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { registerDashboardSummariesIpc } from './dashboardSummariesIpc';
 import { registerDecisionsIpc } from './decisionsIpc';
+import { registerThesisHistoryIpc } from './thesisHistoryIpc';
 import { registerLocalDataIpc } from './localDataIpc';
 import { registerLivingThesesIpc } from './livingThesesIpc';
 import { registerReviewSessionsIpc } from './reviewSessionsIpc';
@@ -41,6 +42,7 @@ function createWindow(): void {
 void app.whenReady().then(() => {
   registerDashboardSummariesIpc();
   registerDecisionsIpc();
+  registerThesisHistoryIpc();
   registerLocalDataIpc();
   registerLivingThesesIpc();
   registerReviewSessionsIpc();

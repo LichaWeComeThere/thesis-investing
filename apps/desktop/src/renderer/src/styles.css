@@ -6541,3 +6541,197 @@ select:focus-visible {
     gap: 4px;
   }
 }
+
+.thesis-history-card {
+  min-width: 0;
+}
+
+.thesis-history-coverage {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 14px 0;
+}
+
+.thesis-history-score-status {
+  background: var(--ti-color-surface-soft);
+  border-radius: 10px;
+  line-height: 1.5;
+  margin: 16px 0;
+  padding: 12px 14px;
+}
+
+.thesis-history-score-status > span {
+  display: block;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.thesis-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.thesis-history-list > li {
+  border-top: 1px solid var(--ti-color-border);
+}
+
+.thesis-history-entry > summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 16px 0;
+}
+
+.thesis-history-entry > summary::-webkit-details-marker {
+  display: none;
+}
+
+.thesis-history-entry > summary:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--ti-color-primary);
+  outline-offset: 3px;
+}
+
+.thesis-history-summary {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.thesis-history-summary strong {
+  color: var(--ti-color-text-section);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.thesis-history-summary > span,
+.thesis-history-summary > time,
+.thesis-history-marker time {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.thesis-history-expand {
+  color: var(--ti-color-primary);
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.thesis-history-expand::after {
+  content: ' +';
+}
+
+.thesis-history-entry[open] .thesis-history-expand::after {
+  content: ' −';
+}
+
+.thesis-history-details {
+  background: var(--ti-color-surface-soft);
+  border-radius: 10px;
+  font-size: 16px;
+  line-height: 1.65;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+  padding: 16px;
+}
+
+.thesis-history-details h3 {
+  color: var(--ti-color-text-section);
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+
+.thesis-history-details p {
+  margin: 0 0 14px;
+}
+
+.thesis-history-details > :last-child {
+  margin-bottom: 0;
+}
+
+.thesis-history-text,
+.thesis-history-changes dd {
+  white-space: pre-wrap;
+}
+
+.thesis-history-version {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+}
+
+.thesis-history-changes {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.thesis-history-changes dl {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.thesis-history-changes dt {
+  color: var(--ti-color-text-subtle);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.thesis-history-changes dd {
+  margin: 0;
+}
+
+.thesis-history-score-table {
+  border-collapse: collapse;
+  margin: 12px 0 16px;
+  width: 100%;
+}
+
+.thesis-history-score-table caption {
+  color: var(--ti-color-text-section);
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.thesis-history-score-table th,
+.thesis-history-score-table td {
+  border-bottom: 1px solid var(--ti-color-border);
+  font-size: 14px;
+  padding: 8px 4px;
+  text-align: left;
+}
+
+.thesis-history-score-table tbody th {
+  font-weight: 400;
+}
+
+.thesis-history-score-table td {
+  white-space: nowrap;
+}
+
+.thesis-history-marker {
+  font-size: 13px;
+  padding: 16px 0;
+}
+
+.thesis-history-marker > div {
+  display: grid;
+  gap: 5px;
+}
+
+.thesis-history-marker p {
+  margin: 8px 0 0;
+}
+
+.thesis-history-marker strong {
+  color: var(--ti-color-text-section);
+  font-size: 14px;
+}

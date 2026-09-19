@@ -52,6 +52,12 @@ adds the table; format 5 adds backup coverage. Saving a decision does not modify
 the current thesis or a completed session. See
 [Decision Log](LIVING_THESIS_DECISION_LOG.md).
 
+Phase 3, Stage 8 adds a read-only History view over the saved thesis, completed
+review sessions and revisions, decisions, and validated review-linked scores.
+It adds no persisted timeline table, schema migration, or backup version.
+Database migration 7 and export format 5 remain current. See
+[Living Thesis History](LIVING_THESIS_HISTORY.md).
+
 ## Package Boundary
 
 Local persistence currently lives in `apps/desktop/src/storage`.
@@ -70,6 +76,10 @@ Local persistence currently lives in `apps/desktop/src/storage`.
   `listCompletedReviews`, and `create`. The renderer supplies the title, reason,
   optional review link, and a stable UUID for retrying the same request. Electron
   main assigns the save timestamp and derives the stored ID and entry kind.
+- History uses a narrow typed preload read operation for the selected thesis.
+  Main reads its related records consistently and validates completed-review
+  relationships before core derives the timeline and score comparisons. Reading
+  History writes no thesis, session, decision, revision, or score records.
 - The renderer can request a local JSON export through `window.thesisInvesting.localData.exportToJson()`, but the save dialog, SQLite reads, and file write happen in the Electron main process.
 - The renderer can request import preview and confirmation through `window.thesisInvesting.localData.previewImportFromJson()` and `window.thesisInvesting.localData.importFromJson(previewId)`. Electron main owns file reading, parsing, validation, pending preview data, and transactional repository writes.
 - The renderer can request `window.thesisInvesting.localData.openDataFolder()` without passing a path. Electron main opens only the trusted app data folder from `app.getPath('userData')`.
@@ -179,11 +189,26 @@ timestamp descending then ID. Existing children cannot be omitted from an
 update and are retired by status rather than deleted. No Living Thesis
 hard-delete API exists.
 
+Direct Board saves update current state but do not append review revisions.
+The existing revision repository records completed-review before/after changes
+only. History therefore cannot reconstruct every direct edit or earlier
+archive/unarchive cycle from the current thesis row. The creation date and
+current `archivedAt` are limited markers, not an original-content snapshot or a
+complete lifecycle event log.
+
 The existing `mbs_score_snapshots.thesis_id` column is unchanged. Legacy values
 are not inferred, migrated, or automatically reinterpreted. Stage 6 review
 completion explicitly links its new snapshots to `LivingThesis.id`; their
 completed session/revision references distinguish them from legacy values.
 Scores remain canonical snapshots rather than fields duplicated on the thesis.
+
+Stage 8 derives eligible score history only through validated completed-session
+and revision links to the same snapshot and thesis. Equal `thesisId` strings or
+tickers alone are insufficient: legacy scorer/import references remain
+excluded. Eligible scores sort by `createdAt` descending, then snapshot ID
+ascending; current, previous, and historical score changes all use that order.
+The first score has no previous comparison, and a review that skips scoring
+creates no score event or synthetic zero change.
 
 Decision creation runs in a transaction and is idempotent for an exact request
 retry: `decision_<request UUID>` identifies the saved result. Reusing that
@@ -200,6 +225,8 @@ parent/session/revision/score/child/decision IDs together, and restores all nine
 in one transaction. Internal append-only restore methods retain saved versions
 and use savepoints without committing the outer import. See the
 [export guide](LOCAL_DATA_EXPORT.md) and [import guide](LOCAL_DATA_IMPORT.md).
+The derived History view is rebuilt from these records after restart or import;
+it is not exported as a separate array or mutable cache.
 
 ## Out Of Scope
 

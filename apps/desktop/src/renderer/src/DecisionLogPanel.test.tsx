@@ -33,7 +33,7 @@ beforeEach(async () => {
   expect(storage.repositories.livingTheses.create(thesis).ok).toBe(true);
   expect(storage.repositories.livingTheses.create(other).ok).toBe(true); storage.close();
   decisions = createDecisionsStorageService(() => createSqliteStorage({ filename }), { now: () => '2026-09-12T16:20:00.000Z' });
-  reviews = createReviewSessionStorageService(() => createSqliteStorage({ filename }));
+  reviews = createReviewSessionStorageService(() => createSqliteStorage({ filename }), { now: () => '2026-09-12T16:00:00.000Z' });
   theses = createLivingThesesStorageService(() => createSqliteStorage({ filename }));
   vi.spyOn(decisionClients, 'getDefaultDecisionsStorageClient').mockReturnValue(decisions);
   vi.spyOn(reviewClients, 'getDefaultReviewSessionsStorageClient').mockReturnValue(reviews);

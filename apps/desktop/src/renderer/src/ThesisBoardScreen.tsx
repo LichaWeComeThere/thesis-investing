@@ -21,6 +21,9 @@ import type { ResumedReviewSession, ReviewSessionsStorageApi } from '../../share
 import type { DecisionsStorageApi } from '../../shared/decisionsStorage';
 import { DecisionLogPanel, type DecisionNavigationRequest } from './DecisionLogPanel';
 import { getDefaultDecisionsStorageClient } from './decisionsStorageClient';
+import type { ThesisHistoryStorageApi } from '../../shared/thesisHistoryStorage';
+import { getDefaultThesisHistoryStorageClient } from './thesisHistoryStorageClient';
+import { ThesisHistoryPanel } from './ThesisHistoryPanel';
 
 import type {
   LivingThesisCatalystWriteInput,
@@ -37,6 +40,7 @@ import {
 } from './livingThesesStorageClient';
 
 type ThesisBoardScreenProps = {
+  historyClient?: ThesisHistoryStorageApi | null;
   decisionClient?: DecisionsStorageApi | null;
   reviewClient?: ReviewSessionsStorageApi | null;
   client?: LivingThesesStorageClient | null;
@@ -118,6 +122,7 @@ export function ThesisBoardScreen({
   client = getDefaultLivingThesesStorageClient(),
   reviewClient = getDefaultReviewSessionsStorageClient(),
   decisionClient = getDefaultDecisionsStorageClient(),
+  historyClient = getDefaultThesisHistoryStorageClient(),
   initialFeedback = null,
   initialLoadState,
   initialTheses,
@@ -496,7 +501,11 @@ export function ThesisBoardScreen({
 
         {(isCreating || selectedThesis) && loadState !== 'error' ? (
           <div className="living-thesis-detail-column">
-          {selectedThesis && !isCreating && loadState === 'loaded' ? <DecisionLogPanel key={selectedThesis.id}
+          {selectedThesis && !isCreating && loadState === 'loaded' ? historyClient ? <ThesisHistoryPanel key={selectedThesis.id}
+            thesisId={selectedThesis.id} thesisVersion={selectedThesis.version} entityName={selectedThesis.entityName}
+            client={historyClient} decisionClient={decisionClient} disabled={isDirty || isSaving || reviewOpening}
+            onGuardChange={setDecisionGuarded} navigationRequest={navigationRequest ?? decisionNavigation}
+          /> : <DecisionLogPanel key={selectedThesis.id}
             thesisId={selectedThesis.id} entityName={selectedThesis.entityName} client={decisionClient}
             disabled={isDirty || isSaving || reviewOpening} onGuardChange={setDecisionGuarded}
             navigationRequest={navigationRequest ?? decisionNavigation}
