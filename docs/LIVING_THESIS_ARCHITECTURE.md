@@ -16,11 +16,14 @@ Stage 6 implements explicit atomic completion, immutable before/after revisions,
 optional linked scores, and history backups. Stage 7 adds the append-only
 Decision Log, optional links to completed reviews, and format 5 backup coverage.
 Stage 8 adds the read-only History card with completed reviews, decisions, and
-validated review-linked scores. Manual Windows UI verification remains pending;
-Thesis Health Engine is the next separate Stage 9 task. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
+validated review-linked scores. Stage 9 adds derived Thesis Health with
+explainable research concerns and separate review timing. Manual Windows UI
+verification remains pending; Stage 10, Review Queue, is the next separate
+task. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
 [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md), and
 [Decision Log](LIVING_THESIS_DECISION_LOG.md), plus the
-[History contract](LIVING_THESIS_HISTORY.md).
+[History contract](LIVING_THESIS_HISTORY.md) and
+[Thesis Health rules](LIVING_THESIS_HEALTH.md).
 
 Sections describing later entities and workflows remain architectural plans,
 not claims that those features are implemented.
@@ -407,7 +410,8 @@ Stage 4 completes the first production adoption of formal Living Thesis data:
   instead of ordinary destructive removal;
 - Stage 4 itself introduced no MBS history, thesis health, review priority,
   timeline, or Review Session state. Stages 6–8 add persisted reviews, decisions,
-  and History; health and review priority remain later stages.
+  and History. Stage 9 adds derived Thesis Health; review priority remains
+  later work.
 
 Ordinary current-state edits persist when the user saves. Review conclusions and
 linked score changes use the Review Workflow and Review Session completion
@@ -554,28 +558,43 @@ records used by History. See [Living Thesis History](LIVING_THESIS_HISTORY.md).
 
 ## Thesis Health
 
-Thesis health should be deterministic, local, explainable, and derived on read.
-It should not be stored as a mutable truth on the Living Thesis row.
+Stage 9 implements a deterministic, local assessment derived from saved research.
+It is not stored on the Living Thesis row or recorded as an extra history event.
+One section shows two independent results:
 
-Potential inputs are:
+- **Research:** `needs_attention`, `no_flagged_concerns`, or
+  `insufficient_information`, with reason codes and readable explanations.
+- **Review timing:** a saved review date is overdue, due today, due within
+  seven days, scheduled later, or absent. Paused and archived records suppress
+  reminders while retaining the saved date and last completed review as context.
 
-- lifecycle status;
-- whether a review is overdue or due soon;
-- latest linked MBS score and change from the prior linked snapshot;
-- user-marked high-severity unresolved risks;
-- recent lifecycle changes and worsening risk evidence;
-- stale review age;
-- incomplete Review Session age.
+Research needs attention when the current overall risk level is high, an open
+risk has high severity, or the latest eligible review-linked score decreased
+from its predecessor. Any negative score change qualifies and is explained in
+score points. No completed review, an unrated overall risk level, or an unrated
+open risk creates an information gap. These reasons remain visible even when
+a concrete concern takes precedence. Fewer than two eligible scores is a
+comparison limitation, not by itself a reason to reject an otherwise complete
+assessment: completing a review without a new score remains valid.
 
-A health result should contain an assessment such as `stable`, `improving`,
-`weakening`, `review_due`, or `insufficient_data`, plus reason codes and
-human-readable explanations. The evaluator must accept an explicit reference
-time, expose an algorithm version, and have threshold tests in `packages/core`.
+An overdue review does not change research status. Lifecycle, conviction,
+prose, and positive score movement do not establish that a thesis is healthy,
+stable, improving, or weakening. No-flagged-concerns wording is limited to the
+recorded signals checked by this version of the rules.
 
-The current result is derived. A completed Review Session may store the health
-assessment and algorithm version seen at completion as historical context, but
-that snapshot must not become the next current source of truth. Health language
-must describe research state, never suggest a transaction.
+The evaluator lives in `packages/core`, accepts an explicit UTC reference time
+and local calendar date, and exposes algorithm version 1. It uses the cloned
+current thesis and validated History records returned together by the existing
+History read path. Future historical records are excluded before score
+comparison; invalid context or a future current thesis is rejected. The UI
+refreshes time-sensitive results on a minute interval and window focus. No
+unfinished review content or unsaved Board edits enter the assessment.
+
+Timing uses only the explicitly saved `nextReviewAt`; cadence does not invent
+a date. Last-review context comes from completed reviews, never from the
+parent's latest edit timestamp. The result supplies research context, not a
+transaction recommendation. See [Thesis Health](LIVING_THESIS_HEALTH.md) for
+the complete rules, limitations, and verification cases.
 
 ## Review Queue
 
@@ -727,8 +746,10 @@ boundary and the atomic restore behavior.
    decisions, validated review-linked scores, and limited creation/current
    archival markers. Direct-edit history remains incomplete; no schema or
    format 5 backup change is introduced.
-9. **Stage 9 - Thesis Health Engine.** Add deterministic assessment and reason
-   codes over persisted local evidence.
+9. **Stage 9 - Thesis Health Engine.** Complete, with manual Windows UI
+   verification pending. Derived research status, concern and missing-information
+   reasons, and separate review timing reuse validated saved records without
+   adding a schema or backup format.
 10. **Stage 10 - Review Queue.** Build the explainable queue from schedules,
     health, scores, risks, and active sessions.
 11. **Stage 11 - Thesis Library.** Add the full persisted catalog as a second
@@ -755,8 +776,9 @@ remaining persistence and feature-stage questions are:
    draft schema versions be upgraded?
 3. Should abandoned Review Sessions appear in the normal timeline or only in
    an audit/details view?
-4. Which thesis-health thresholds and priority bands are understandable
-    enough to ship without implying recommendations?
+4. Stage 9 research rules and review-date boundaries are documented in
+   [Thesis Health](LIVING_THESIS_HEALTH.md). Which additional priority bands
+   are appropriate for the future Review Queue?
 5. Should a future explicit Create from demo action copy any example history,
     or create only clean current state and one creation revision?
 6. When Review Sessions become portable in a later format, should in-progress Review

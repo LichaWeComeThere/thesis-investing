@@ -37,6 +37,7 @@ describe('thesis history IPC and preload boundary', () => {
     const result = await api.get(thesis.id);
     if (!result.ok) throw new Error(result.errors.join(' '));
     expect(result.value.thesisId).toBe(thesis.id);
+    expect(result.value.thesis).toEqual(thesis);
     expect(result.value.items).toHaveLength(2);
     expect(result.value.items[0]).toMatchObject({ kind: 'decision', decision: saved.value });
     expect(result.value.items[1]).toMatchObject({ kind: 'created', occurredAt: thesis.createdAt });

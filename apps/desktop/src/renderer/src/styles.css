@@ -6735,3 +6735,88 @@ select:focus-visible {
   color: var(--ti-color-text-section);
   font-size: 14px;
 }
+
+.living-thesis-health-card {
+  min-width: 0;
+}
+
+.living-thesis-health-intro {
+  margin: 0 0 18px;
+}
+
+.living-thesis-health-sections {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.living-thesis-health-section {
+  background: var(--ti-color-surface-soft);
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 1.6;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 16px;
+}
+
+.living-thesis-health-section h3 {
+  color: var(--ti-color-text-section);
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+.living-thesis-health-section p {
+  margin: 12px 0 0;
+}
+
+.living-thesis-health-reasons {
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.living-thesis-health-reasons li + li {
+  margin-top: 8px;
+}
+
+.living-thesis-health-date {
+  color: var(--ti-color-text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.living-thesis-health-explanation {
+  border-top: 1px solid var(--ti-color-border);
+  font-size: 16px;
+  line-height: 1.65;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+.living-thesis-health-explanation > summary {
+  color: var(--ti-color-primary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 32px;
+}
+
+.living-thesis-health-explanation > summary:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--ti-color-primary);
+  outline-offset: 3px;
+}
+
+.living-thesis-health-explanation p {
+  margin: 12px 0;
+}
+
+.living-thesis-health-explanation ul {
+  padding-left: 20px;
+}
+
+@media (max-width: 1180px) {
+  .living-thesis-health-sections {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

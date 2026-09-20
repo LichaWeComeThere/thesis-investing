@@ -2,8 +2,11 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  calculateMbsScore,
   completeLivingThesisReviewWorkflowStep,
+  evaluateLivingThesisHealth,
   type LivingThesis,
+  type LivingThesisHistory,
   type LivingThesisReviewScoreDraft,
   type LivingThesisReviewWorkflow
 } from '@thesis-investing/core';
@@ -19,6 +22,7 @@ const firstReviewAt = '2026-09-19T10:00:00.000Z';
 const secondReviewAt = '2026-09-19T11:00:00.000Z';
 const decisionAt = '2026-09-19T12:00:00.000Z';
 const editedAt = '2026-09-19T13:00:00.000Z';
+const healthClock = { referenceTime: '2026-09-20T14:00:00.000Z', today: '2026-09-20' };
 const scoreDraft: LivingThesisReviewScoreDraft = { kind: 'score', input: {
   businessQuality: 8, moat: 7, management: 6, balanceSheet: 9, growth: 5, valuation: 4, risk: 0
 } };
@@ -82,6 +86,10 @@ function snapshot(storage: SqliteStorage) {
     portfolioRankerItems: r.portfolioRankerItems.list() });
 }
 
+function assess(history: LivingThesisHistory) {
+  return value(evaluateLivingThesisHealth({ history, ...healthClock }));
+}
+
 async function fixture() {
   const path = await filename();
   const storage = await open(path);
@@ -117,6 +125,7 @@ describe('read-only thesis history against SQLite', () => {
     const before = snapshot(storage);
     const result = value(await history.get('thesis'));
     expect(result.thesisId).toBe('thesis');
+    expect(result.thesis).toEqual(before.data.livingTheses.find((parent) => parent.id === 'thesis'));
     expect(result.items.filter((item) => item.kind === 'review').map((item) => item.session)).toEqual([second.session, first.session]);
     expect(result.items.filter((item) => item.kind === 'decision').map((item) => item.decision)).toEqual([note, conclusion]);
     expect(result.items.find((item) => item.kind === 'decision' && item.decision.id === conclusion.id))
@@ -151,7 +160,10 @@ describe('read-only thesis history against SQLite', () => {
       vi.spyOn(r.thesisDecisions, 'list').mockImplementation((id) => { expect(inside).toBe(true); return decisionRead(id); }),
       vi.spyOn(r.mbsScoreSnapshots, 'getById').mockImplementation((id) => { expect(inside).toBe(true); return scoreRead(id); })
     ];
-    expect((await history.get('thesis')).ok).toBe(true);
+    const coherent = value(await history.get('thesis'));
+    expect(coherent.thesis).toEqual(before.data.livingTheses[0]);
+    expect(coherent.thesis.version).toBe(3);
+    expect(coherent.items.filter((item) => item.kind === 'review')[0].revision.after).toEqual(coherent.thesis);
     expect(transaction).toHaveBeenCalledOnce();
     for (const read of reads) { expect(read).toHaveBeenCalled(); read.mockRestore(); }
     expect(snapshot(storage)).toEqual(before);
@@ -164,6 +176,7 @@ describe('read-only thesis history against SQLite', () => {
       summary: 'Later Board edits are current.', lifecycle: 'archived', archivedAt: editedAt, updatedAt: editedAt }, current.version));
     const before = snapshot(storage);
     const result = value(await history.get('thesis'));
+    expect(result.thesis).toEqual(edited);
     expect(result.items.filter((item) => item.kind === 'review').map((item) => item.revision.after))
       .toEqual([second.revision.after, first.revision.after]);
     expect(result.items.find((item) => item.kind === 'archived')).toMatchObject({ occurredAt: editedAt });
@@ -174,6 +187,50 @@ describe('read-only thesis history against SQLite', () => {
     const restarted = createThesisHistoryStorageService(async () => reopened);
     expect(value(await restarted.get('thesis'))).toEqual(result);
     expect(snapshot(reopened)).toEqual(before);
+  });
+
+  it('assesses saved risks rather than unfinished review edits or unlinked legacy scores, and updates only after a saved thesis reload', async () => {
+    const { storage, history, first } = await fixture();
+    const initial = value(await history.get('thesis'));
+    const initialHealth = assess(initial);
+    expect(initialHealth.research.status).toBe('no_flagged_concerns');
+    expect(initialHealth.research.limitations).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'one_score_only' })]));
+
+    const reviews = createReviewSessionStorageService(async () => storage, { now: () => editedAt });
+    const started = value(await reviews.start('thesis'));
+    const risk = { id: 'proposed-health-risk', thesisId: 'thesis', title: 'Customer concentration',
+      status: 'open' as const, severity: 'high' as const, createdAt: editedAt, updatedAt: editedAt };
+    const draft = value(await reviews.saveDraft(started.id, { ...started.workflow,
+      draft: { ...started.workflow.draft, risks: [risk] } }, started.version));
+    const lowScore = calculateMbsScore({ businessQuality: 0, moat: 0, management: 0, balanceSheet: 0,
+      growth: 0, valuation: 0, risk: 0 });
+    if (lowScore.rating === 'incomplete') throw new Error('Expected a complete legacy score.');
+    value(storage.repositories.mbsScoreSnapshots.create({ ...first.scoreSnapshot!, ...lowScore,
+      id: 'legacy-same-id-and-ticker', rating: lowScore.rating, createdAt: editedAt }));
+    const savedBeforeRead = snapshot(storage);
+    const withDraft = value(await history.get('thesis'));
+    expect(withDraft.thesis.risks).toEqual([]);
+    expect(withDraft.scores).toEqual(initial.scores);
+    expect(assess(withDraft)).toEqual(initialHealth);
+    expect(snapshot(storage)).toEqual(savedBeforeRead);
+
+    const savedRisk = value(storage.repositories.livingTheses.update({ ...withDraft.thesis,
+      risks: [risk], updatedAt: editedAt }, withDraft.thesis.version));
+    const withSavedRisk = value(await history.get('thesis'));
+    expect(withSavedRisk.thesis).toEqual(savedRisk);
+    expect(assess(withSavedRisk).research).toMatchObject({ status: 'needs_attention',
+      reasons: expect.arrayContaining([expect.objectContaining({ code: 'open_high_risks' })]) });
+    const resolved = value(storage.repositories.livingTheses.update({ ...savedRisk,
+      risks: [{ ...risk, status: 'resolved', updatedAt: '2026-09-19T14:00:00.000Z' }],
+      updatedAt: '2026-09-19T14:00:00.000Z' }, savedRisk.version));
+    const afterResolution = value(await history.get('thesis'));
+    expect(afterResolution.thesis).toEqual(resolved);
+    expect(assess(afterResolution).research.status).toBe('no_flagged_concerns');
+    expect(storage.repositories.reviewSessions.getById(draft.id)?.workflow.draft.risks).toEqual([risk]);
+    expect(afterResolution.scores).toEqual(initial.scores);
+    expect(afterResolution.items).toEqual(initial.items);
+    expect(storage.repositories.thesisRevisions.list()).toEqual(savedBeforeRead.data.thesisRevisions);
+    expect(storage.repositories.thesisDecisions.list()).toEqual(savedBeforeRead.data.thesisDecisions);
   });
 
   it('returns an empty score list and creation event for a saved thesis with no history, while missing IDs fail', async () => {
@@ -222,6 +279,7 @@ describe('read-only thesis history against SQLite', () => {
       const before = rawSnapshot();
       const result = await history.get('thesis');
       expect(result.ok).toBe(false);
+      expect(result).not.toHaveProperty('value');
       if (result.ok) throw new Error('Corrupt history was accepted.');
       expect(result.errors.join(' ')).not.toBe('');
       expect(rawSnapshot()).toEqual(before);
@@ -239,14 +297,24 @@ describe('read-only thesis history against SQLite', () => {
     } finally { database.close(); }
   });
 
-  it('reconstructs the same history after a genuine format 5 file export/import and reopening SQLite', async () => {
+  it('reconstructs history and derived health after format 5 file import, restart and duplicate-import ID remapping', async () => {
     const { storage, path, history } = await fixture();
+    const current = storage.repositories.livingTheses.getById('thesis')!;
+    value(storage.repositories.livingTheses.update({ ...current, updatedAt: editedAt, nextReviewAt: '2026-09-18',
+      risks: [{ id: 'saved-backup-risk', thesisId: 'thesis', title: 'Demand concentration', status: 'open',
+        severity: 'high', createdAt: editedAt, updatedAt: editedAt }] }, current.version));
     const expected = value(await history.get('thesis'));
+    const expectedHealth = assess(expected);
+    expect(expectedHealth.research.status).toBe('needs_attention');
+    expect(expectedHealth.reviewTiming.status).toBe('overdue');
     const filePath = `${path}.json`;
     const exporter = createLocalDataStorageService({ createStorage: async () => storage,
       getUserDataPath: () => folders[folders.length - 1], showSaveDialog: async () => ({ canceled: false, filePath }) });
     expect((await exporter.exportToJson()).ok).toBe(true);
-    expect(JSON.parse(await readFile(filePath, 'utf8')).formatVersion).toBe(5);
+    const exported = JSON.parse(await readFile(filePath, 'utf8'));
+    expect(exported.formatVersion).toBe(5);
+    expect(Object.keys(exported.data).sort()).toEqual(['livingTheses', 'mbsScoreSnapshots', 'portfolioRankerItems',
+      'reminders', 'reviewSessions', 'thesisDecisions', 'thesisNotes', 'thesisRevisions', 'watchlistItems']);
     const targetPath = await filename();
     const target = await open(targetPath);
     const importer = createLocalDataStorageService({ createStorage: async () => target,
@@ -258,6 +326,24 @@ describe('read-only thesis history against SQLite', () => {
     const reopened = await open(targetPath);
     const restored = createThesisHistoryStorageService(async () => reopened);
     expect(value(await restored.get('thesis'))).toEqual(expected);
+    expect(assess(value(await restored.get('thesis')))).toEqual(expectedHealth);
     expect(snapshot(reopened).data).toEqual(snapshot(storage).data);
+
+    const again = createLocalDataStorageService({ createStorage: async () => reopened,
+      getUserDataPath: () => folders[folders.length - 1], createImportPreviewId: () => 'repeat-preview',
+      showOpenDialog: async () => ({ canceled: false, filePaths: [filePath] }) });
+    expect((await again.previewImportFromJson()).ok).toBe(true);
+    expect((await again.importFromJson('repeat-preview')).ok).toBe(true);
+    const remapped = value(await restored.get('thesis-import-1'));
+    expect(remapped.thesis.risks[0]).toMatchObject({ id: 'saved-backup-risk-import-1', thesisId: 'thesis-import-1' });
+    expect(remapped.scores[0]).toMatchObject({ reviewSessionId: 'scored-1-import-1',
+      snapshot: { id: 'scored-3-import-1', thesisId: 'thesis-import-1' } });
+    const remappedHealth = assess(remapped);
+    expect({ ...remappedHealth, thesisId: expectedHealth.thesisId }).toEqual(expectedHealth);
+    await restored.close(); storages.delete(reopened);
+    const finalStorage = await open(targetPath);
+    const finalHistory = createThesisHistoryStorageService(async () => finalStorage);
+    expect(assess(value(await finalHistory.get('thesis-import-1')))).toEqual(remappedHealth);
+    expect(assess(value(await finalHistory.get('thesis')))).toEqual(expectedHealth);
   });
 });

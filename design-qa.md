@@ -1,7 +1,52 @@
 # Living Thesis design QA
 
-Current History QA is recorded first. Earlier Decision Log and review
-assessments remain below as historical evidence.
+Current Thesis Health QA is recorded first. Earlier History, Decision Log
+and review assessments remain below as historical evidence.
+
+## Thesis Health — Stage 9
+
+Date: 2026-09-20. A compact Thesis Health card above History separates
+saved research concerns from review timing. It uses the same transaction-read
+thesis/history snapshot and never evaluates the Board's unsaved draft.
+
+| Evidence | View |
+| --- | --- |
+| [Desktop separation](docs/screenshots/thesis-health-desktop.jpg) | 1100×720; no flagged research concerns with a separately overdue review |
+| [Recorded concerns](docs/screenshots/thesis-health-concerns.jpg) | 1487×1058; high recorded risk, named open risk, and a 20-point score decline |
+| [Small desktop](docs/screenshots/thesis-health-small.jpg) | 860×560; missing research information and an unscheduled review, both readable |
+
+Captures contain fictional Acme Research Lab, Harbor Research and New Research
+data in the isolated preview SQLite database. They use one pixel per CSS pixel,
+ordinary scrolling and a crop that removes the development size selector.
+Displayed dates use the preview device's local calendar date.
+
+- Verified each research state and the separate overdue, due-soon and
+  unscheduled timing messages. A no-concerns result does not hide an overdue date.
+- Changed a saved thesis's risk level from low to high: the unsaved edit left
+  the assessment unchanged; Save updated it immediately to Needs attention.
+  Restoring and saving low risk returned the expected assessment. Review dates
+  and last completed review stayed independent of those direct Board saves.
+- Verified Enter expands and collapses How this is assessed, including the
+  missing-score explanation and quiet assessment-version detail.
+- Fixed a discovered collision with legacy health-card styles by naming every
+  new class living-thesis-health-*. The new card now sizes to its content;
+  the legacy styles remain unchanged. Final captures show the corrected layout.
+- Loading, invalid data and failed refreshes cannot retain a reassuring stale
+  assessment. Check again invokes the existing History read; focus, visibility
+  and minute ticks refresh the clock, and new saved data receives a fresh clock.
+- 529 tests pass: 188 core, 5 shared UI and 336 desktop, including 27 new tests.
+  Coverage includes concern priority with retained information gaps, tiny score
+  declines, formal score links, date boundaries, future records, local midnight,
+  immutable input, saved-versus-draft state, real backup remapping/restart,
+  refresh, failed reads and delayed responses. Existing navigation guards pass.
+- Lint, typecheck, production build and git diff checks pass. Independent source
+  review found no blocking issue. GitHub CI and Windows Build results are
+  recorded on the pull request.
+
+No schema, migration, backup-format, dependency or external-service change is
+introduced. The assessment describes recorded research signals; it does not
+verify evidence or recommend a transaction. Manual Windows UI, installer,
+native window-close and assistive-technology checks remain deferred.
 
 ## History — Stage 8
 

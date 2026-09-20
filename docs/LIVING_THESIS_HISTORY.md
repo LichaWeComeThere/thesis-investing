@@ -5,7 +5,8 @@
 Phase 3 Stage 8 implements read-only history for a saved Living Thesis. The
 History card combines completed reviews, decisions, and eligible review-linked
 scores with simple summaries and expandable details. Manual Windows UI
-verification remains pending. Stage 9, Thesis Health Engine, is next.
+verification remains pending. [Stage 9: Thesis Health](LIVING_THESIS_HEALTH.md)
+now uses the same validated saved records; Stage 10, Review Queue, is next.
 
 This stage reads existing records. It does not add a database migration,
 persisted event table, backup format, external API, or automatic assessment.
@@ -36,6 +37,12 @@ The renderer requests history for one stable thesis ID through a narrow typed
 preload API. Electron main reads the saved parent, sessions, revisions,
 decisions, and required snapshots consistently, validates their relationships,
 and delegates the timeline projection to pure core code.
+
+Stage 9 also returns a cloned current thesis with this read model, from the
+same transaction. Thesis Health uses that saved state together with validated
+history, so it does not mix unsaved Board edits or separately loaded versions
+into the assessment. Current thesis fields still never replace historical
+review snapshots. No new IPC channel or stored health record is introduced.
 
 One completed review produces one review item. Its session and revision are
 joined by their recorded IDs rather than displayed as duplicate events. The

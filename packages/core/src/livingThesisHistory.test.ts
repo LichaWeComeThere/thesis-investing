@@ -80,7 +80,7 @@ describe('Living Thesis History projection', () => {
   it('shows only a creation date when there is no saved history, without inventing original content from current edits', () => {
     const current = { ...thesis(), version: 8, title: 'A later direct edit', updatedAt: fourthAt };
     expect(buildLivingThesisHistory({ thesis: current, completedReviews: [], decisions: [] })).toEqual({
-      thesisId: current.id, scores: [], items: [{ id: `created:${current.id}`, kind: 'created', occurredAt: createdAt }]
+      thesisId: current.id, thesis: current, scores: [], items: [{ id: `created:${current.id}`, kind: 'created', occurredAt: createdAt }]
     });
   });
 
@@ -251,6 +251,10 @@ describe('Living Thesis History projection', () => {
     deepFreeze(input);
     const history = buildLivingThesisHistory(input);
     expect(JSON.stringify(input)).toBe(before);
+    expect(history.thesis).toEqual(input.thesis);
+    expect(history.thesis).not.toBe(input.thesis);
+    expect(history.thesis.risks[0]).not.toBe(input.thesis.risks[0]);
+    expect(history.thesis.id).toBe(history.thesisId);
     const reviewItem = history.items.find((item) => item.kind === 'review');
     expect(reviewItem?.kind).toBe('review');
     if (reviewItem?.kind !== 'review') throw new Error('Missing review.');
