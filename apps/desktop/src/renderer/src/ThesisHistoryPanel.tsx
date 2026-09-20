@@ -1,9 +1,10 @@
 import type { LivingThesisHistory, LivingThesisHistoryItem, LivingThesisHistoryScore, ManualBusinessScoreCategory } from '@thesis-investing/core';
 import { Button, Card } from '@thesis-investing/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { DecisionsStorageApi } from '../../shared/decisionsStorage';
 import type { ThesisHistoryStorageApi } from '../../shared/thesisHistoryStorage';
 import { DecisionLogPanel, type DecisionNavigationRequest } from './DecisionLogPanel';
+import { ThesisHealthPanel } from './ThesisHealthPanel';
 
 const factorLabels: Record<ManualBusinessScoreCategory, string> = {
   businessQuality: 'Business quality', moat: 'Competitive advantage', management: 'Management',
@@ -25,37 +26,44 @@ export function ThesisHistoryPanel({ thesisId, thesisVersion, entityName, client
   const [errors, setErrors] = useState<readonly string[]>([]);
   const [reload, setReload] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const request = useMemo(() => ({ client, thesisId, thesisVersion, reload }), [client, thesisId, thesisVersion, reload]);
+  const [loadedRequest, setLoadedRequest] = useState<typeof request | null>(null);
+  // Clear the displayed assessment immediately when a new saved version needs reading.
+  const isLoading = loading || loadedRequest !== request;
 
   useEffect(() => {
     let current = true;
     setLoading(true); setErrors([]);
-    void client.get(thesisId).then((result) => {
+    void request.client.get(request.thesisId).then((result) => {
       if (!current) return;
       if (result.ok) setHistory(result.value);
       else { setHistory(null); setErrors(result.errors); }
     }).catch(() => {
       if (current) { setHistory(null); setErrors(['Your history could not be loaded. Try again.']); }
-    }).finally(() => { if (current) setLoading(false); });
+    }).finally(() => { if (current) { setLoadedRequest(request); setLoading(false); } });
     return () => { current = false; };
-  }, [client, thesisId, thesisVersion, reload]);
+  }, [request]);
 
   const visible = history ? showAll ? history.items : history.items.slice(0, 5) : [];
   const hasResearchHistory = history?.items.some((item) => ['review', 'decision', 'score'].includes(item.kind));
-  return <Card className="thesis-history-card" aria-label={`History for ${entityName}`}>
+  return <>
+    <ThesisHealthPanel history={history} entityName={entityName} loading={isLoading} unavailable={errors.length > 0} onRetry={() => setReload((value) => value + 1)} />
+    <Card className="thesis-history-card" aria-label={`History for ${entityName}`}>
     <DecisionLogPanel thesisId={thesisId} entityName={entityName} client={decisionClient} disabled={disabled}
       navigationRequest={navigationRequest} onGuardChange={onGuardChange} embedded showEntries={false}
       onDecisionSaved={() => setReload((value) => value + 1)}
       heading={<div><h2>History</h2><p>Reviews, decisions and business scores for {entityName}.</p></div>} />
     <p className="thesis-history-coverage">Completed reviews and decisions are preserved here. Direct edits on the Board may not appear.</p>
-    {loading ? <p role="status">Loading history…</p> : null}
-    {errors.length > 0 ? <div className="thesis-history-error" role="alert"><p>{errors.join(' ')}</p><Button type="button" variant="secondary" onClick={() => setReload((value) => value + 1)}>Try history again</Button></div> : null}
-    {!loading && history ? <>
+    {isLoading ? <p role="status">Loading history…</p> : null}
+    {!isLoading && errors.length > 0 ? <div className="thesis-history-error" role="alert"><p>{errors.join(' ')}</p><Button type="button" variant="secondary" onClick={() => setReload((value) => value + 1)}>Try history again</Button></div> : null}
+    {!isLoading && history ? <>
       {history.scores.length === 0 ? <p className="thesis-history-score-status">No review-linked scores yet. Add a business score when you complete a review.</p> : <p className="thesis-history-score-status">Latest business score: <strong>{scoreValue(history.scores[0])}</strong><span>{scoreChange(history.scores[0])}</span></p>}
       {!hasResearchHistory ? <p className="thesis-history-empty">No completed reviews or decisions yet. Start a review or add a decision to build this history.</p> : null}
       <ol className="thesis-history-list" aria-label="Thesis history">{visible.map((item) => <li key={item.id}><HistoryEntry item={item} /></li>)}</ol>
       {history.items.length > 5 ? <Button type="button" variant="ghost" onClick={() => setShowAll(!showAll)}>{showAll ? 'Show recent history' : `Show all history (${history.items.length})`}</Button> : null}
     </> : null}
-  </Card>;
+    </Card>
+  </>;
 }
 
 function HistoryEntry({ item }: { item: LivingThesisHistoryItem }): JSX.Element {

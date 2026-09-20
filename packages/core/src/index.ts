@@ -157,3 +157,21 @@ export type {
   LivingThesisHistoryItem,
   LivingThesisHistoryScore
 } from './livingThesisHistory';
+
+export {
+  LIVING_THESIS_HEALTH_ALGORITHM_VERSION,
+  LIVING_THESIS_RESEARCH_STATUSES,
+  LIVING_THESIS_REVIEW_TIMING_STATUSES,
+  evaluateLivingThesisHealth
+} from './livingThesisHealth';
+export type {
+  LivingThesisHealth,
+  LivingThesisHealthInput,
+  LivingThesisHealthLimitation,
+  LivingThesisHealthLimitationCode,
+  LivingThesisHealthReason,
+  LivingThesisHealthReasonCode,
+  LivingThesisHealthResult,
+  LivingThesisResearchStatus,
+  LivingThesisReviewTimingStatus
+} from './livingThesisHealth';

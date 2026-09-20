@@ -47,6 +47,8 @@ export type LivingThesisHistoryItem = {
 
 export type LivingThesisHistory = {
   readonly thesisId: EntityId;
+  /** Current saved aggregate, read alongside history in the same storage transaction. */
+  readonly thesis: LivingThesis;
   readonly items: readonly LivingThesisHistoryItem[];
   readonly scores: readonly LivingThesisHistoryScore[];
 };
@@ -110,7 +112,7 @@ export function buildLivingThesisHistory(input: LivingThesisHistoryInput): Livin
   const kindOrder = { decision: 0, review: 1, score: 2, archived: 3, created: 4 };
   items.sort((left, right) => compareText(right.occurredAt, left.occurredAt) ||
     kindOrder[left.kind] - kindOrder[right.kind] || compareText(left.id, right.id));
-  return { thesisId: thesis.id, items, scores };
+  return { thesisId: thesis.id, thesis: copy(thesis), items, scores };
 }
 
 function isScopedReview({ session, revision }: LivingThesisHistoryCompletedReview, thesis: LivingThesis): boolean {
