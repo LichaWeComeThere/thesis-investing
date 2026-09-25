@@ -44,7 +44,7 @@ describe('PortfolioRankerScreen', () => {
     );
 
     expect(html).toContain('Thesis Board');
-    expect(html).toContain('Portfolio Ranker');
+    expect(html).not.toContain('Portfolio Ranker');
     expect(html).toContain('Rank investment ideas by thesis score');
     expect(html).toContain('Investment ideas');
     expect(html).toContain('MBS 72 / 100');
@@ -65,6 +65,10 @@ describe('PortfolioRankerScreen', () => {
     expect(html).toContain('Weakest idea');
     expect(html).toContain('Lowest current thesis score.');
     expect(html).toContain('Re-evaluate thesis');
+    expect(html).toContain('Strong thesis');
+    expect(html).toContain('Needs review');
+    expect(html).toContain('Thesis ranking output');
+    expect(html).not.toContain('No validation errors');
     expect(html).not.toContain('Untitled holding');
   });
 
@@ -169,7 +173,7 @@ describe('PortfolioRankerScreen', () => {
       <PortfolioRankerScreen storageClient={null} />
     );
 
-    expect(html).toContain('Portfolio Ranker');
+    expect(html).toContain('Thesis Board');
   });
 
   it('shows four default sample ideas before expanding the board', () => {

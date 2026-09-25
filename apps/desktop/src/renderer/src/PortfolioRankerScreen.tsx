@@ -28,6 +28,8 @@ import {
 import {
   formatScoreChange,
   mockTheses,
+  type MockThesisIdeaStatus,
+  type MockThesisStatus,
   type MockThesis
 } from './data/mockTheses';
 
@@ -46,6 +48,34 @@ type ThesisStatusDisplay = {
 };
 
 const DEFAULT_VISIBLE_DEMO_IDEA_COUNT = 4;
+
+type ThesisFilterValue = 'all' | MockThesisStatus;
+type IdeaStatusFilterValue = 'all' | MockThesisIdeaStatus;
+
+const THESIS_FILTER_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: ThesisFilterValue;
+}> = [
+  { label: 'All ideas', value: 'all' },
+  { label: 'Strong thesis', value: 'Strong' },
+  { label: 'Stable thesis', value: 'Stable' },
+  { label: 'Improving thesis', value: 'Improving' },
+  { label: 'Weakening thesis', value: 'Weakening' },
+  { label: 'Broken thesis', value: 'Broken' }
+];
+
+const IDEA_STATUS_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: IdeaStatusFilterValue;
+}> = [
+  { label: 'All statuses', value: 'all' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Watchlist', value: 'Watchlist' },
+  { label: 'Researching', value: 'Researching' },
+  { label: 'Needs review', value: 'Needs Review' },
+  { label: 'Caution', value: 'Caution' },
+  { label: 'Archived', value: 'Archived' }
+];
 
 export function PortfolioRankerScreen({
   initialRows,
@@ -84,6 +114,15 @@ export function PortfolioRankerScreen({
     useState<string[]>(initialStorageErrors);
   const [isLoading, setIsLoading] = useState(Boolean(resolvedStorageClient));
   const [isWriting, setIsWriting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [thesisFilter, setThesisFilter] =
+    useState<ThesisFilterValue>('all');
+  const [ideaStatusFilter, setIdeaStatusFilter] =
+    useState<IdeaStatusFilterValue>('all');
+  const [editingRow, setEditingRow] =
+    useState<PortfolioRankerRowState | null>(null);
+  const [openActionMenuRowId, setOpenActionMenuRowId] =
+    useState<string | null>(null);
 
   useEffect(() => {
     const client = resolvedStorageClient;
@@ -254,6 +293,19 @@ export function PortfolioRankerScreen({
     ? rows.slice(0, DEFAULT_VISIBLE_DEMO_IDEA_COUNT)
     : rows;
   const hiddenDemoIdeaCount = Math.max(rows.length - visibleRows.length, 0);
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    thesisFilter !== 'all' ||
+    ideaStatusFilter !== 'all';
+  const displayedRows = (hasActiveFilters ? rows : visibleRows).filter((row) =>
+    portfolioRankerRowMatchesFilters(
+      row,
+      mockThesesById.get(row.id),
+      searchQuery,
+      thesisFilter,
+      ideaStatusFilter
+    )
+  );
   const rankerInput = useMemo(
     () => buildPortfolioRankerInput(visibleRows),
     [visibleRows]
@@ -292,21 +344,44 @@ export function PortfolioRankerScreen({
     (item) => item.status !== 'ranked'
   );
 
-  function updateRow(
-    rowId: string,
+  function updateEditingRow(
     field: keyof Omit<PortfolioRankerRowState, 'id'>,
     value: string
   ): void {
+    setEditingRow((currentRow) =>
+      currentRow
+        ? {
+            ...currentRow,
+            [field]: value
+          }
+        : currentRow
+    );
+  }
+
+  function startEditingRow(row: PortfolioRankerRowState): void {
+    setOpenActionMenuRowId(null);
+    setEditingRow({ ...row });
+  }
+
+  function cancelEditingRow(): void {
+    setOpenActionMenuRowId(null);
+    setEditingRow(null);
+  }
+
+  async function saveEditingRow(): Promise<void> {
+    if (!editingRow) {
+      return;
+    }
+
+    const rowToSave = { ...editingRow };
     setRows((currentRows) =>
       currentRows.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              [field]: value
-            }
-          : row
+        row.id === rowToSave.id ? rowToSave : row
       )
     );
+    setOpenActionMenuRowId(null);
+    setEditingRow(null);
+    await persistRow(rowToSave);
   }
 
   function addRow(): void {
@@ -330,6 +405,10 @@ export function PortfolioRankerScreen({
 
       return currentRows.filter((row) => row.id !== rowId);
     });
+    setEditingRow((currentRow) =>
+      currentRow?.id === rowId ? null : currentRow
+    );
+    setOpenActionMenuRowId(null);
   }
 
   async function clearRows(): Promise<void> {
@@ -358,29 +437,22 @@ export function PortfolioRankerScreen({
     }
 
     setRows(defaultRows.map((row) => ({ ...row })));
+    setEditingRow(null);
     setShowAllDemoIdeas(false);
     setNextRowNumber(getNextPortfolioRankerRowNumber(defaultRows, defaultRows.length + 1));
-  }
-
-  function handleRowFieldBlur(rowId: string): void {
-    const current = rows.find((row) => row.id === rowId);
-    if (!current) {
-      return;
-    }
-    void persistRow(current);
   }
 
   return (
     <div className="portfolio-ranker-screen">
       <PageHeader
-        badge={<Badge variant="accent">Thesis Board</Badge>}
+        badge={<Badge variant="accent">Idea ranking</Badge>}
         description="Rank investment ideas by thesis score, status, conviction, risk, and review priority."
         eyebrow="Idea Ranking Board"
-        title="Portfolio Ranker"
+        title="Thesis Board"
       />
 
       <div className="portfolio-ranker-layout">
-        <Card className="portfolio-ranker-workspace-card" title="Portfolio ranking board">
+        <Card className="portfolio-ranker-workspace-card" title="Thesis Board">
           <div className="portfolio-ranker-toolbar">
             <div>
               <h2>Investment ideas</h2>
@@ -403,169 +475,270 @@ export function PortfolioRankerScreen({
               <span>Search</span>
               <input
                 aria-label="Search ideas"
-                placeholder="Search ideas..."
-                readOnly
+                onChange={(event) => setSearchQuery(event.currentTarget.value)}
+                placeholder="Ticker, company, theme, status..."
                 type="search"
+                value={searchQuery}
               />
             </label>
             <label className="portfolio-ranker-filter">
               <span>Filter</span>
-              <select aria-label="Filter ideas" defaultValue="all">
-                <option value="all">All ideas</option>
+              <select
+                aria-label="Filter ideas"
+                onChange={(event) =>
+                  setThesisFilter(event.currentTarget.value as ThesisFilterValue)
+                }
+                value={thesisFilter}
+              >
+                {THESIS_FILTER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="portfolio-ranker-filter">
               <span>Status</span>
-              <select aria-label="Filter ranking status" defaultValue="all">
-                <option value="all">All statuses</option>
+              <select
+                aria-label="Filter idea status"
+                onChange={(event) =>
+                  setIdeaStatusFilter(
+                    event.currentTarget.value as IdeaStatusFilterValue
+                  )
+                }
+                value={ideaStatusFilter}
+              >
+                {IDEA_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
 
-          <div className="portfolio-ranker-rows">
-            {visibleRows.map((row, index) => {
+          <section
+            aria-label="Investment ideas"
+            className="portfolio-ranker-rows"
+          >
+            {displayedRows.map((row) => {
               const rankedItem = rankedItemsById.get(row.id);
               const thesis = mockThesesById.get(row.id);
               const thesisStatus = getThesisStatus(thesis);
+              const rowNumber = rows.findIndex((item) => item.id === row.id) + 1;
+              const isEditing = editingRow?.id === row.id;
 
               return (
-                <article className="portfolio-ranker-row" key={row.id}>
+                <article
+                  className={`portfolio-ranker-row${isEditing ? ' portfolio-ranker-row--expanded' : ''}`}
+                  key={row.id}
+                >
                   <div className="portfolio-ranker-row-header">
                     <div className="portfolio-ranker-rank-badge">
-                      {rankedItem?.rank ?? index + 1}
+                      {rankedItem?.rank ?? rowNumber}
                     </div>
                     <div className="portfolio-ranker-row-summary">
                       <span className="portfolio-ranker-entry-number">
-                        Idea {index + 1}
+                        Idea {rowNumber}
                       </span>
                       <h3>{formatTickerPreview(row)}</h3>
                       <p>{formatCompanyPreview(row)}</p>
                     </div>
-                    <Badge
-                      className={`portfolio-ranker-score-badge ${getScoreToneClass(rankedItem)}`}
-                      variant={getScoreBadgeVariant(rankedItem)}
-                    >
-                      MBS {formatRowScorePreview(row)}
-                    </Badge>
-                  </div>
-
-                  <div className="portfolio-ranker-thesis-meta">
-                    <Badge variant={thesisStatus.variant}>
-                      {thesisStatus.label}
-                    </Badge>
-                    <span className="portfolio-ranker-meta-chip">
-                      Change: {thesis ? formatScoreChange(thesis) : 'Not set'}
-                    </span>
-                    <span className="portfolio-ranker-meta-chip">
-                      Conviction: {thesis?.conviction ?? 'Not set'}
-                    </span>
-                    <span className="portfolio-ranker-meta-chip portfolio-ranker-meta-chip--risk">
-                      Risk: {thesis?.riskLevel ?? 'Not set'}
-                    </span>
-                    <span className="portfolio-ranker-meta-chip">
-                      Theme: {thesis?.theme ?? 'Not set'}
-                    </span>
-                  </div>
-
-                  <div className="portfolio-ranker-row-actions">
-                    <div className="portfolio-ranker-review-dates">
-                      <span>
-                        Last reviewed{' '}
-                        <strong>{thesis?.lastReviewedDate ?? 'Not set'}</strong>
-                      </span>
-                      <span>
-                        Next review{' '}
-                        <strong>{thesis?.nextReviewDate ?? 'Not set'}</strong>
-                      </span>
+                    <div className="portfolio-ranker-row-controls">
+                      <Badge
+                        className={`portfolio-ranker-score-badge ${getScoreToneClass(rankedItem)}`}
+                        variant={getScoreBadgeVariant(rankedItem)}
+                      >
+                        MBS {formatRowScorePreview(row)}
+                      </Badge>
+                      <details
+                        className="portfolio-ranker-overflow-menu"
+                        onToggle={(event) => {
+                          const isOpen = event.currentTarget.open;
+                          setOpenActionMenuRowId((currentRowId) =>
+                            isOpen
+                              ? row.id
+                              : currentRowId === row.id
+                                ? null
+                                : currentRowId
+                          );
+                        }}
+                        open={openActionMenuRowId === row.id}
+                      >
+                        <summary
+                          aria-label={`More actions for ${formatTickerPreview(row)}`}
+                          title="More actions"
+                        >
+                          <span aria-hidden="true">...</span>
+                        </summary>
+                        <div className="portfolio-ranker-overflow-popover">
+                          <button
+                            disabled={isWriting || isLoading}
+                            onClick={() => {
+                              void removeRow(row.id);
+                            }}
+                            type="button"
+                          >
+                            Remove idea
+                          </button>
+                        </div>
+                      </details>
                     </div>
-                    <details className="portfolio-ranker-editor">
-                      <summary>Edit details</summary>
-                      <div className="portfolio-ranker-entry-grid">
+                  </div>
+
+                  {isEditing && editingRow ? (
+                    <section
+                      aria-label={`Edit ${formatTickerPreview(row)} details`}
+                      className="portfolio-ranker-expanded-editor"
+                    >
+                      <h4>Edit details</h4>
+                      <div className="portfolio-ranker-expanded-grid">
                         <label className="portfolio-ranker-field">
                           <span>Ticker</span>
                           <input
-                            aria-label={`Ticker ${index + 1}`}
-                            onBlur={() => handleRowFieldBlur(row.id)}
+                            aria-label={`Ticker ${rowNumber}`}
                             onChange={(event) =>
-                              updateRow(row.id, 'ticker', event.currentTarget.value)
+                              updateEditingRow(
+                                'ticker',
+                                event.currentTarget.value
+                              )
                             }
                             placeholder="MSFT"
                             type="text"
-                            value={row.ticker}
+                            value={editingRow.ticker}
                           />
                         </label>
 
                         <label className="portfolio-ranker-field">
                           <span>Company name</span>
                           <input
-                            aria-label={`Company name ${index + 1}`}
-                            onBlur={() => handleRowFieldBlur(row.id)}
+                            aria-label={`Company name ${rowNumber}`}
                             onChange={(event) =>
-                              updateRow(
-                                row.id,
+                              updateEditingRow(
                                 'companyName',
                                 event.currentTarget.value
                               )
                             }
                             placeholder="Optional"
                             type="text"
-                            value={row.companyName}
+                            value={editingRow.companyName}
                           />
                         </label>
 
                         <label className="portfolio-ranker-field">
                           <span>Manual score</span>
                           <input
-                            aria-label={`Manual score ${index + 1}`}
+                            aria-label={`Manual score ${rowNumber}`}
                             inputMode="decimal"
-                            onBlur={() => handleRowFieldBlur(row.id)}
                             onChange={(event) =>
-                              updateRow(
-                                row.id,
+                              updateEditingRow(
                                 'manualScore',
                                 event.currentTarget.value
                               )
                             }
                             placeholder={`${PORTFOLIO_RANKER_MIN_SCORE}-${PORTFOLIO_RANKER_MAX_SCORE}`}
                             type="text"
-                            value={row.manualScore}
+                            value={editingRow.manualScore}
                           />
                         </label>
                       </div>
 
-                      <label className="portfolio-ranker-field portfolio-ranker-notes">
+                      <label className="portfolio-ranker-field portfolio-ranker-expanded-notes">
                         <span>Optional notes</span>
                         <textarea
-                          aria-label={`Notes ${index + 1}`}
-                          onBlur={() => handleRowFieldBlur(row.id)}
+                          aria-label={`Notes ${rowNumber}`}
                           onChange={(event) =>
-                            updateRow(row.id, 'notes', event.currentTarget.value)
+                            updateEditingRow('notes', event.currentTarget.value)
                           }
                           placeholder="User-entered context for this score."
                           rows={3}
-                          value={row.notes}
+                          value={editingRow.notes}
                         />
                       </label>
-                    </details>
-                    <Button
-                      className="portfolio-ranker-remove-button"
-                      disabled={isWriting || isLoading}
-                      onClick={() => {
-                        void removeRow(row.id);
-                      }}
-                      size="sm"
-                      type="button"
-                      variant="secondary"
-                    >
-                      Remove
-                    </Button>
-                  </div>
+
+                      <div className="portfolio-ranker-editor-actions">
+                        <Button
+                          onClick={cancelEditingRow}
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          disabled={isWriting || isLoading}
+                          onClick={() => {
+                            void saveEditingRow();
+                          }}
+                          size="sm"
+                          type="button"
+                        >
+                          Save changes
+                        </Button>
+                      </div>
+                    </section>
+                  ) : (
+                    <>
+                      <div className="portfolio-ranker-thesis-meta">
+                        <Badge variant={thesisStatus.variant}>
+                          {thesisStatus.label}
+                        </Badge>
+                        <span className="portfolio-ranker-meta-chip">
+                          Change:{' '}
+                          {thesis ? formatScoreChange(thesis) : 'Not set'}
+                        </span>
+                        <span className="portfolio-ranker-meta-chip">
+                          Conviction: {thesis?.conviction ?? 'Not set'}
+                        </span>
+                        <span className="portfolio-ranker-meta-chip portfolio-ranker-meta-chip--risk">
+                          Risk: {thesis?.riskLevel ?? 'Not set'}
+                        </span>
+                        <span className="portfolio-ranker-meta-chip">
+                          Theme: {thesis?.theme ?? 'Not set'}
+                        </span>
+                      </div>
+                      <div className="portfolio-ranker-card-footer">
+                        <div className="portfolio-ranker-review-dates">
+                          <span>
+                            Last reviewed{' '}
+                            <strong>
+                              {thesis?.lastReviewedDate ?? 'Not set'}
+                            </strong>
+                          </span>
+                          <span>
+                            Next review{' '}
+                            <strong>
+                              {thesis?.nextReviewDate ?? 'Not set'}
+                            </strong>
+                          </span>
+                        </div>
+                        <Button
+                          disabled={isWriting || isLoading}
+                          onClick={() => startEditingRow(row)}
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          Edit details
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </article>
               );
             })}
-          </div>
+            {displayedRows.length === 0 ? (
+              <div className="portfolio-ranker-filter-empty" role="status">
+                <h3>Nothing found</h3>
+                <p>
+                  No matching ideas. Try another ticker, company, theme, or
+                  status.
+                </p>
+              </div>
+            ) : null}
+          </section>
 
-          {hiddenDemoIdeaCount > 0 ? (
+          {hiddenDemoIdeaCount > 0 && !hasActiveFilters ? (
             <div className="portfolio-ranker-show-more">
               <p>
                 Showing {visibleRows.length} focused sample ideas.{' '}
@@ -618,7 +791,7 @@ export function PortfolioRankerScreen({
         <Card
           className="portfolio-ranker-output-card"
           emphasis
-          title="Ranking output"
+          title="Thesis ranking output"
         >
           <div className="portfolio-ranker-output-hero">
             <div>
@@ -656,9 +829,8 @@ export function PortfolioRankerScreen({
                 ))}
               </div>
 
-              <div className="portfolio-ranker-feedback">
-                {rankedItems.some((item) => item.errors.length > 0) ? (
-                  <>
+              {rankedItems.some((item) => item.errors.length > 0) ? (
+                <div className="portfolio-ranker-feedback">
                     <h3>Items needing attention</h3>
                     <ul>
                       {rankedItems
@@ -670,11 +842,8 @@ export function PortfolioRankerScreen({
                           </li>
                         ))}
                     </ul>
-                  </>
-                ) : (
-                  <p>No validation errors.</p>
-                )}
-              </div>
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="portfolio-ranker-empty-state">
@@ -833,6 +1002,44 @@ function mockThesisToPortfolioRankerRow(
     notes: thesis.thesisSummary,
     ticker: thesis.ticker
   };
+}
+
+function portfolioRankerRowMatchesFilters(
+  row: PortfolioRankerRowState,
+  thesis: MockThesis | undefined,
+  searchQuery: string,
+  thesisFilter: ThesisFilterValue,
+  ideaStatusFilter: IdeaStatusFilterValue
+): boolean {
+  if (thesisFilter !== 'all' && thesis?.thesisStatus !== thesisFilter) {
+    return false;
+  }
+
+  if (ideaStatusFilter !== 'all' && thesis?.ideaStatus !== ideaStatusFilter) {
+    return false;
+  }
+
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  const searchableValues = [
+    row.ticker,
+    row.companyName,
+    thesis?.theme,
+    thesis?.thesisStatus,
+    thesis ? `${thesis.thesisStatus} thesis` : undefined,
+    thesis?.ideaStatus,
+    thesis?.conviction,
+    thesis ? `${thesis.conviction} conviction` : undefined,
+    thesis?.riskLevel,
+    thesis ? `${thesis.riskLevel} risk` : undefined
+  ];
+
+  return searchableValues.some((value) =>
+    value?.toLocaleLowerCase().includes(normalizedQuery)
+  );
 }
 
 function getThesisStatus(thesis: MockThesis | undefined): ThesisStatusDisplay {

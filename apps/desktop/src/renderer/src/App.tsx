@@ -83,8 +83,8 @@ const navigationViews: NavigationView[] = [
   },
   {
     id: 'portfolio-ranker',
-    title: 'Portfolio Ranker',
-    navLabel: 'Portfolio Ranker',
+    title: 'Thesis Board',
+    navLabel: 'Thesis Ranking',
     icon: 'portfolio-ranker',
     description:
       'Compare saved ideas with user-entered thesis scores and focused ranking output.'

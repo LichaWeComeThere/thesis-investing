@@ -3878,6 +3878,16 @@ select:focus-visible {
   font-size: 13px;
   line-height: 1.35;
   padding: 12px;
+  transition:
+    background 170ms ease,
+    border-color 170ms ease,
+    box-shadow 170ms ease;
+}
+
+.portfolio-ranker-preview-row:hover {
+  background: #16202B;
+  border-color: rgba(72, 224, 204, 0.2);
+  box-shadow: inset 2px 0 0 rgba(72, 224, 204, 0.5);
 }
 
 .portfolio-ranker-preview-row strong {
@@ -3966,6 +3976,22 @@ select:focus-visible {
   gap: 14px;
   margin-top: 18px;
   padding: 18px;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.portfolio-ranker-weakest-card:hover {
+  background:
+    linear-gradient(145deg, rgba(72, 224, 204, 0.055), rgba(255, 255, 255, 0.022)),
+    #16202B;
+  border-color: rgba(72, 224, 204, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 28px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 .portfolio-ranker-weakest-card--steady {
@@ -5571,6 +5597,37 @@ select:focus-visible {
   margin: 0;
 }
 
+.portfolio-ranker-filter-empty {
+  align-items: center;
+  background: #16202B;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+  min-height: 150px;
+  padding: 24px;
+  text-align: center;
+}
+
+.portfolio-ranker-filter-empty h3,
+.portfolio-ranker-filter-empty p {
+  margin: 0;
+}
+
+.portfolio-ranker-filter-empty h3 {
+  color: var(--ti-color-text);
+  font-size: 17px;
+}
+
+.portfolio-ranker-filter-empty p {
+  color: var(--ti-color-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 430px;
+}
+
 .portfolio-ranker-output-hero {
   gap: 10px;
 }
@@ -6818,5 +6875,222 @@ select:focus-visible {
 @media (max-width: 1180px) {
   .living-thesis-health-sections {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Thesis Board card editor */
+.portfolio-ranker-row-controls {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.portfolio-ranker-overflow-menu {
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.portfolio-ranker-overflow-menu > summary {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--ti-color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 17px;
+  font-weight: 800;
+  height: 34px;
+  justify-content: center;
+  letter-spacing: 0;
+  line-height: 1;
+  list-style: none;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease;
+  width: 34px;
+}
+
+.portfolio-ranker-overflow-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.portfolio-ranker-overflow-menu > summary:hover,
+.portfolio-ranker-overflow-menu[open] > summary {
+  background: rgba(72, 224, 204, 0.09);
+  border-color: rgba(72, 224, 204, 0.32);
+  color: var(--ti-color-accent);
+}
+
+.portfolio-ranker-overflow-menu > summary:focus-visible,
+.portfolio-ranker-overflow-popover button:focus-visible {
+  border-color: rgba(72, 224, 204, 0.55);
+  box-shadow: 0 0 0 3px rgba(72, 224, 204, 0.18);
+  outline: none;
+}
+
+.portfolio-ranker-overflow-popover {
+  background: #16202B;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  min-width: 150px;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 8;
+}
+
+.portfolio-ranker-overflow-popover button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--ti-color-risk);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 9px 10px;
+  text-align: left;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+  width: 100%;
+}
+
+.portfolio-ranker-overflow-popover button:hover {
+  background: rgba(239, 95, 87, 0.1);
+  border-color: rgba(239, 95, 87, 0.2);
+}
+
+.portfolio-ranker-overflow-popover button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.portfolio-ranker-card-footer {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.portfolio-ranker-row.portfolio-ranker-row--expanded,
+.portfolio-ranker-row.portfolio-ranker-row--expanded:hover {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(72, 224, 204, 0.11), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022)),
+    var(--ti-color-surface-elevated);
+  border-color: rgba(72, 224, 204, 0.38);
+  box-shadow:
+    var(--ti-shadow-surface-inset),
+    0 0 0 1px rgba(72, 224, 204, 0.08),
+    0 16px 34px rgba(0, 0, 0, 0.2);
+  transform: none;
+}
+
+.portfolio-ranker-expanded-editor {
+  background: #16202B;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-sizing: border-box;
+  display: grid;
+  gap: 14px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 14px;
+  width: 100%;
+}
+
+.portfolio-ranker-expanded-editor h4 {
+  color: var(--ti-color-text);
+  font-size: 15px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.portfolio-ranker-expanded-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(100px, 0.72fr) minmax(180px, 1.4fr) minmax(110px, 0.72fr);
+  min-width: 0;
+}
+
+.portfolio-ranker-expanded-editor .portfolio-ranker-field {
+  min-width: 0;
+}
+
+.portfolio-ranker-expanded-editor input,
+.portfolio-ranker-expanded-editor textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.portfolio-ranker-expanded-editor input:focus-visible,
+.portfolio-ranker-expanded-editor textarea:focus-visible {
+  border-color: rgba(72, 224, 204, 0.55);
+  box-shadow: 0 0 0 3px rgba(72, 224, 204, 0.16);
+  outline: none;
+}
+
+.portfolio-ranker-expanded-notes {
+  margin: 0;
+  width: 100%;
+}
+
+.portfolio-ranker-expanded-notes textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.portfolio-ranker-editor-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 980px) {
+  .portfolio-ranker-expanded-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 780px) {
+  .portfolio-ranker-row-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .portfolio-ranker-row-controls {
+    grid-column: 2;
+    justify-content: space-between;
+  }
+
+  .portfolio-ranker-card-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .portfolio-ranker-card-footer > .ti-button {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .portfolio-ranker-expanded-editor {
+    padding: 12px;
+  }
+
+  .portfolio-ranker-editor-actions > .ti-button {
+    flex: 1 1 120px;
   }
 }
