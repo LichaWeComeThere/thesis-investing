@@ -9,14 +9,14 @@ import {
   type BadgeVariant,
   Button,
   Card,
+  DraftLeaveDialog,
   PageHeader
 } from '@thesis-investing/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   buildPortfolioRankerInput,
   createEmptyPortfolioRankerRow,
   getNextPortfolioRankerRowNumber,
-  isPortfolioRankerRowSaveable,
   portfolioRankerItemToRow,
   type PortfolioRankerRowState
 } from './portfolioRankerInput';
@@ -38,6 +38,11 @@ type PortfolioRankerScreenProps = {
   initialPersistedRowIds?: string[];
   initialStorageErrors?: string[];
   onOpenWorkspace?: (workspaceId: string) => void;
+  navigationRequest?: {
+    destination: string;
+    onLeave: () => void;
+    onStay: () => void;
+  };
   storageClient?: PortfolioRankerStorageClient | null;
   theses?: MockThesis[];
 };
@@ -82,6 +87,7 @@ export function PortfolioRankerScreen({
   initialPersistedRowIds = [],
   initialStorageErrors = [],
   onOpenWorkspace,
+  navigationRequest,
   storageClient,
   theses = mockTheses
 }: PortfolioRankerScreenProps): JSX.Element {
@@ -121,8 +127,38 @@ export function PortfolioRankerScreen({
     useState<IdeaStatusFilterValue>('all');
   const [editingRow, setEditingRow] =
     useState<PortfolioRankerRowState | null>(null);
+  const [editorErrors, setEditorErrors] = useState<string[]>([]);
+  const writeInFlight = useRef(false);
+  const editorRef = useRef<HTMLElement>(null);
   const [openActionMenuRowId, setOpenActionMenuRowId] =
     useState<string | null>(null);
+  const savedEditingRow = rows.find((row) => row.id === editingRow?.id);
+  const hasUnsavedChanges = Boolean(editingRow && (
+    !savedEditingRow ||
+    editingRow.ticker !== savedEditingRow.ticker ||
+    editingRow.companyName !== savedEditingRow.companyName ||
+    editingRow.manualScore !== savedEditingRow.manualScore ||
+    editingRow.notes !== savedEditingRow.notes
+  ));
+  const guardedDraft = hasUnsavedChanges || Boolean(editingRow && editorErrors.length > 0);
+
+  useEffect(() => {
+    if (navigationRequest && !guardedDraft && !isWriting) navigationRequest.onLeave();
+  }, [navigationRequest, guardedDraft, isWriting]);
+
+  useEffect(() => {
+    if (!guardedDraft && !isWriting) return;
+    const protectDraft = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', protectDraft);
+    return () => window.removeEventListener('beforeunload', protectDraft);
+  }, [guardedDraft, isWriting]);
+
+  useEffect(() => {
+    editorRef.current?.querySelector<HTMLInputElement>('input')?.focus();
+  }, [editingRow?.id]);
 
   useEffect(() => {
     const client = resolvedStorageClient;
@@ -193,60 +229,6 @@ export function PortfolioRankerScreen({
     };
   }, [resolvedStorageClient]);
 
-  async function persistRow(row: PortfolioRankerRowState): Promise<void> {
-    if (!resolvedStorageClient) {
-      return;
-    }
-
-    if (!isPortfolioRankerRowSaveable(row)) {
-      return;
-    }
-
-    setIsWriting(true);
-    setStorageErrors([]);
-
-    try {
-      const result = await resolvedStorageClient.save(
-        toPersistedPortfolioRankerItem(row)
-      );
-
-      if (!result.ok) {
-        setStorageErrors(result.errors);
-        return;
-      }
-
-      setPersistedRowIds((current) => {
-        if (current.has(row.id)) {
-          return current;
-        }
-        const next = new Set(current);
-        next.add(row.id);
-        return next;
-      });
-
-      // Apply normalized field echoes from storage (e.g. uppercased ticker)
-      // without overwriting any in-progress field the user is still typing.
-      setRows((currentRows) =>
-        currentRows.map((existing) =>
-          existing.id === row.id
-            ? {
-                ...existing,
-                ticker: result.value.ticker
-              }
-            : existing
-        )
-      );
-    } catch (error) {
-      setStorageErrors([
-        error instanceof Error
-          ? error.message
-          : 'Unable to save portfolio ranker row.'
-      ]);
-    } finally {
-      setIsWriting(false);
-    }
-  }
-
   async function removePersistedRow(rowId: string): Promise<boolean> {
     if (!resolvedStorageClient) {
       return true;
@@ -255,6 +237,7 @@ export function PortfolioRankerScreen({
       return true;
     }
 
+    writeInFlight.current = true;
     setIsWriting(true);
     setStorageErrors([]);
 
@@ -283,6 +266,7 @@ export function PortfolioRankerScreen({
       ]);
       return false;
     } finally {
+      writeInFlight.current = false;
       setIsWriting(false);
     }
   }
@@ -307,8 +291,8 @@ export function PortfolioRankerScreen({
     )
   );
   const rankerInput = useMemo(
-    () => buildPortfolioRankerInput(visibleRows),
-    [visibleRows]
+    () => buildPortfolioRankerInput(displayedRows),
+    [displayedRows]
   );
   const rankedItems = useMemo(
     () => rankManualPortfolioItems(rankerInput),
@@ -348,6 +332,8 @@ export function PortfolioRankerScreen({
     field: keyof Omit<PortfolioRankerRowState, 'id'>,
     value: string
   ): void {
+    if (writeInFlight.current) return;
+    setEditorErrors([]);
     setEditingRow((currentRow) =>
       currentRow
         ? {
@@ -359,41 +345,74 @@ export function PortfolioRankerScreen({
   }
 
   function startEditingRow(row: PortfolioRankerRowState): void {
+    if (writeInFlight.current || isLoading || guardedDraft) return;
+    setEditorErrors([]);
     setOpenActionMenuRowId(null);
     setEditingRow({ ...row });
   }
 
   function cancelEditingRow(): void {
+    if (writeInFlight.current) return;
+    setEditorErrors([]);
     setOpenActionMenuRowId(null);
     setEditingRow(null);
   }
 
   async function saveEditingRow(): Promise<void> {
-    if (!editingRow) {
+    if (!editingRow || writeInFlight.current || isLoading) return;
+    const rowToSave = { ...editingRow };
+    // Validate the raw text before conversion can omit a nonnumeric score.
+    const inputs = buildPortfolioRankerInput([rowToSave]);
+    const [validated] = rankManualPortfolioItems(
+      inputs.length ? inputs : [{ id: rowToSave.id, ticker: rowToSave.ticker }]
+    );
+    if (validated.errors.length > 0) {
+      setEditorErrors(validated.errors);
       return;
     }
 
-    const rowToSave = { ...editingRow };
-    setRows((currentRows) =>
-      currentRows.map((row) =>
-        row.id === rowToSave.id ? rowToSave : row
-      )
-    );
-    setOpenActionMenuRowId(null);
-    setEditingRow(null);
-    await persistRow(rowToSave);
+    writeInFlight.current = true;
+    setIsWriting(true);
+    setEditorErrors([]);
+    setStorageErrors([]);
+    try {
+      let savedRow = rowToSave;
+      if (resolvedStorageClient) {
+        const result = await resolvedStorageClient.save(toPersistedPortfolioRankerItem(rowToSave));
+        if (!result.ok) {
+          setEditorErrors(result.errors.length ? result.errors : ['Unable to save this idea. Please try again.']);
+          return;
+        }
+        savedRow = portfolioRankerItemToRow(result.value);
+        setPersistedRowIds((current) => new Set([...current, rowToSave.id]));
+      }
+      setRows((current) => current.map((row) => row.id === savedRow.id ? savedRow : row));
+      setOpenActionMenuRowId(null);
+      setEditingRow(null);
+    } catch (error) {
+      setEditorErrors([error instanceof Error ? error.message : 'Unable to save this idea. Please try again.']);
+    } finally {
+      writeInFlight.current = false;
+      setIsWriting(false);
+    }
   }
 
   function addRow(): void {
+    if (writeInFlight.current || isLoading || guardedDraft) return;
+    const newRow = createEmptyPortfolioRankerRow(`idea-${nextRowNumber}`);
+    setSearchQuery('');
+    setThesisFilter('all');
+    setIdeaStatusFilter('all');
+    setEditorErrors([]);
+    setOpenActionMenuRowId(null);
     setShowAllDemoIdeas(true);
-    setRows((currentRows) => [
-      ...currentRows,
-      createEmptyPortfolioRankerRow(`idea-${nextRowNumber}`)
-    ]);
+    setRows((currentRows) => [...currentRows, newRow]);
+    setEditingRow(newRow);
     setNextRowNumber((currentNumber) => currentNumber + 1);
   }
 
   async function removeRow(rowId: string): Promise<void> {
+    if (writeInFlight.current || isLoading || guardedDraft) return;
     const removed = await removePersistedRow(rowId);
     if (!removed) {
       return;
@@ -412,7 +431,9 @@ export function PortfolioRankerScreen({
   }
 
   async function clearRows(): Promise<void> {
+    if (writeInFlight.current || isLoading || guardedDraft) return;
     if (resolvedStorageClient && persistedRowIds.size > 0) {
+      writeInFlight.current = true;
       setIsWriting(true);
       setStorageErrors([]);
       try {
@@ -432,12 +453,14 @@ export function PortfolioRankerScreen({
         ]);
         return;
       } finally {
+        writeInFlight.current = false;
         setIsWriting(false);
       }
     }
 
     setRows(defaultRows.map((row) => ({ ...row })));
     setEditingRow(null);
+    setEditorErrors([]);
     setShowAllDemoIdeas(false);
     setNextRowNumber(getNextPortfolioRankerRowNumber(defaultRows, defaultRows.length + 1));
   }
@@ -462,7 +485,7 @@ export function PortfolioRankerScreen({
               </p>
             </div>
             <Button
-              disabled={isWriting || isLoading}
+              disabled={isWriting || isLoading || guardedDraft}
               onClick={addRow}
               type="button"
             >
@@ -475,6 +498,7 @@ export function PortfolioRankerScreen({
               <span>Search</span>
               <input
                 aria-label="Search ideas"
+                disabled={isWriting || isLoading || Boolean(editingRow)}
                 onChange={(event) => setSearchQuery(event.currentTarget.value)}
                 placeholder="Ticker, company, theme, status..."
                 type="search"
@@ -485,6 +509,7 @@ export function PortfolioRankerScreen({
               <span>Filter</span>
               <select
                 aria-label="Filter ideas"
+                disabled={isWriting || isLoading || Boolean(editingRow)}
                 onChange={(event) =>
                   setThesisFilter(event.currentTarget.value as ThesisFilterValue)
                 }
@@ -501,6 +526,7 @@ export function PortfolioRankerScreen({
               <span>Status</span>
               <select
                 aria-label="Filter idea status"
+                disabled={isWriting || isLoading || Boolean(editingRow)}
                 onChange={(event) =>
                   setIdeaStatusFilter(
                     event.currentTarget.value as IdeaStatusFilterValue
@@ -573,7 +599,7 @@ export function PortfolioRankerScreen({
                         </summary>
                         <div className="portfolio-ranker-overflow-popover">
                           <button
-                            disabled={isWriting || isLoading}
+                            disabled={isWriting || isLoading || guardedDraft}
                             onClick={() => {
                               void removeRow(row.id);
                             }}
@@ -590,13 +616,25 @@ export function PortfolioRankerScreen({
                     <section
                       aria-label={`Edit ${formatTickerPreview(row)} details`}
                       className="portfolio-ranker-expanded-editor"
+                      ref={editorRef}
                     >
                       <h4>Edit details</h4>
+                      <p className="portfolio-ranker-editor-help">
+                        Save or cancel before switching ideas or changing filters.
+                      </p>
+                      {hasUnsavedChanges ? <Badge variant="warning">Unsaved changes</Badge> : null}
+                      {editorErrors.length > 0 ? (
+                        <div className="portfolio-ranker-editor-errors" role="alert">
+                          {editorErrors.map((error) => <p key={error}>{error}</p>)}
+                          <p>Your edits are still open. Correct the details or try saving again.</p>
+                        </div>
+                      ) : null}
                       <div className="portfolio-ranker-expanded-grid">
                         <label className="portfolio-ranker-field">
                           <span>Ticker</span>
                           <input
                             aria-label={`Ticker ${rowNumber}`}
+                            disabled={isWriting}
                             onChange={(event) =>
                               updateEditingRow(
                                 'ticker',
@@ -613,6 +651,7 @@ export function PortfolioRankerScreen({
                           <span>Company name</span>
                           <input
                             aria-label={`Company name ${rowNumber}`}
+                            disabled={isWriting}
                             onChange={(event) =>
                               updateEditingRow(
                                 'companyName',
@@ -629,6 +668,7 @@ export function PortfolioRankerScreen({
                           <span>Manual score</span>
                           <input
                             aria-label={`Manual score ${rowNumber}`}
+                            disabled={isWriting}
                             inputMode="decimal"
                             onChange={(event) =>
                               updateEditingRow(
@@ -647,6 +687,7 @@ export function PortfolioRankerScreen({
                         <span>Optional notes</span>
                         <textarea
                           aria-label={`Notes ${rowNumber}`}
+                          disabled={isWriting}
                           onChange={(event) =>
                             updateEditingRow('notes', event.currentTarget.value)
                           }
@@ -658,6 +699,7 @@ export function PortfolioRankerScreen({
 
                       <div className="portfolio-ranker-editor-actions">
                         <Button
+                          disabled={isWriting}
                           onClick={cancelEditingRow}
                           size="sm"
                           type="button"
@@ -673,7 +715,7 @@ export function PortfolioRankerScreen({
                           size="sm"
                           type="button"
                         >
-                          Save changes
+                          {isWriting ? 'Saving…' : 'Save changes'}
                         </Button>
                       </div>
                     </section>
@@ -713,7 +755,7 @@ export function PortfolioRankerScreen({
                           </span>
                         </div>
                         <Button
-                          disabled={isWriting || isLoading}
+                          disabled={isWriting || isLoading || guardedDraft}
                           onClick={() => startEditingRow(row)}
                           size="sm"
                           type="button"
@@ -757,7 +799,7 @@ export function PortfolioRankerScreen({
 
           <div className="portfolio-ranker-actions">
             <Button
-              disabled={isWriting || isLoading}
+              disabled={isWriting || isLoading || guardedDraft}
               onClick={addRow}
               type="button"
               variant="secondary"
@@ -765,7 +807,7 @@ export function PortfolioRankerScreen({
               + Add another idea
             </Button>
             <Button
-              disabled={isWriting || isLoading}
+              disabled={isWriting || isLoading || guardedDraft}
               onClick={() => {
                 void clearRows();
               }}
@@ -797,7 +839,7 @@ export function PortfolioRankerScreen({
             <div>
               <span>Ranked ideas</span>
               <strong>
-                {rankedCount} / {visibleRows.length}
+                {rankedCount} / {displayedRows.length}
               </strong>
             </div>
             <div>
@@ -888,6 +930,7 @@ export function PortfolioRankerScreen({
               {weakestIdea || validRankedItems.length === 0 ? (
                 <button
                   className="portfolio-ranker-weakest-action"
+                  disabled={isWriting || isLoading}
                   onClick={() => onOpenWorkspace?.('mbs-scorer')}
                   type="button"
                 >
@@ -958,6 +1001,22 @@ export function PortfolioRankerScreen({
           </div>
         </Card>
       </div>
+      {navigationRequest && (guardedDraft || isWriting) ? (
+        <DraftLeaveDialog
+          title="Unsaved ranking changes"
+          description={`Save your changes before opening ${navigationRequest.destination}, discard them, or continue editing.`}
+          errors={editorErrors}
+          busy={isWriting}
+          onSave={() => { void saveEditingRow(); }}
+          onDiscard={() => {
+            if (writeInFlight.current) return;
+            setEditingRow(null);
+            setEditorErrors([]);
+            navigationRequest.onLeave();
+          }}
+          onStay={navigationRequest.onStay}
+        />
+      ) : null}
     </div>
   );
 }

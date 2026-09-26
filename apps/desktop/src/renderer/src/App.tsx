@@ -305,7 +305,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   function requestNavigation(viewId: string): void {
     if (viewId === selectedViewId) return;
 
-    if (selectedViewId === 'thesis-board') {
+    if (selectedViewId === 'thesis-board' || selectedViewId === 'portfolio-ranker') {
       setPendingViewId(viewId);
       return;
     }
@@ -399,7 +399,12 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           />
         ) : selectedView.id === 'portfolio-ranker' ? (
           <PortfolioRankerScreen
-            onOpenWorkspace={setSelectedViewId}
+            navigationRequest={pendingViewId ? {
+              destination: navigationViews.find((view) => view.id === pendingViewId)?.navLabel ?? 'another workspace',
+              onLeave: completeBoardNavigation,
+              onStay: cancelBoardNavigation
+            } : undefined}
+            onOpenWorkspace={requestNavigation}
             theses={theses}
           />
         ) : selectedView.id === 'thesis-monitor' ? (
