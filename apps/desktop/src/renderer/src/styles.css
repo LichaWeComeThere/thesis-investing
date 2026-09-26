@@ -6879,6 +6879,23 @@ select:focus-visible {
 }
 
 /* Thesis Board card editor */
+.portfolio-ranker-editor-help,
+.portfolio-ranker-editor-errors p {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.portfolio-ranker-editor-errors {
+  background: var(--ti-color-callout-warning-bg);
+  border: 1px solid var(--ti-color-callout-warning-border);
+  border-radius: 10px;
+  color: var(--ti-color-callout-warning-text);
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
 .portfolio-ranker-row-controls {
   align-items: center;
   display: flex;

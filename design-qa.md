@@ -1,7 +1,36 @@
 # Living Thesis design QA
 
-Current Thesis Health QA is recorded first. Earlier History, Decision Log
-and review assessments remain below as historical evidence.
+Current ranking regression QA is recorded first. Earlier Thesis Health,
+History, Decision Log and review assessments remain below as historical evidence.
+
+## Ranking draft and filter corrections
+
+Date: 2026-09-26. Follow-up to `60e5eed` preserves the coworker's card layout
+while correcting four issues: lost drafts, premature save success, hidden new
+ideas under filters, and ranking output that omitted matching demo ideas.
+
+- Other-row edits and destructive actions are disabled while a draft is dirty.
+  Sidebar and Re-evaluate thesis navigation reuse the shared Save, Discard or
+  Continue editing dialog. Escape retains the draft. Fields and duplicate
+  actions are locked during writes.
+- Save validates raw input and keeps the editor open until persistence succeeds.
+  Tests cover invalid input, rejected calls, failed writes, explicit retry,
+  normalized data and recovery after closing/reopening a real SQLite database.
+- Both Add buttons clear search and filters and focus the new editor. Ranking,
+  card ranks, leader, weakest idea and counts use the same displayed set,
+  including previously hidden samples and empty results.
+- Nineteen new interaction tests exercise real SQLite storage and App navigation,
+  including navigation during a pending save and failure of an unchanged-row
+  save. The existing ranking and Thesis Board navigation checks also pass.
+- All 556 tests pass: 188 core, 5 shared UI and 363 desktop. Lint, typecheck,
+  production build and diff checks pass. GitHub checks are tracked on the PR.
+- Browser preview verification could not be completed in this environment.
+  No new visual captures or browser keyboard/layout results are claimed.
+  Manual Windows UI, installer and native window-close checks remain deferred.
+
+No schema, backup-format, dependency, scoring formula or external-service change
+is introduced. The ranking screen still uses its existing manual rows and demo
+thesis context; this does not implement Stage 10 or link it to Living Theses.
 
 ## Thesis Health — Stage 9
 
