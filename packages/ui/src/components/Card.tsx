@@ -33,26 +33,27 @@ export function Card({
       {...sectionProps}
       className={sectionClassName}
       style={{
-        background: `linear-gradient(145deg, ${tokens.colors.surfaceElevated}, ${tokens.colors.surface})`,
+        background: tokens.colors.surface,
         border: `1px solid ${tokens.colors.border}`,
         borderRadius: tokens.radii.bento,
         boxShadow: emphasis ? tokens.shadows.cardEmphasis : tokens.shadows.card,
         padding: tokens.spacing.card,
         transition:
-          'border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease',
+          'border-color 160ms ease',
         ...style
       }}
     >
       {eyebrow ? (
         <p
+          className="ti-card__eyebrow"
           style={{
-            color: tokens.colors.primary,
+            color: tokens.colors.textMuted,
             fontSize: tokens.typography.fontSize.xs,
-            fontWeight: tokens.typography.fontWeight.bold,
-            letterSpacing: '0.08em',
+            fontWeight: tokens.typography.fontWeight.semibold,
+            letterSpacing: 0,
             lineHeight: tokens.typography.lineHeight.normal,
             margin: `0 0 ${tokens.spacing.sm}px`,
-            textTransform: 'uppercase'
+            textTransform: 'none'
           }}
         >
           {eyebrow}
@@ -61,10 +62,11 @@ export function Card({
 
       {title ? (
         <h2
+          className="ti-card__title"
           style={{
             color: tokens.colors.textSection,
-            fontSize: tokens.typography.fontSize.xl,
-            fontWeight: tokens.typography.fontWeight.bold,
+            fontSize: tokens.typography.fontSize.lg,
+            fontWeight: tokens.typography.fontWeight.semibold,
             lineHeight: tokens.typography.lineHeight.tight,
             margin: 0
           }}
@@ -74,6 +76,7 @@ export function Card({
       ) : null}
 
       <div
+        className="ti-card__body"
         style={{
           color: tokens.colors.textMuted,
           fontSize: tokens.typography.fontSize.md,
@@ -86,6 +89,7 @@ export function Card({
 
       {footer ? (
         <div
+          className="ti-card__footer"
           style={{
             borderTop: `1px solid ${tokens.colors.border}`,
             marginTop: tokens.spacing.xl,

@@ -1,7 +1,25 @@
 # Living Thesis design QA
 
-Current ranking regression QA is recorded first. Earlier Thesis Health,
+Current interface redesign QA is recorded first. Earlier ranking, Thesis Health,
 History, Decision Log and review assessments remain below as historical evidence.
+
+## App-wide research workspace redesign
+
+Date: 2026-09-26. Feature work is paused for a focused interface redesign.
+See [design decisions, scope, and validation](docs/UI_REDESIGN.md).
+
+- Grouped navigation, consistent task names, a simpler Overview, searchable Theses,
+  essential-first editing, saved/example separation, and backups before diagnostics.
+- Warm neutral palette, forest action color, restrained surfaces, readable labels,
+  visible focus, and responsive forms replace the previous decorative dark UI.
+- Browser verified comparison save/navigation/reload, review draft save/next step,
+  compact-menu Escape and focus, small-window overflow, and readable field layouts.
+- 566 tests pass (188 core, 7 UI, 371 desktop), plus lint, typecheck, build and diff checks.
+- Evidence: [Overview](docs/screenshots/ui-redesign-overview.jpg),
+  [Theses](docs/screenshots/ui-redesign-theses.jpg),
+  [small review](docs/screenshots/ui-redesign-review-small.jpg).
+- Native Windows interaction/installer verification remains deferred. The browser
+  preview does not exercise native file dialogs. GitHub checks are tracked on the PR.
 
 ## Ranking draft and filter corrections
 

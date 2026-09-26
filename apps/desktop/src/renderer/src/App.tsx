@@ -5,7 +5,7 @@ import {
   PageHeader,
   themeCssVariables
 } from '@thesis-investing/ui';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   LocalDataExportOutcome,
   LocalDataInfo,
@@ -59,40 +59,40 @@ type NavigationIconId =
 const navigationViews: NavigationView[] = [
   {
     id: 'dashboard',
-    title: 'Dashboard',
-    navLabel: 'Dashboard',
+    title: 'Overview',
+    navLabel: 'Overview',
     icon: 'dashboard',
     description:
       'Overview of the local research workspaces, saved state, and next actions.'
   },
   {
     id: 'mbs-scorer',
-    title: 'MBS Scorer',
-    navLabel: 'MBS Scorer',
+    title: 'Score a company',
+    navLabel: 'Score a company',
     icon: 'mbs-scorer',
     description:
       'Score business quality, moat, management, balance sheet, growth, valuation, and risk.'
   },
   {
     id: 'thesis-board',
-    title: 'Thesis Board',
-    navLabel: 'Thesis Board',
+    title: 'Theses',
+    navLabel: 'Theses',
     icon: 'thesis-board',
     description:
       'Create, organize, and update formal Living Thesis records saved in local SQLite.'
   },
   {
     id: 'portfolio-ranker',
-    title: 'Thesis Board',
-    navLabel: 'Thesis Ranking',
+    title: 'Compare ideas',
+    navLabel: 'Compare ideas',
     icon: 'portfolio-ranker',
     description:
       'Compare saved ideas with user-entered thesis scores and focused ranking output.'
   },
   {
     id: 'thesis-monitor',
-    title: 'Thesis Monitor',
-    navLabel: 'Thesis Monitor',
+    title: 'Research notes',
+    navLabel: 'Research notes',
     icon: 'thesis-monitor',
     description:
       'Write, persist, and review local thesis notes while tracking user-defined thesis status.'
@@ -107,8 +107,8 @@ const navigationViews: NavigationView[] = [
   },
   {
     id: 'theme-baskets',
-    title: 'Theme Baskets',
-    navLabel: 'Theme Baskets',
+    title: 'Themes',
+    navLabel: 'Themes',
     icon: 'theme-baskets',
     description:
       'Browse research themes and example companies for organizing new ideas.'
@@ -123,8 +123,8 @@ const navigationViews: NavigationView[] = [
   },
   {
     id: 'settings-about',
-    title: 'Settings/About',
-    navLabel: 'Settings/About',
+    title: 'Settings',
+    navLabel: 'Settings',
     icon: 'settings-about',
     description:
       'Review app mode, local-first boundaries, and workspace preferences.'
@@ -143,6 +143,11 @@ const navIconProps = {
   viewBox: '0 0 24 24',
   width: 18
 };
+
+const navigationGroups = [
+  { label: 'Workspace', ids: ['dashboard', 'thesis-board', 'watchlist', 'reminders'] },
+  { label: 'Research tools', ids: ['mbs-scorer', 'portfolio-ranker', 'thesis-monitor', 'theme-baskets'] }
+];
 
 function NavigationIcon({ icon }: { icon: NavigationIconId }): JSX.Element {
   switch (icon) {
@@ -251,34 +256,32 @@ function OnboardingScreen({
   onComplete
 }: OnboardingScreenProps): JSX.Element {
   return (
-    <main className="onboarding-screen" style={themeCssVariables}>
+    <main className="onboarding-screen workspace-welcome" style={themeCssVariables}>
       <div className="onboarding-layout">
+        <p className="welcome-brand">Thesis Investing</p>
         <PageHeader
-          badge={<Badge variant="accent">Offline-first</Badge>}
-          description="A Windows-first workspace for building investment discipline through scoring, thesis notes, watchlists, and review dates."
-          eyebrow="Welcome"
-          title="Thesis Investing"
+          description="A clear place for your investment research, reasoning, and decisions."
+          title="Give every idea a reason."
         />
 
         <Card
           footer={
             <Button onClick={onComplete} type="button">
-              Continue
+              Open my workspace
             </Button>
           }
-          title="Invest with a thesis."
+          title="Start with what you believe."
         >
           <div className="onboarding-copy">
             <p>
-              Thesis Investing keeps your research process structured before
-              the app connects to live services. Start with local scoring,
-              thesis notes, watchlists, and review workflows.
+              Write a thesis, record the evidence behind it, and return to it
+              when something changes. Your saved research stays on this device.
             </p>
 
             <ul>
-              <li>Build a repeatable thesis workflow.</li>
-              <li>Compare ideas with consistent local scoring.</li>
-              <li>Keep review dates close to the research that matters.</li>
+              <li><strong>Write.</strong> Capture your case and what could prove it wrong.</li>
+              <li><strong>Review.</strong> Revisit your evidence, risks, and conviction.</li>
+              <li><strong>Remember.</strong> Keep the reasoning behind each decision.</li>
             </ul>
           </div>
         </Card>
@@ -295,6 +298,10 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   const [selectedViewId, setSelectedViewId] = useState(navigationViews[0].id);
   const [pendingViewId, setPendingViewId] = useState<string | null>(null);
   const [theses, setTheses] = useState<MockThesis[]>(() => cloneMockTheses());
+  const [isNavigationOpen, setIsNavigationOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+  const navigationRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
   const selectedView = useMemo(
     () =>
       navigationViews.find((view) => view.id === selectedViewId) ??
@@ -302,18 +309,33 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
     [selectedViewId]
   );
 
+  useEffect(() => {
+    mainRef.current?.focus({ preventScroll: true });
+    mainRef.current?.scrollTo?.({ top: 0 });
+  }, [selectedViewId]);
+
+  useEffect(() => {
+    if (isNavigationOpen) navigationRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+  }, [isNavigationOpen]);
+
   function requestNavigation(viewId: string): void {
-    if (viewId === selectedViewId) return;
+    if (viewId === selectedViewId) {
+      setIsNavigationOpen(false);
+      mainRef.current?.focus({ preventScroll: true });
+      return;
+    }
 
     if (selectedViewId === 'thesis-board' || selectedViewId === 'portfolio-ranker') {
       setPendingViewId(viewId);
       return;
     }
 
+    setIsNavigationOpen(false);
     setSelectedViewId(viewId);
   }
 
   const completeBoardNavigation = useCallback(() => {
+    setIsNavigationOpen(false);
     if (pendingViewId) setSelectedViewId(pendingViewId);
     setPendingViewId(null);
   }, [pendingViewId]);
@@ -340,18 +362,28 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   }
 
   return (
-    <div className="app-shell" style={themeCssVariables}>
-      <aside className="sidebar" aria-label="Primary navigation">
+    <div className="app-shell workspace-shell" style={themeCssVariables}>
+      <a className="skip-to-content" href="#workspace-content">Skip to content</a>
+      <div className="compact-navigation-bar">
+        <span>Thesis Investing</span>
+        <button aria-controls="workspace-navigation" aria-expanded={isNavigationOpen} onClick={() => setIsNavigationOpen((open) => !open)} ref={menuRef} type="button">
+          {isNavigationOpen ? 'Close menu' : 'Menu'}
+        </button>
+      </div>
+      <aside className={`sidebar${isNavigationOpen ? ' sidebar--open' : ''}`} aria-label="Primary navigation" id="workspace-navigation" ref={navigationRef} onKeyDown={(event) => {
+        if (event.key === 'Escape' && isNavigationOpen) { setIsNavigationOpen(false); menuRef.current?.focus(); }
+      }}>
         <div className="brand-area">
-          <p className="brand-eyebrow">conviction</p>
-          <h1>Invest with a thesis.</h1>
-          <Badge className="local-mode-badge" variant="accent">
-            Local Data Mode
-          </Badge>
+          <span className="workspace-monogram" aria-hidden="true">T.</span>
+          <div><p className="workspace-brand">Thesis Investing</p><p className="workspace-brand-caption">Your research desk</p></div>
         </div>
 
         <nav className="navigation-list" aria-label="Research workspaces">
-          {navigationViews.map((view) => {
+          {navigationGroups.map((group) => (
+            <div className="workspace-navigation-group" key={group.label} role="group" aria-label={group.label}>
+              <p className="workspace-navigation-label">{group.label}</p>
+              {group.ids.map((id) => {
+            const view = navigationViews.find((item) => item.id === id)!;
             const isActive = view.id === selectedView.id;
 
             return (
@@ -371,18 +403,23 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
                 <span className="nav-item-label">{view.navLabel}</span>
               </Button>
             );
-          })}
+              })}
+            </div>
+          ))}
         </nav>
 
-        <p className="safety-note">
-          Educational software only. Not financial advice. No brokerage or
-          trading execution.
-        </p>
+        <div className="workspace-sidebar-footer">
+          <Button aria-current={selectedView.id === 'settings-about' ? 'page' : undefined} className="nav-item" fullWidth isActive={selectedView.id === 'settings-about'} onClick={() => requestNavigation('settings-about')} type="button" variant="sidebar">
+            <span className="nav-item-icon-shell"><NavigationIcon icon="settings-about" /></span><span className="nav-item-label">Settings</span>
+          </Button>
+          <p className="workspace-local-note"><span aria-hidden="true" />Saved on this device</p>
+          <p className="safety-note">Research journal · Not financial advice</p>
+        </div>
       </aside>
 
-      <main className="content-area">
+      <main className="content-area" id="workspace-content" tabIndex={-1} aria-label={selectedView.title} ref={mainRef}>
         {selectedView.id === 'dashboard' ? (
-          <DashboardScreen onOpenWorkspace={setSelectedViewId} theses={theses} />
+          <DashboardScreen onOpenWorkspace={requestNavigation} />
         ) : selectedView.id === 'mbs-scorer' ? (
           <ManualMbsScorerScreen
             onCreateThesis={createThesisFromMbsScore}
@@ -415,7 +452,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           <ThemeBasketsScreen />
         ) : selectedView.id === 'reminders' ? (
           <RemindersScreen
-            onOpenWorkspace={setSelectedViewId}
+            onOpenWorkspace={requestNavigation}
             theses={theses}
           />
         ) : selectedView.id === 'settings-about' ? (
@@ -611,6 +648,12 @@ export function SettingsAboutScreen({
     useState<LocalDataMaintenanceState>(
       () => initialLocalDataMaintenanceState ?? { status: 'idle' }
     );
+  const hasStorageErrors = localDataErrors.length > 0 || localDataMaintenanceState.status === 'error';
+  const [isStorageDetailsOpen, setIsStorageDetailsOpen] = useState(hasStorageErrors);
+
+  useEffect(() => {
+    if (hasStorageErrors) setIsStorageDetailsOpen(true);
+  }, [hasStorageErrors]);
 
   useEffect(() => {
     if (
@@ -933,33 +976,296 @@ export function SettingsAboutScreen({
   return (
     <div className="settings-about-screen">
       <PageHeader
-        badge={<Badge variant="accent">Settings/About</Badge>}
-        description="Review local workspace mode, data visibility, app boundaries, and onboarding controls."
-        eyebrow="Settings/About"
-        title="Settings/About"
+        description="Back up your research and manage this device’s workspace."
+        title="Settings"
       />
 
       <div className="settings-about-grid">
-        <Card title="Workspace mode">
+        <Card className="settings-device-summary" title="Your workspace">
           <div className="settings-mode-panel">
             <p>
-              Thesis Investing currently runs as a local-first, offline
-              workspace. Saved records stay on this device while live
-              integrations remain off.
+              Your saved research stays on this device. Create regular backups
+              to keep a copy outside the app. No account or internet connection is required.
             </p>
           </div>
         </Card>
 
-        <Card title="Local data management">
+        <Card title="Backups">
           <div className="local-data-status-panel">
             <p>
-              Your saved Thesis Investing records are stored locally on this
-              computer. Export creates a JSON backup, while import accepts only
-              Thesis Investing export files, previews them first, and appends
-              records only after confirmation. Existing records are never
-              overwritten or deleted.
+              Save a backup before moving computers or reinstalling the app.
+              Import lets you preview a backup before adding its records.
+              Existing records are never overwritten or deleted.
             </p>
 
+            <section
+              aria-label="Local data export"
+              className="local-data-export-panel"
+            >
+              <div>
+                <h2>Export local data</h2>
+                <p>
+                  Create a JSON backup of your saved research, including theses,
+                  reviews, history, decisions, scores, comparison ideas, notes,
+                  watchlist companies, and reminders. Choose where to save the file.
+                </p>
+              </div>
+
+              <div className="local-data-export-actions">
+                <Button
+                  disabled={isExportDisabled}
+                  onClick={() => {
+                    void exportLocalData();
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  {localDataExportState.status === 'exporting'
+                    ? 'Exporting local data'
+                    : 'Export local data'}
+                </Button>
+
+                {localDataExportState.status === 'completed' ? (
+                  <div className="local-data-status-message" role="status">
+                    <strong>Backup JSON saved.</strong>
+                    <p>
+                      A copy of your persisted local records was saved to{' '}
+                      <code>{localDataExportState.outcome.filePath}</code>.
+                      Your records in Thesis Investing were not changed.
+                    </p>
+                    <p>
+                      Exported {localDataExportState.outcome.counts.watchlistItems}{' '}
+                      watchlist items,{' '}
+                      {localDataExportState.outcome.counts.thesisNotes} thesis
+                      notes, {localDataExportState.outcome.counts.reminders}{' '}
+                      reminders,{' '}
+                      {
+                        localDataExportState.outcome.counts
+                          .portfolioRankerItems
+                      }{' '}
+                      portfolio ranker inputs, and{' '}
+                      {
+                        localDataExportState.outcome.counts
+                          .mbsScoreSnapshots
+                      }{' '}
+                      MBS score snapshots, plus{' '}
+                      {localDataExportState.outcome.counts.livingTheses} Living
+                      Theses (including risks and catalysts), and{' '}
+                      {localDataExportState.outcome.counts.reviewSessions} saved review sessions and{' '}
+                      {localDataExportState.outcome.counts.thesisRevisions} thesis revisions and{' '}
+                      {localDataExportState.outcome.counts.thesisDecisions} thesis decisions.
+                    </p>
+                    <p>
+                      Export generated{' '}
+                      {formatLocalDataTimestamp(
+                        localDataExportState.outcome.exportedAt
+                      )}
+                      .
+                    </p>
+                  </div>
+                ) : null}
+
+                {localDataExportState.status === 'canceled' ? (
+                  <p className="local-data-status-message" role="status">
+                    Export canceled. Nothing was changed and no backup file was
+                    created.
+                  </p>
+                ) : null}
+
+                {localDataExportState.status === 'error' ? (
+                  <div className="local-data-status-error" role="alert">
+                    <strong>Unable to export local data.</strong>
+                    <p>
+                      The backup file could not be saved. Choose another
+                      location and try again.
+                    </p>
+                    <ul>
+                      {localDataExportState.errors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <section
+              aria-label="Local data import"
+              className="local-data-import-panel"
+            >
+              <div>
+                <h2>Import local data</h2>
+                <p>
+                  Choose a JSON backup created by Thesis Investing. Check its
+                  contents before confirming; no records are written during preview.
+                  Imports never overwrite or delete existing local data.
+                </p>
+              </div>
+
+              <div className="local-data-import-actions">
+                <Button
+                  disabled={isImportDisabled}
+                  onClick={() => {
+                    void previewLocalDataImport();
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  {localDataImportState.status === 'selecting'
+                    ? 'Selecting import file'
+                    : activeImportPreview
+                      ? 'Choose another file'
+                      : 'Import local data'}
+                </Button>
+
+                {activeImportPreview ? (
+                  <div className="local-data-import-preview" role="status">
+                    <strong>Import preview ready. No records have been written.</strong>
+                    <p>
+                      <code>{activeImportPreview.fileName}</code> uses export
+                      format version {activeImportPreview.formatVersion} and was
+                      generated{' '}
+                      {formatLocalDataTimestamp(activeImportPreview.exportedAt)}.
+                    </p>
+                    <dl className="local-data-import-counts">
+                      <div>
+                        <dt>Watchlist items</dt>
+                        <dd>{activeImportPreview.counts.watchlistItems}</dd>
+                      </div>
+                      <div>
+                        <dt>Thesis Notes</dt>
+                        <dd>{activeImportPreview.counts.thesisNotes}</dd>
+                      </div>
+                      <div>
+                        <dt>Reminders</dt>
+                        <dd>{activeImportPreview.counts.reminders}</dd>
+                      </div>
+                      <div>
+                        <dt>Portfolio Ranker Inputs</dt>
+                        <dd>
+                          {activeImportPreview.counts.portfolioRankerItems}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>MBS Score Snapshots</dt>
+                        <dd>{activeImportPreview.counts.mbsScoreSnapshots}</dd>
+                      </div>
+                      <div>
+                        <dt>Living Theses</dt>
+                        <dd>{activeImportPreview.counts.livingTheses}</dd>
+                      </div>
+                      <div>
+                        <dt>Saved review sessions</dt>
+                        <dd>{activeImportPreview.counts.reviewSessions}</dd>
+                      </div>
+                      <div>
+                        <dt>Thesis revisions</dt>
+                        <dd>{activeImportPreview.counts.thesisRevisions}</dd>
+                      </div>
+                      <div>
+                        <dt>Thesis decisions</dt>
+                        <dd>{activeImportPreview.counts.thesisDecisions}</dd>
+                      </div>
+                    </dl>
+                    {activeImportPreview.warnings.length > 0 ? (
+                      <ul className="local-data-import-warnings">
+                        {activeImportPreview.warnings.map((warning) => (
+                          <li key={warning}>{warning}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    <p>
+                      Review the counts above, then select Confirm import to add
+                      these records. Existing records will not be overwritten,
+                      and colliding IDs will be assigned new local IDs.
+                    </p>
+                    <div className="local-data-import-confirmation">
+                      <Button
+                        disabled={localDataImportState.status === 'importing'}
+                        onClick={() => {
+                          void confirmLocalDataImport(activeImportPreview);
+                        }}
+                        type="button"
+                      >
+                        {localDataImportState.status === 'importing'
+                          ? 'Importing local data'
+                          : 'Confirm import'}
+                      </Button>
+                      <Button
+                        disabled={localDataImportState.status === 'importing'}
+                        onClick={() => {
+                          setLocalDataImportState({ status: 'idle' });
+                        }}
+                        type="button"
+                        variant="secondary"
+                      >
+                        Cancel import
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {localDataImportState.status === 'completed' ? (
+                  <div className="local-data-status-message" role="status">
+                    <strong>Backup import complete.</strong>
+                    <p>
+                      The confirmed records were added to this local profile.
+                      Existing records were not overwritten.
+                    </p>
+                    <p>
+                      Imported {localDataImportState.outcome.imported.watchlistItems}{' '}
+                      watchlist items,{' '}
+                      {localDataImportState.outcome.imported.thesisNotes} thesis
+                      notes, {localDataImportState.outcome.imported.reminders}{' '}
+                      reminders,{' '}
+                      {
+                        localDataImportState.outcome.imported
+                          .portfolioRankerItems
+                      }{' '}
+                      portfolio ranker inputs, and{' '}
+                      {localDataImportState.outcome.imported.mbsScoreSnapshots}{' '}
+                      MBS score snapshots, plus{' '}
+                      {localDataImportState.outcome.imported.livingTheses} Living
+                      Theses (including risks and catalysts), and{' '}
+                      {localDataImportState.outcome.imported.reviewSessions} saved review sessions and{' '}
+                      {localDataImportState.outcome.imported.thesisRevisions} thesis revisions and{' '}
+                      {localDataImportState.outcome.imported.thesisDecisions} thesis decisions.
+                    </p>
+                    {localDataImportState.outcome.warnings.length > 0 ? (
+                      <ul className="local-data-import-warnings">
+                        {localDataImportState.outcome.warnings.map((warning) => (
+                          <li key={warning}>{warning}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {localDataImportState.status === 'canceled' ? (
+                  <p className="local-data-status-message" role="status">
+                    Import canceled. No records were added or changed.
+                  </p>
+                ) : null}
+
+                {localDataImportState.status === 'error' ? (
+                  <div className="local-data-status-error" role="alert">
+                    <strong>Unable to import local data.</strong>
+                    <p>
+                      The selected file could not be prepared for import. Choose
+                      a JSON backup created by Thesis Investing and try again.
+                    </p>
+                    <ul>
+                      {localDataImportState.errors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <details className="settings-storage-details" open={isStorageDetailsOpen} onToggle={(event) => setIsStorageDetailsOpen(event.currentTarget.open)}>
+              <summary>Storage details and troubleshooting</summary>
             <div className="local-data-maintenance-actions">
               <Button
                 disabled={isMaintenanceDisabled}
@@ -1179,278 +1485,6 @@ export function SettingsAboutScreen({
             </div>
 
             <section
-              aria-label="Local data export"
-              className="local-data-export-panel"
-            >
-              <div>
-                <h2>Export local data</h2>
-                <p>
-                  Create a JSON backup of persisted local records: Watchlist,
-                  Thesis Notes, Reminders, Portfolio Ranker Inputs, MBS
-                  Score Snapshots, and Living Theses with their risks and
-                  catalysts, plus saved review sessions. Choose where to save the file. Exporting
-                  copies these records without changing them in the app.
-                  Static Theme Baskets, transient UI state, app logs, and raw
-                  SQLite files are not included.
-                </p>
-              </div>
-
-              <div className="local-data-export-actions">
-                <Button
-                  disabled={isExportDisabled}
-                  onClick={() => {
-                    void exportLocalData();
-                  }}
-                  type="button"
-                  variant="secondary"
-                >
-                  {localDataExportState.status === 'exporting'
-                    ? 'Exporting local data'
-                    : 'Export local data'}
-                </Button>
-
-                {localDataExportState.status === 'completed' ? (
-                  <div className="local-data-status-message" role="status">
-                    <strong>Backup JSON saved.</strong>
-                    <p>
-                      A copy of your persisted local records was saved to{' '}
-                      <code>{localDataExportState.outcome.filePath}</code>.
-                      Your records in Thesis Investing were not changed.
-                    </p>
-                    <p>
-                      Exported {localDataExportState.outcome.counts.watchlistItems}{' '}
-                      watchlist items,{' '}
-                      {localDataExportState.outcome.counts.thesisNotes} thesis
-                      notes, {localDataExportState.outcome.counts.reminders}{' '}
-                      reminders,{' '}
-                      {
-                        localDataExportState.outcome.counts
-                          .portfolioRankerItems
-                      }{' '}
-                      portfolio ranker inputs, and{' '}
-                      {
-                        localDataExportState.outcome.counts
-                          .mbsScoreSnapshots
-                      }{' '}
-                      MBS score snapshots, plus{' '}
-                      {localDataExportState.outcome.counts.livingTheses} Living
-                      Theses (including risks and catalysts), and{' '}
-                      {localDataExportState.outcome.counts.reviewSessions} saved review sessions and{' '}
-                      {localDataExportState.outcome.counts.thesisRevisions} thesis revisions and{' '}
-                      {localDataExportState.outcome.counts.thesisDecisions} thesis decisions.
-                    </p>
-                    <p>
-                      Export generated{' '}
-                      {formatLocalDataTimestamp(
-                        localDataExportState.outcome.exportedAt
-                      )}
-                      .
-                    </p>
-                  </div>
-                ) : null}
-
-                {localDataExportState.status === 'canceled' ? (
-                  <p className="local-data-status-message" role="status">
-                    Export canceled. Nothing was changed and no backup file was
-                    created.
-                  </p>
-                ) : null}
-
-                {localDataExportState.status === 'error' ? (
-                  <div className="local-data-status-error" role="alert">
-                    <strong>Unable to export local data.</strong>
-                    <p>
-                      The backup file could not be saved. Choose another
-                      location and try again.
-                    </p>
-                    <ul>
-                      {localDataExportState.errors.map((error) => (
-                        <li key={error}>{error}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-
-            <section
-              aria-label="Local data import"
-              className="local-data-import-panel"
-            >
-              <div>
-                <h2>Import local data</h2>
-                <p>
-                  Choose a JSON backup created by Thesis Investing. Other JSON
-                  files are rejected. The app validates the file and previews
-                  record counts before confirmation; no records are written
-                  during preview. Confirmed imports append new records and never
-                  overwrite or delete existing local data.
-                </p>
-              </div>
-
-              <div className="local-data-import-actions">
-                <Button
-                  disabled={isImportDisabled}
-                  onClick={() => {
-                    void previewLocalDataImport();
-                  }}
-                  type="button"
-                  variant="secondary"
-                >
-                  {localDataImportState.status === 'selecting'
-                    ? 'Selecting import file'
-                    : activeImportPreview
-                      ? 'Choose another file'
-                      : 'Import local data'}
-                </Button>
-
-                {activeImportPreview ? (
-                  <div className="local-data-import-preview" role="status">
-                    <strong>Import preview ready. No records have been written.</strong>
-                    <p>
-                      <code>{activeImportPreview.fileName}</code> uses export
-                      format version {activeImportPreview.formatVersion} and was
-                      generated{' '}
-                      {formatLocalDataTimestamp(activeImportPreview.exportedAt)}.
-                    </p>
-                    <dl className="local-data-import-counts">
-                      <div>
-                        <dt>Watchlist items</dt>
-                        <dd>{activeImportPreview.counts.watchlistItems}</dd>
-                      </div>
-                      <div>
-                        <dt>Thesis Notes</dt>
-                        <dd>{activeImportPreview.counts.thesisNotes}</dd>
-                      </div>
-                      <div>
-                        <dt>Reminders</dt>
-                        <dd>{activeImportPreview.counts.reminders}</dd>
-                      </div>
-                      <div>
-                        <dt>Portfolio Ranker Inputs</dt>
-                        <dd>
-                          {activeImportPreview.counts.portfolioRankerItems}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>MBS Score Snapshots</dt>
-                        <dd>{activeImportPreview.counts.mbsScoreSnapshots}</dd>
-                      </div>
-                      <div>
-                        <dt>Living Theses</dt>
-                        <dd>{activeImportPreview.counts.livingTheses}</dd>
-                      </div>
-                      <div>
-                        <dt>Saved review sessions</dt>
-                        <dd>{activeImportPreview.counts.reviewSessions}</dd>
-                      </div>
-                      <div>
-                        <dt>Thesis revisions</dt>
-                        <dd>{activeImportPreview.counts.thesisRevisions}</dd>
-                      </div>
-                      <div>
-                        <dt>Thesis decisions</dt>
-                        <dd>{activeImportPreview.counts.thesisDecisions}</dd>
-                      </div>
-                    </dl>
-                    {activeImportPreview.warnings.length > 0 ? (
-                      <ul className="local-data-import-warnings">
-                        {activeImportPreview.warnings.map((warning) => (
-                          <li key={warning}>{warning}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    <p>
-                      Review the counts above, then select Confirm import to add
-                      these records. Existing records will not be overwritten,
-                      and colliding IDs will be assigned new local IDs.
-                    </p>
-                    <div className="local-data-import-confirmation">
-                      <Button
-                        disabled={localDataImportState.status === 'importing'}
-                        onClick={() => {
-                          void confirmLocalDataImport(activeImportPreview);
-                        }}
-                        type="button"
-                      >
-                        {localDataImportState.status === 'importing'
-                          ? 'Importing local data'
-                          : 'Confirm import'}
-                      </Button>
-                      <Button
-                        disabled={localDataImportState.status === 'importing'}
-                        onClick={() => {
-                          setLocalDataImportState({ status: 'idle' });
-                        }}
-                        type="button"
-                        variant="secondary"
-                      >
-                        Cancel import
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-
-                {localDataImportState.status === 'completed' ? (
-                  <div className="local-data-status-message" role="status">
-                    <strong>Backup import complete.</strong>
-                    <p>
-                      The confirmed records were added to this local profile.
-                      Existing records were not overwritten.
-                    </p>
-                    <p>
-                      Imported {localDataImportState.outcome.imported.watchlistItems}{' '}
-                      watchlist items,{' '}
-                      {localDataImportState.outcome.imported.thesisNotes} thesis
-                      notes, {localDataImportState.outcome.imported.reminders}{' '}
-                      reminders,{' '}
-                      {
-                        localDataImportState.outcome.imported
-                          .portfolioRankerItems
-                      }{' '}
-                      portfolio ranker inputs, and{' '}
-                      {localDataImportState.outcome.imported.mbsScoreSnapshots}{' '}
-                      MBS score snapshots, plus{' '}
-                      {localDataImportState.outcome.imported.livingTheses} Living
-                      Theses (including risks and catalysts), and{' '}
-                      {localDataImportState.outcome.imported.reviewSessions} saved review sessions and{' '}
-                      {localDataImportState.outcome.imported.thesisRevisions} thesis revisions and{' '}
-                      {localDataImportState.outcome.imported.thesisDecisions} thesis decisions.
-                    </p>
-                    {localDataImportState.outcome.warnings.length > 0 ? (
-                      <ul className="local-data-import-warnings">
-                        {localDataImportState.outcome.warnings.map((warning) => (
-                          <li key={warning}>{warning}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {localDataImportState.status === 'canceled' ? (
-                  <p className="local-data-status-message" role="status">
-                    Import canceled. No records were added or changed.
-                  </p>
-                ) : null}
-
-                {localDataImportState.status === 'error' ? (
-                  <div className="local-data-status-error" role="alert">
-                    <strong>Unable to import local data.</strong>
-                    <p>
-                      The selected file could not be prepared for import. Choose
-                      a JSON backup created by Thesis Investing and try again.
-                    </p>
-                    <ul>
-                      {localDataImportState.errors.map((error) => (
-                        <li key={error}>{error}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-
-            <section
               aria-label="Backup guidance"
               className="local-data-backup-guidance"
             >
@@ -1497,10 +1531,11 @@ export function SettingsAboutScreen({
                 </ul>
               </div>
             </section>
+            </details>
           </div>
         </Card>
 
-        <Card title="Educational boundaries">
+        <Card title="About Thesis Investing">
           <div className="settings-disclaimer">
             <p>
               Thesis Investing is educational software only. It is not financial
@@ -1515,7 +1550,7 @@ export function SettingsAboutScreen({
           </div>
         </Card>
 
-        <Card title="Onboarding">
+        <Card title="Getting started">
           <div className="settings-actions">
             <Button onClick={onResetOnboarding} type="button" variant="secondary">
               Reset onboarding
@@ -1539,4 +1574,3 @@ function formatLocalDataTimestamp(value: string): string {
     timeStyle: 'short'
   }).format(date);
 }
-

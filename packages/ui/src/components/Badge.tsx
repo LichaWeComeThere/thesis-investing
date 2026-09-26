@@ -14,18 +14,18 @@ const badgeStyles: Record<
   { background: string; border: string; color: string }
 > = {
   neutral: {
-    background: 'rgba(255, 255, 255, 0.045)',
+    background: tokens.colors.surfaceMuted,
     border: `1px solid ${tokens.colors.border}`,
     color: tokens.colors.textSubtle
   },
   accent: {
-    background: `color-mix(in srgb, ${tokens.colors.primary} 18%, transparent)`,
-    border: `1px solid color-mix(in srgb, ${tokens.colors.primary} 34%, ${tokens.colors.border})`,
+    background: `color-mix(in srgb, ${tokens.colors.primary} 8%, white)`,
+    border: `1px solid color-mix(in srgb, ${tokens.colors.primary} 20%, ${tokens.colors.border})`,
     color: tokens.colors.accent
   },
   success: {
-    background: `color-mix(in srgb, ${tokens.colors.growth} 17%, transparent)`,
-    border: `1px solid color-mix(in srgb, ${tokens.colors.growth} 34%, ${tokens.colors.border})`,
+    background: `color-mix(in srgb, ${tokens.colors.growth} 8%, white)`,
+    border: `1px solid color-mix(in srgb, ${tokens.colors.growth} 20%, ${tokens.colors.border})`,
     color: tokens.colors.growth
   },
   warning: {
@@ -34,8 +34,8 @@ const badgeStyles: Record<
     color: tokens.colors.calloutWarningText
   },
   risk: {
-    background: `color-mix(in srgb, ${tokens.colors.risk} 16%, transparent)`,
-    border: `1px solid color-mix(in srgb, ${tokens.colors.risk} 36%, ${tokens.colors.border})`,
+    background: `color-mix(in srgb, ${tokens.colors.risk} 7%, white)`,
+    border: `1px solid color-mix(in srgb, ${tokens.colors.risk} 20%, ${tokens.colors.border})`,
     color: tokens.colors.risk
   }
 };
@@ -57,17 +57,17 @@ export function Badge({
         alignItems: 'center',
         background: badgeStyles[variant].background,
         border: badgeStyles[variant].border,
-        borderRadius: tokens.radii.pill,
+        borderRadius: tokens.radii.sm,
         boxShadow: tokens.shadows.badgeInset,
         color: badgeStyles[variant].color,
         display: 'inline-flex',
         fontSize: tokens.typography.fontSize.xs,
-        fontWeight: tokens.typography.fontWeight.bold,
-        letterSpacing: '0.04em',
+        fontWeight: tokens.typography.fontWeight.semibold,
+        letterSpacing: 0,
         lineHeight: tokens.typography.lineHeight.normal,
-        minHeight: 26,
-        padding: `${tokens.spacing.xs}px ${tokens.spacing.md}px`,
-        textTransform: 'uppercase',
+        minHeight: 24,
+        padding: `2px ${tokens.spacing.sm}px`,
+        textTransform: 'none',
         ...style
       }}
     >

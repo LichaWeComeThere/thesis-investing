@@ -13,7 +13,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const baseButtonStyle: CSSProperties = {
   alignItems: 'center',
-  borderRadius: tokens.radii.md,
+  borderRadius: tokens.radii.sm,
   cursor: 'pointer',
   display: 'inline-flex',
   fontWeight: tokens.typography.fontWeight.semibold,
@@ -22,7 +22,7 @@ const baseButtonStyle: CSSProperties = {
   letterSpacing: 0,
   textDecoration: 'none',
   transition:
-    'background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease, filter 180ms ease, transform 180ms ease'
+    'background 160ms ease, border-color 160ms ease, color 160ms ease'
 };
 
 const sizeStyles: Record<ButtonSize, CSSProperties> = {
@@ -32,9 +32,9 @@ const sizeStyles: Record<ButtonSize, CSSProperties> = {
     padding: `${tokens.spacing.sm}px ${tokens.spacing.md}px`
   },
   md: {
-    fontSize: tokens.typography.fontSize.md,
-    minHeight: 44,
-    padding: `${tokens.spacing.md}px ${tokens.spacing.lg}px`
+    fontSize: tokens.typography.fontSize.sm,
+    minHeight: 40,
+    padding: `9px ${tokens.spacing.lg}px`
   }
 };
 
@@ -44,17 +44,16 @@ function getVariantStyle(
 ): CSSProperties {
   if (variant === 'primary') {
     return {
-      background: `linear-gradient(180deg, ${tokens.colors.primaryHover}, ${tokens.colors.primary})`,
+      background: `var(--ti-button-background, ${tokens.colors.primary})`,
       border: `1px solid ${tokens.colors.primary}`,
-      boxShadow:
-        '0 12px 28px rgba(72, 224, 204, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.28)',
+      boxShadow: 'none',
       color: tokens.colors.onPrimary
     };
   }
 
   if (variant === 'secondary') {
     return {
-      background: tokens.colors.surfaceSoft,
+      background: `var(--ti-button-background, ${tokens.colors.surface})`,
       border: `1px solid ${tokens.colors.border}`,
       color: tokens.colors.text
     };
@@ -63,21 +62,22 @@ function getVariantStyle(
   if (variant === 'sidebar') {
     return {
       background: isActive
-        ? 'rgba(72, 224, 204, 0.10)'
-        : 'rgba(255, 255, 255, 0.01)',
-      border: `1px solid ${
-        isActive ? tokens.colors.borderStrong : 'transparent'
-      }`,
-      boxShadow: isActive
-        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.06)'
-        : undefined,
+        ? tokens.colors.surfaceSoft
+        : 'var(--ti-button-background, transparent)',
+      border: '1px solid transparent',
+      boxShadow: 'none',
       color: isActive ? tokens.colors.sidebarTextStrong : tokens.colors.sidebarText,
+      fontSize: 13,
+      fontWeight: tokens.typography.fontWeight.semibold,
+      padding: '9px 10px',
       justifyContent: 'flex-start'
     };
   }
 
   return {
-    background: isActive ? tokens.colors.surfaceSoft : 'transparent',
+    background: isActive
+      ? tokens.colors.surfaceSoft
+      : 'var(--ti-button-background, transparent)',
     border: '1px solid transparent',
     color: tokens.colors.textMuted
   };
@@ -113,7 +113,7 @@ export function Button({
         ...baseButtonStyle,
         ...sizeStyles[size],
         ...getVariantStyle(variant, isActive),
-        opacity: disabled ? 0.58 : undefined,
+        opacity: disabled ? 0.55 : undefined,
         pointerEvents: disabled ? 'none' : undefined,
         width: fullWidth ? '100%' : undefined,
         ...style

@@ -54,8 +54,8 @@ describe('App onboarding', () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain('Thesis Investing');
-    expect(html).toContain('Build a repeatable thesis workflow.');
-    expect(html).toContain('Continue');
+    expect(html).toContain('Capture your case and what could prove it wrong.');
+    expect(html).toContain('Open my workspace');
   });
 });
 
@@ -68,9 +68,9 @@ describe('SettingsAboutScreen', () => {
       />
     );
 
-    expect(html).toContain('Local data management');
+    expect(html).toContain('Backups');
     expect(html).toContain(
-      'Your saved Thesis Investing records are stored locally on this computer'
+      'Save a backup before moving computers or reinstalling the app.'
     );
     expect(html).toContain('Watchlist');
     expect(html).toContain('Thesis Notes');
@@ -96,7 +96,7 @@ describe('SettingsAboutScreen', () => {
       'Living Thesis counts include active and archived records.'
     );
     expect(html).toContain('Export local data');
-    expect(html).toContain('Create a JSON backup of persisted local records');
+    expect(html).toContain('Create a JSON backup of your saved research');
     expect(html).toContain('Import local data');
     expect(html).toContain('Choose a JSON backup created by Thesis Investing');
     expect(html).toContain('no records are written during preview');

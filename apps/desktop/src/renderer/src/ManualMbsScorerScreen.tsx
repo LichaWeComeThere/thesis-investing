@@ -395,9 +395,6 @@ export function ManualMbsScorerScreen({
     () => calculateMbsScore(scoreInput),
     [scoreInput]
   );
-  const completedPercent = Math.round(
-    (scoreOutput.completedCriteria / MBS_CATEGORIES.length) * 100
-  );
   const strongestDrivers = useMemo(
     () => getStrongestDrivers(scoreOutput.input),
     [scoreOutput.input]
@@ -545,7 +542,7 @@ export function ManualMbsScorerScreen({
       );
     }
 
-    setThesisActionMessage('Score saved to thesis.');
+    setThesisActionMessage('Example score updated for this session.');
   }
 
   function createNewThesisFromScore(): void {
@@ -576,7 +573,7 @@ export function ManualMbsScorerScreen({
       theme: '',
       ticker: ''
     });
-    setThesisActionMessage('New thesis created.');
+    setThesisActionMessage('Preview company added for this session.');
   }
 
   async function saveScoreSnapshot(): Promise<void> {
@@ -615,7 +612,7 @@ export function ManualMbsScorerScreen({
         result.value,
         ...currentSnapshots.filter((item) => item.id !== result.value.id)
       ]);
-      setThesisActionMessage('MBS snapshot saved locally.');
+      setThesisActionMessage('Score snapshot saved on this device.');
     } catch (error) {
       setSnapshotStorageErrors([
         error instanceof Error
@@ -630,29 +627,31 @@ export function ManualMbsScorerScreen({
   return (
     <div className="mbs-screen">
       <PageHeader
-        badge={<Badge variant="accent">Local Scoring</Badge>}
-        description="Score a business across seven core criteria and keep the thesis context beside the output."
-        eyebrow="Business Score"
-        title="MBS Scorer"
+        description="Rate seven business factors and save your assessment."
+        title="Score a company"
       />
 
       <div className="mbs-workspace-grid">
-        <Card className="mbs-form-card" title="Guided manual scoring">
-          <section className="mbs-thesis-link-panel" aria-label="Selected thesis">
+        <Card className="mbs-form-card" title="Your assessment">
+          <details className="mbs-thesis-link-panel tool-about">
+            <summary>
+              Company: {selectedThesis?.ticker ?? (newThesisFields.ticker || 'Choose a company')}{' '}
+              <span>(preview)</span>
+            </summary>
+            <p className="data-provenance-note">
+              These examples are separate from your saved Theses. Preview changes
+              last only for this session. Use Save snapshot to keep your score.
+            </p>
             <div className="mbs-thesis-link-header">
               <div>
-                <span>Investment Idea</span>
-                <h2>Connect score to thesis</h2>
+                <h2>Choose an example company</h2>
               </div>
-              {thesisActionMessage ? (
-                <Badge variant="success">{thesisActionMessage}</Badge>
-              ) : null}
             </div>
 
             <label className="mbs-thesis-select-field">
-              <span>Selected thesis</span>
+              <span>Example company</span>
               <select
-                aria-label="Selected thesis"
+                aria-label="Example company"
                 onChange={(event) => {
                   setSelectedThesisId(event.currentTarget.value);
                   setThesisActionMessage('');
@@ -665,7 +664,7 @@ export function ManualMbsScorerScreen({
                   </option>
                 ))}
                 <option value={CREATE_NEW_THESIS_ID}>
-                  Create new thesis from this score
+                  Add a company to this preview
                 </option>
               </select>
             </label>
@@ -683,7 +682,7 @@ export function ManualMbsScorerScreen({
                   <small>{selectedThesis.ideaStatus}</small>
                 </div>
                 <div>
-                  <span>Saved MBS</span>
+                  <span>Example score</span>
                   <strong>{selectedThesis.mbsScore} / 100</strong>
                   <small>
                     Previous{' '}
@@ -746,40 +745,41 @@ export function ManualMbsScorerScreen({
                 onClick={saveScoreToSelectedThesis}
                 type="button"
               >
-                Save score to selected thesis
+                Update example score
               </Button>
               <Button
                 onClick={createNewThesisFromScore}
                 type="button"
                 variant="secondary"
               >
-                Create new thesis from score
+                Add preview company
               </Button>
             </div>
-          </section>
+          </details>
 
           <div className="mbs-section-kicker">
-            <Badge variant="neutral">Step 1</Badge>
-            <span>Score the business across seven compact criteria.</span>
+            <h2>1. Rate the business</h2>
           </div>
 
           <div className="mbs-scoring-mode-panel">
-            <span className="mbs-scoring-mode-label">Scoring Mode</span>
+            <span className="mbs-scoring-mode-label">How would you like to score?</span>
             <div
               aria-label="Scoring mode"
               className="mbs-scoring-mode-toggle"
               role="group"
             >
-              <Button
-                aria-pressed={scoringMode === 'autofill'}
-                isActive={scoringMode === 'autofill'}
-                onClick={() => setScoringMode('autofill')}
-                size="sm"
-                type="button"
-                variant={scoringMode === 'autofill' ? 'primary' : 'secondary'}
-              >
-                Auto-Fill
-              </Button>
+              {availableAutoFillScoreSource ? (
+                <Button
+                  aria-pressed={scoringMode === 'autofill'}
+                  isActive={scoringMode === 'autofill'}
+                  onClick={() => setScoringMode('autofill')}
+                  size="sm"
+                  type="button"
+                  variant={scoringMode === 'autofill' ? 'primary' : 'secondary'}
+                >
+                  Auto-Fill
+                </Button>
+              ) : null}
               <Button
                 aria-pressed={scoringMode === 'guided'}
                 isActive={scoringMode === 'guided'}
@@ -788,7 +788,7 @@ export function ManualMbsScorerScreen({
                 type="button"
                 variant={scoringMode === 'guided' ? 'primary' : 'secondary'}
               >
-                Beginner Guided
+                Guided questions
               </Button>
               <Button
                 aria-pressed={scoringMode === 'manual'}
@@ -798,7 +798,7 @@ export function ManualMbsScorerScreen({
                 type="button"
                 variant={scoringMode === 'manual' ? 'primary' : 'secondary'}
               >
-                Advanced Manual
+                Enter ratings
               </Button>
             </div>
             <p>{scoringModeDescriptions[scoringMode]}</p>
@@ -815,8 +815,8 @@ export function ManualMbsScorerScreen({
                   </p>
                 ) : (
                   <p>
-                    Auto-Fill is not connected yet. Use Beginner Guided or
-                    Advanced Manual for now.
+                    Auto-Fill is not connected yet. Use Guided questions or
+                    Enter ratings for now.
                   </p>
                 )}
               </div>
@@ -921,12 +921,11 @@ export function ManualMbsScorerScreen({
 
           <div className="mbs-notes-panel">
             <div className="mbs-section-kicker">
-              <Badge variant="neutral">Step 2</Badge>
-              <span>Add thesis context without affecting the score.</span>
+              <h2>2. Explain your ratings</h2>
             </div>
 
             <label className="mbs-notes-field">
-              <span className="mbs-field-label">Optional thesis notes</span>
+              <span className="mbs-field-label">Your reasoning (optional)</span>
               <span className="mbs-field-description">
                 Notes can be included in a saved score snapshot and do not
                 affect the score.
@@ -965,7 +964,7 @@ export function ManualMbsScorerScreen({
               </Button>
             </div>
           }
-          title="Live score output"
+          title="Your score"
         >
           <div className="mbs-output-panel">
             <div className={`mbs-hero-score mbs-hero-score--${scoreOutput.rating}`}>
@@ -991,10 +990,6 @@ export function ManualMbsScorerScreen({
                 <strong>
                   {scoreOutput.completedCriteria} / {MBS_CATEGORIES.length}
                 </strong>
-              </div>
-              <div className="mbs-score-card">
-                <span className="mbs-score-label">Progress</span>
-                <strong>{completedPercent}%</strong>
               </div>
             </div>
 
@@ -1069,7 +1064,10 @@ export function ManualMbsScorerScreen({
               </div>
             )}
 
-            <details className="mbs-output-section mbs-output-section--warnings">
+            <details
+              className="mbs-output-section mbs-output-section--warnings"
+              open={scoreOutput.errors.length > 0}
+            >
               <summary>Warnings and errors</summary>
               {scoreOutput.warnings.length > 0 || scoreOutput.errors.length > 0 ? (
                 <ul className="mbs-message-list">
@@ -1087,6 +1085,7 @@ export function ManualMbsScorerScreen({
               )}
             </details>
 
+            {thesisActionMessage ? <p role="status">{thesisActionMessage}</p> : null}
             <section className="mbs-output-section" aria-label="Saved snapshots">
               <div className="mbs-driver-card-header">
                 <span className="mbs-score-label">Saved snapshots</span>
@@ -1109,7 +1108,7 @@ export function ManualMbsScorerScreen({
                   ))}
                 </ul>
               ) : (
-                <p>No saved MBS snapshots yet.</p>
+                <p>No saved scores yet. Finish your ratings, then choose Save snapshot.</p>
               )}
               {snapshotStorageErrors.length > 0 ? (
                 <ul className="mbs-message-list" role="alert">

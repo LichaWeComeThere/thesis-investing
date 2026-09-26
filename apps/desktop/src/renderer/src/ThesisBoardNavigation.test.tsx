@@ -60,7 +60,7 @@ afterEach(() => {
 });
 
 async function openBoard(): Promise<void> {
-  fireEvent.click(screen.getByRole('button', { name: 'Thesis Board' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Theses' }));
   await screen.findByDisplayValue(savedThesis.summary);
 }
 
@@ -69,7 +69,7 @@ function editSummary(value = 'Unsaved research update'): void {
 }
 
 function leaveBoard(): void {
-  fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
 }
 
 describe('Thesis Board sidebar navigation', () => {
@@ -132,7 +132,7 @@ describe('Thesis Board sidebar navigation', () => {
     render(<App />);
     await openBoard();
     fireEvent.click(screen.getByRole('button', { name: 'New thesis' }));
-    fireEvent.change(screen.getByLabelText('Entity name'), { target: { value: 'New research entity' } });
+    fireEvent.change(screen.getByLabelText('Company or asset'), { target: { value: 'New research entity' } });
     fireEvent.change(screen.getByLabelText('Thesis title'), { target: { value: 'New research title' } });
     editSummary('A new thesis summary');
     leaveBoard();
@@ -217,7 +217,7 @@ describe('Thesis Board sidebar navigation', () => {
     render(<App />);
     await openBoard();
     editSummary();
-    fireEvent.click(screen.getByRole('button', { name: 'Thesis Board' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Theses' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByDisplayValue('Unsaved research update')).toBeTruthy();
 

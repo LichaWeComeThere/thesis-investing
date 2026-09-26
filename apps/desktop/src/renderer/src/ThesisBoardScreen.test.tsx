@@ -1,6 +1,9 @@
+// @vitest-environment jsdom
+
 import type { LivingThesis } from '@thesis-investing/core';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { CreateLivingThesisInput } from '../../shared/livingThesesStorage';
 import {
@@ -54,12 +57,14 @@ const thesis: LivingThesis = {
   version: 4
 };
 
+afterEach(cleanup);
+
 describe('ThesisBoardScreen', () => {
   it('loads formal saved data by default without rendering mock thesis records', () => {
     const html = renderToStaticMarkup(<ThesisBoardScreen />);
 
-    expect(html).toContain('Thesis Board');
-    expect(html).toContain('Saved locally');
+    expect(html).toContain('Theses');
+    expect(html).toContain('Your theses');
     expect(html).toContain('Loading saved theses...');
     expect(html).not.toContain('NVDA');
     expect(html).not.toContain('Demo thesis workspace');
@@ -70,7 +75,7 @@ describe('ThesisBoardScreen', () => {
       <ThesisBoardScreen initialTheses={[]} />
     );
 
-    expect(html).toContain('No Living Thesis records yet');
+    expect(html).toContain('Your first thesis starts here');
     expect(html).toContain('Create first thesis');
     expect(html).not.toContain('example records');
   });
@@ -105,7 +110,7 @@ describe('ThesisBoardScreen', () => {
       />
     );
 
-    expect(html).toContain('Living Thesis records could not be loaded.');
+    expect(html).toContain('Your theses could not be loaded.');
     expect(html).toContain('Your saved data was not changed.');
     expect(html).toContain('Try again');
   });
@@ -143,6 +148,39 @@ describe('ThesisBoardScreen', () => {
     expect(html).toContain('Acme Research');
     expect(html).toContain('Acme Special Situations');
     expect(html.match(/ACME \/ /g)).toHaveLength(2);
+  });
+
+  it('searches saved research without discarding the selected draft', () => {
+    const other: LivingThesis = { ...thesis, id: 'second-thesis', entityName: 'Cedar Systems', ticker: 'CDR', title: 'Infrastructure demand', theme: 'Infrastructure' };
+    render(<ThesisBoardScreen initialTheses={[thesis, other]} reviewClient={null} decisionClient={null} historyClient={null} />);
+
+    fireEvent.change(screen.getByLabelText('Thesis summary'), { target: { value: 'Research still in progress' } });
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search theses' }), { target: { value: '  cdr ' } });
+
+    const saved = screen.getByRole('group', { name: 'Saved theses' });
+    expect(within(saved).queryByRole('button', { name: /Acme Research/ })).toBeNull();
+    fireEvent.click(within(saved).getByRole('button', { name: /Cedar Systems/ }));
+    expect(screen.getByDisplayValue('Research still in progress')).toBeTruthy();
+    expect(screen.getByText('Save or cancel the current changes before opening another thesis.')).toBeTruthy();
+    expect(screen.getByText('1 of 2 theses')).toBeTruthy();
+  });
+
+  it('reveals a collapsed invalid field when saving so it can be corrected', () => {
+    const update = vi.fn();
+    render(<ThesisBoardScreen initialTheses={[thesis]} client={makeClient({ update })} reviewClient={null} decisionClient={null} historyClient={null} />);
+    const cadence = screen.getByLabelText('Review cadence (days)') as HTMLInputElement;
+    const section = cadence.closest('details')!;
+    expect(section.open).toBe(false);
+    section.open = true;
+    fireEvent.change(cadence, { target: { value: '0' } });
+    section.open = false;
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(section.open).toBe(true);
+    expect(cadence.validity.valid).toBe(false);
+    expect(update).not.toHaveBeenCalled();
+    expect(screen.getByText('Unsaved changes')).toBeTruthy();
   });
 
   it('creates tickerless input without renderer-authored identity, version, or timestamps', async () => {

@@ -44,7 +44,7 @@ afterEach(async () => {
   rmSync(directory, { recursive: true, force: true });
 });
 async function openBoard() {
-  fireEvent.click(screen.getByRole('button', { name: 'Thesis Board' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Theses' }));
   await screen.findByDisplayValue(thesis.summary);
   fireEvent.click(screen.getByRole('button', { name: /Acme Research.*Durable execution/ }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Add decision' }).hasAttribute('disabled')).toBe(false));
@@ -104,12 +104,12 @@ describe('Decision Log with real local storage', () => {
   it('protects a decision on sidebar navigation and saves before leaving', async () => {
     await start(); write();
     const unload = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(unload); expect(unload.defaultPrevented).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     fireEvent.click(within(await screen.findByRole('dialog', { name: 'Unsaved decision' })).getByRole('button', { name: 'Continue editing' }));
     expect(screen.getByDisplayValue('Retention evidence is still incomplete.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Save and leave' }));
-    await screen.findByRole('heading', { name: 'Dashboard' }); expect(await persisted()).toHaveLength(1);
+    await screen.findByRole('heading', { name: 'Overview' }); expect(await persisted()).toHaveLength(1);
     const after = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(after); expect(after.defaultPrevented).toBe(false);
   });
   it('guards switching theses and creating a thesis, with explicit discard affecting only the unsaved decision', async () => {
@@ -127,7 +127,7 @@ describe('Decision Log with real local storage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add decision' })); write('Temporary Beacon decision', 'Temporary notes');
     fireEvent.click(screen.getByRole('button', { name: 'New thesis' }));
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Discard edits and leave' }));
-    await screen.findByRole('heading', { name: 'Create Living Thesis' }); expect(await persisted(other.id)).toHaveLength(0);
+    await screen.findByRole('heading', { name: 'The essentials' }); expect(await persisted(other.id)).toHaveLength(0);
   });
   it('keeps a failed save editable and retries using the same request identity', async () => {
     await start(); write();
@@ -147,13 +147,13 @@ describe('Decision Log with real local storage', () => {
     expect(await persisted()).toHaveLength(1);
     expect(screen.getByRole('textbox', { name: 'Decision' }).closest('fieldset')?.disabled).toBe(true);
     expect(screen.getAllByRole('button', { name: 'Cancel' }).some((button) => button.hasAttribute('disabled'))).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).queryByRole('button', { name: 'Discard edits and leave' })).toBeNull();
     expect(within(dialog).getByRole('button', { name: 'Continue editing' }).hasAttribute('disabled')).toBe(true);
     fireEvent(dialog, new Event('cancel', { bubbles: false, cancelable: true })); expect(screen.getByRole('dialog')).toBeTruthy();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Retry save and leave' }));
-    await screen.findByRole('heading', { name: 'Dashboard' });
+    await screen.findByRole('heading', { name: 'Overview' });
     expect(spy.mock.calls[1]).toEqual(spy.mock.calls[0]); expect(await persisted()).toHaveLength(1);
   });
   it('blocks duplicate writes and navigation while a save is pending, then leaves after success', async () => {
@@ -164,10 +164,10 @@ describe('Decision Log with real local storage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save decision' }));
     fireEvent.click(screen.getByRole('button', { name: 'Saving…' }));
     expect(screen.getByRole('textbox', { name: 'Decision' }).closest('fieldset')?.disabled).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     const dialog = await screen.findByRole('dialog'); expect(within(dialog).getByRole('button', { name: 'Continue editing' }).hasAttribute('disabled')).toBe(true);
     expect(spy).toHaveBeenCalledTimes(1); release();
-    await screen.findByRole('heading', { name: 'Dashboard' }); expect(await persisted()).toHaveLength(1);
+    await screen.findByRole('heading', { name: 'Overview' }); expect(await persisted()).toHaveLength(1);
   });
   it('confirms cancellation, returns focus, and keeps Board edits separate', async () => {
     await start(); write();
@@ -180,12 +180,12 @@ describe('Decision Log with real local storage', () => {
     expect(screen.getByRole('button', { name: 'Add decision' })).toBe(document.activeElement);
     fireEvent.change(screen.getByRole('textbox', { name: 'Thesis summary' }), { target: { value: 'Unsaved Board changes' } });
     expect(screen.getByRole('button', { name: 'Add decision' }).hasAttribute('disabled')).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     expect(await screen.findByRole('dialog', { name: 'Unsaved thesis changes' })).toBeTruthy();
   });
   it('shows a retryable load failure without pretending history is empty', async () => {
     vi.spyOn(decisions, 'list').mockRejectedValueOnce(new Error('Temporary read failure'));
-    render(<App />); fireEvent.click(screen.getByRole('button', { name: 'Thesis Board' }));
+    render(<App />); fireEvent.click(screen.getByRole('button', { name: 'Theses' }));
     await screen.findByText('The decision log could not be loaded. Try again.');
     expect(screen.queryByText(/No decisions yet/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Try loading again' }));

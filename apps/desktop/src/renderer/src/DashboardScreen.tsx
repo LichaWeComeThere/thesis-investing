@@ -1,75 +1,32 @@
-import { Badge, Card, PageHeader } from '@thesis-investing/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { Button, PageHeader } from '@thesis-investing/ui';
+import { useEffect, useState } from 'react';
 import type { DashboardSummary } from '../../shared/dashboardSummariesStorage';
-import {
-  formatScoreChange,
-  getBiggestScoreDrop,
-  getNextReviewThesis,
-  getReviewDueSoon,
-  getScoreChange,
-  getThesisHealthSummary,
-  getTopImprovingThesis,
-  getWeakestThesis,
-  isNeedsReviewThesis,
-  mockTheses,
-  type MockThesis
-} from './data/mockTheses';
 import {
   getDefaultDashboardSummariesStorageClient,
   type DashboardSummariesStorageClient
 } from './dashboardSummariesStorageClient';
-import { MarketPulseFeed } from './MarketPulseFeed';
 import './dashboard.css';
 
-type ThesisHealthTone = 'tracked' | 'strong' | 'review' | 'weakening';
-
-type ThesisHealthItem = {
-  detail: string;
-  label: string;
-  tone: ThesisHealthTone;
-  value: number;
-};
-
-type ReviewPriorityItem = {
-  label: string;
-  ticker: string;
-  detail: string;
-  tone: ThesisHealthTone;
-};
-
-type RecentActivityItem = {
-  ticker: string;
-  action: string;
-  detail: string;
-  tone: ThesisHealthTone;
-};
-
-type QuickAction = {
-  label: string;
-  workspaceId: string;
-  description: string;
-};
-
-const defaultQuickActions: QuickAction[] = [
+const researchActions = [
   {
-    label: 'Open MBS Scorer',
-    workspaceId: 'mbs-scorer',
-    description: 'Refresh score assumptions.'
-  },
-  {
-    label: 'Review Portfolio Ranker',
-    workspaceId: 'portfolio-ranker',
-    description: 'Compare scored ideas.'
-  },
-  {
-    label: 'Open Thesis Monitor',
-    workspaceId: 'thesis-monitor',
-    description: 'Update thesis health.'
-  },
-  {
-    label: 'Check Watchlist',
+    label: 'Build your watchlist',
     workspaceId: 'watchlist',
-    description: 'Review tracked ideas.'
+    description: 'Keep the companies you want to understand in one place.'
+  },
+  {
+    label: 'Score a company',
+    workspaceId: 'mbs-scorer',
+    description: 'Work through the business fundamentals and save your assessment.'
+  },
+  {
+    label: 'Compare ideas',
+    workspaceId: 'portfolio-ranker',
+    description: 'Compare your scores and decide what to research next.'
+  },
+  {
+    label: 'Write research notes',
+    workspaceId: 'thesis-monitor',
+    description: 'Record observations, questions, and reminders as you learn.'
   }
 ];
 
@@ -78,259 +35,67 @@ type DashboardScreenProps = {
   initialSummaryErrors?: string[];
   onOpenWorkspace?: (workspaceId: string) => void;
   summaryStorageClient?: DashboardSummariesStorageClient | null;
-  theses?: MockThesis[];
 };
 
-function createEmptyDashboardSummary(): DashboardSummary {
-  return {
-    activeThesisNotes: 0,
-    completedReminders: 0,
-    draftThesisNotes: 0,
-    generatedAt: '',
-    openReminders: 0,
-    overdueReminders: 0,
-    totalMbsScoreSnapshots: 0,
-    totalPortfolioRankerItems: 0,
-    totalReminders: 0,
-    totalThesisNotes: 0,
-    totalWatchlistItems: 0,
-    watchThesisNotes: 0
-  };
-}
+function getSummaryItems(summary: DashboardSummary) {
+  const latestScore = summary.latestMbsScoreSnapshot;
+  const scoreLabel = latestScore?.ticker ?? latestScore?.companyName ?? 'Latest score';
 
-function isEmptyDashboardSummary(summary: DashboardSummary): boolean {
-  return (
-    summary.totalWatchlistItems === 0 &&
-    summary.totalThesisNotes === 0 &&
-    summary.totalReminders === 0 &&
-    summary.totalPortfolioRankerItems === 0 &&
-    summary.totalMbsScoreSnapshots === 0
-  );
-}
-
-function getDashboardSummaryItems(
-  summary: DashboardSummary
-): ThesisHealthItem[] {
   return [
     {
-      detail: 'Local watchlist records.',
-      label: 'Saved watchlist items',
-      tone: 'tracked',
+      label: 'Watchlist companies',
+      detail: 'Companies saved to your watchlist',
       value: summary.totalWatchlistItems
     },
     {
-      detail: `${summary.activeThesisNotes} active / ${summary.draftThesisNotes} draft / ${summary.watchThesisNotes} watch`,
-      label: 'Thesis notes',
-      tone: 'strong',
+      label: 'Research notes',
+      detail: `${summary.activeThesisNotes} active · ${summary.draftThesisNotes} draft · ${summary.watchThesisNotes} watching`,
       value: summary.totalThesisNotes
     },
     {
-      detail: `${summary.overdueReminders} overdue / ${summary.completedReminders} completed / ${summary.totalReminders} total`,
-      label: 'Open reminders',
-      tone: summary.overdueReminders > 0 ? 'review' : 'tracked',
-      value: summary.openReminders
-    },
-    {
-      detail: 'Saved manual ranker rows.',
-      label: 'Ranker inputs',
-      tone: 'tracked',
+      label: 'Comparison ideas',
+      detail: 'Ideas saved in Compare ideas',
       value: summary.totalPortfolioRankerItems
     },
     {
-      detail: getMbsScoreSnapshotDetail(summary),
       label: 'Saved scores',
-      tone: summary.latestMbsScoreSnapshot ? 'strong' : 'tracked',
+      detail: latestScore
+        ? `${scoreLabel}: ${latestScore.score} / ${latestScore.maxScore}`
+        : 'Completed company assessments',
       value: summary.totalMbsScoreSnapshots
+    },
+    {
+      label: 'Open reminders',
+      detail: `${summary.overdueReminders} overdue · ${summary.completedReminders} completed · ${summary.totalReminders} total`,
+      value: summary.openReminders
     }
   ];
 }
 
-function getMbsScoreSnapshotDetail(summary: DashboardSummary): string {
-  const latestSnapshot = summary.latestMbsScoreSnapshot;
-
-  if (!latestSnapshot) {
-    return 'No completed snapshots yet.';
-  }
-
-  const label =
-    latestSnapshot.ticker ??
-    latestSnapshot.companyName ??
-    'Latest completed score';
-
-  return `Latest ${label}: ${latestSnapshot.score} / ${latestSnapshot.maxScore}`;
-}
-
-function getDashboardThesisHealthItems(
-  theses: readonly MockThesis[]
-): ThesisHealthItem[] {
-  const summary = getThesisHealthSummary(theses);
-
-  return [
-    {
-      detail: 'Shared demo thesis records.',
-      label: 'Theses tracked',
-      tone: 'tracked',
-      value: summary.trackedCount
-    },
-    {
-      detail: `${summary.reviewDueSoonCount} review due soon.`,
-      label: 'Needs review',
-      tone: summary.needsReviewCount > 0 ? 'review' : 'tracked',
-      value: summary.needsReviewCount
-    },
-    {
-      detail: 'Example ideas currently marked active.',
-      label: 'Active ideas',
-      tone: summary.activeCount > 0 ? 'strong' : 'tracked',
-      value: summary.activeCount
-    },
-    {
-      detail: 'Thesis status is weakening or broken.',
-      label: 'Weakening theses',
-      tone: summary.weakeningCount > 0 ? 'weakening' : 'tracked',
-      value: summary.weakeningCount
-    },
-    {
-      detail: 'High-conviction examples in the demo set.',
-      label: 'Strong conviction',
-      tone: summary.highConvictionCount > 0 ? 'strong' : 'tracked',
-      value: summary.highConvictionCount
-    }
-  ];
-}
-
-function formatGeneratedAt(generatedAt: string): string {
-  if (!generatedAt) {
-    return 'Waiting for local data.';
-  }
-
+function formatUpdatedAt(generatedAt: string): string | null {
   const date = new Date(generatedAt);
 
-  if (Number.isNaN(date.getTime())) {
-    return generatedAt;
-  }
-
-  return date.toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  });
-}
-
-function getDashboardTone(thesis: MockThesis): ThesisHealthTone {
-  if (thesis.thesisStatus === 'Weakening' || thesis.thesisStatus === 'Broken') {
-    return 'weakening';
-  }
-
-  if (isNeedsReviewThesis(thesis)) {
-    return 'review';
-  }
-
-  if (thesis.conviction === 'High' || getScoreChange(thesis) > 0) {
-    return 'strong';
-  }
-
-  return 'tracked';
-}
-
-function getReviewPriorityItems(theses: readonly MockThesis[]): ReviewPriorityItem[] {
-  if (theses.length === 0) {
-    return [];
-  }
-
-  const dueSoonThesis = getReviewDueSoon(theses)[0] ?? getNextReviewThesis(theses);
-  const weakestThesis = getWeakestThesis(theses);
-  const largestDropThesis = getBiggestScoreDrop(theses);
-  const topImprovingThesis = getTopImprovingThesis(theses);
-
-  return [
-    {
-      label: 'Needs Review Now',
-      ticker: dueSoonThesis.ticker,
-      detail: `${dueSoonThesis.companyName} is ${dueSoonThesis.ideaStatus.toLowerCase()} with next review ${dueSoonThesis.nextReviewDate}.`,
-      tone: 'review'
-    },
-    {
-      label: 'Weakest Thesis',
-      ticker: weakestThesis.ticker,
-      detail: `${weakestThesis.mbsScore} MBS. ${weakestThesis.thesisSummary}`,
-      tone: 'weakening'
-    },
-    {
-      label: 'Biggest Score Drop',
-      ticker: largestDropThesis.ticker,
-      detail: `${formatScoreChange(largestDropThesis)} since last review.`,
-      tone: 'review'
-    },
-    {
-      label: 'Top Improving Idea',
-      ticker: topImprovingThesis.ticker,
-      detail: `${formatScoreChange(topImprovingThesis)} since last review.`,
-      tone: 'strong'
-    }
-  ];
-}
-
-function getOpenNextAction(theses: readonly MockThesis[]): QuickAction {
-  const reviewCandidate =
-    getReviewDueSoon(theses)[0] ??
-    theses.find((thesis) => thesis.ideaStatus === 'Needs Review') ??
-    getBiggestScoreDrop(theses);
-
-  if (!reviewCandidate) {
-    return defaultQuickActions[0];
-  }
-
-  return {
-    label: `Open demo ${reviewCandidate.ticker}`,
-    workspaceId: 'thesis-board',
-    description: `${reviewCandidate.companyName}: example ${reviewCandidate.ideaStatus.toLowerCase()} thesis review.`
-  };
+  return Number.isNaN(date.getTime())
+    ? null
+    : date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export function DashboardScreen({
   initialSummary,
   initialSummaryErrors = [],
   onOpenWorkspace,
-  summaryStorageClient,
-  theses = mockTheses
+  summaryStorageClient
 }: DashboardScreenProps): JSX.Element {
   const resolvedSummaryStorageClient =
     summaryStorageClient === undefined
       ? getDefaultDashboardSummariesStorageClient()
       : summaryStorageClient;
-  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary>(
-    () => initialSummary ?? createEmptyDashboardSummary()
-  );
+  const [summary, setSummary] = useState(initialSummary);
   const [summaryErrors, setSummaryErrors] = useState(initialSummaryErrors);
+  const [refreshCount, setRefreshCount] = useState(0);
   const [isSummaryLoading, setIsSummaryLoading] = useState(
-    () =>
-      Boolean(resolvedSummaryStorageClient) &&
-      initialSummary === undefined &&
-      initialSummaryErrors.length === 0
+    () => Boolean(resolvedSummaryStorageClient) && !initialSummary && !initialSummaryErrors.length
   );
-  const summaryItems = useMemo(
-    () => getDashboardSummaryItems(dashboardSummary),
-    [dashboardSummary]
-  );
-  const thesisHealthItems = useMemo(
-    () => getDashboardThesisHealthItems(theses),
-    [theses]
-  );
-  const isSummaryEmpty = isEmptyDashboardSummary(dashboardSummary);
-  const reviewPriorityItems = getReviewPriorityItems(theses);
-  const quickActions = [getOpenNextAction(theses), ...defaultQuickActions];
-  const recentActivityItems: RecentActivityItem[] = theses
-    .flatMap((thesis) =>
-      thesis.decisionLog.map((entry) => ({
-        ticker: thesis.ticker,
-        action: entry.title,
-        detail: entry.note,
-        tone: getDashboardTone(thesis),
-        createdAt: entry.createdAt
-      }))
-    )
-    .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
-    .slice(0, 3);
 
   useEffect(() => {
     if (!resolvedSummaryStorageClient) {
@@ -339,211 +104,135 @@ export function DashboardScreen({
     }
 
     let isMounted = true;
-
     setIsSummaryLoading(true);
     setSummaryErrors([]);
 
-    resolvedSummaryStorageClient
-      .get()
-      .then((result) => {
-        if (!isMounted) {
-          return;
-        }
-
+    async function loadSummary(): Promise<void> {
+      try {
+        const result = await resolvedSummaryStorageClient!.get();
+        if (!isMounted) return;
         if (result.ok) {
-          setDashboardSummary(result.value);
-          setSummaryErrors([]);
-          return;
+          setSummary(result.value);
+        } else {
+          setSummaryErrors(result.errors.length ? result.errors : ['Please try again.']);
         }
-
-        setSummaryErrors(result.errors);
-      })
-      .catch((error: unknown) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setSummaryErrors([
-          error instanceof Error
-            ? error.message
-            : 'Unable to load Dashboard summary.'
-        ]);
-      })
-      .finally(() => {
+      } catch (error: unknown) {
         if (isMounted) {
-          setIsSummaryLoading(false);
+          setSummaryErrors([
+            error instanceof Error ? error.message : 'Please try again.'
+          ]);
         }
-      });
+      } finally {
+        if (isMounted) setIsSummaryLoading(false);
+      }
+    }
 
-    return () => {
-      isMounted = false;
-    };
-  }, [resolvedSummaryStorageClient]);
+    void loadSummary();
+    return () => { isMounted = false; };
+  }, [resolvedSummaryStorageClient, refreshCount]);
+
+  const updatedAt = summary ? formatUpdatedAt(summary.generatedAt) : null;
+  const hasSavedToolRecords = summary && (
+    summary.totalWatchlistItems + summary.totalThesisNotes + summary.totalReminders +
+    summary.totalPortfolioRankerItems + summary.totalMbsScoreSnapshots > 0
+  );
 
   return (
-    <div className="dashboard-screen">
+    <div className="overview-screen">
       <PageHeader
-        badge={<Badge variant="accent">Command Center</Badge>}
-        description="Review saved local workflow totals, thesis context, and the next research actions."
-        eyebrow="Investor Command Center"
-        title="Dashboard"
+        title="Overview"
+        description="A place to think clearly about the companies you follow."
       />
 
-      <div className="dashboard-content-layout">
-        <MarketPulseFeed />
-
-        <div className="dashboard-main-stack">
-          <section
-            className="dashboard-health-section"
-            aria-label="Local persisted summary"
-          >
-            <div className="dashboard-section-heading">
-              <h2>Local Saved Data</h2>
-              <p>
-                {isSummaryLoading
-                  ? 'Loading saved local records.'
-                  : `Updated ${formatGeneratedAt(dashboardSummary.generatedAt)}`}
-              </p>
-            </div>
-
-            {summaryErrors.length > 0 ? (
-              <div className="dashboard-summary-message" role="alert">
-                <strong>Unable to load local summary.</strong>
-                <ul>
-                  {summaryErrors.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {!isSummaryLoading && summaryErrors.length === 0 && isSummaryEmpty ? (
-              <p className="dashboard-summary-empty">
-                No persisted local workflow records yet.
-              </p>
-            ) : null}
-
-            <div className="dashboard-health-grid">
-              {summaryItems.map((item) => (
-                <Card
-                  className={`dashboard-health-card dashboard-health-card--${item.tone}`}
-                  key={item.label}
-                >
-                  <div className="dashboard-health-card-content">
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                    <small>{item.detail}</small>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-
-          <section
-            className="dashboard-health-section"
-            aria-label="Demo thesis analytics"
-          >
-            <div className="dashboard-section-heading">
-              <h2>Demo Thesis Analytics</h2>
-              <p>Example thesis health and score-change context.</p>
-            </div>
-
-            <div className="dashboard-health-grid">
-              {thesisHealthItems.map((item) => (
-                <Card
-                  className={`dashboard-health-card dashboard-health-card--${item.tone}`}
-                  key={item.label}
-                >
-                  <div className="dashboard-health-card-content">
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                    <small>{item.detail}</small>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-
-          <section
-            className="dashboard-health-section"
-            aria-label="Demo thesis research context"
-          >
-            <div className="dashboard-section-heading">
-              <h2>Demo Research Context</h2>
-              <p>Example review signals from the shared demo thesis set.</p>
-            </div>
-
-            <div className="dashboard-command-grid">
-              <Card className="review-priority-card" emphasis title="Review Priority">
-                <div className="review-priority-list">
-                  {reviewPriorityItems.map((item) => (
-                    <article
-                      className={`review-priority-item review-priority-item--${item.tone}`}
-                      key={item.label}
-                    >
-                      <div>
-                        <span>{item.label}</span>
-                        <strong>{item.ticker}</strong>
-                      </div>
-                      <p>{item.detail}</p>
-                    </article>
-                  ))}
-                </div>
-              </Card>
-
-              <Card className="market-regime-card" title="Market Regime">
-                <div className="market-regime-hero">
-                  <span>Example context</span>
-                  <strong>Under Pressure</strong>
-                </div>
-                <p>
-                  Example context for organizing research: revisit stale
-                  assumptions and flag higher-risk growth theses for additional
-                  review.
-                </p>
-                <div className="market-regime-tags">
-                  <Badge variant="warning">Risk check</Badge>
-                  <Badge variant="neutral">Example market context</Badge>
-                </div>
-              </Card>
-            </div>
-          </section>
-
-          <section className="dashboard-lower-grid" aria-label="Activity and actions">
-            <Card title="Demo Thesis Activity">
-              <div className="recent-activity-list">
-                {recentActivityItems.map((item) => (
-                  <article
-                    className={`recent-activity-item recent-activity-item--${item.tone}`}
-                    key={`${item.ticker}-${item.action}`}
-                  >
-                    <span>{item.ticker}</span>
-                    <div>
-                      <strong>{item.action}</strong>
-                      <p>{item.detail}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </Card>
-
-            <Card title="Continue Research">
-              <div className="quick-action-grid">
-                {quickActions.map((action) => (
-                  <button
-                    className="quick-action-card"
-                    key={action.workspaceId}
-                    onClick={() => onOpenWorkspace?.(action.workspaceId)}
-                    type="button"
-                  >
-                    <span>{action.label}</span>
-                    <small>{action.description}</small>
-                  </button>
-                ))}
-              </div>
-            </Card>
-          </section>
+      <section className="overview-intro" aria-labelledby="overview-theses-heading">
+        <div>
+          <p className="overview-eyebrow">Your research, connected</p>
+          <h2 id="overview-theses-heading">Start with your thesis.</h2>
+          <p className="overview-intro-description">
+            Keep your reasoning, reviews, and decisions together. Return to a saved
+            thesis or begin a new one.
+          </p>
         </div>
+        <Button
+          className="overview-primary-action"
+          disabled={!onOpenWorkspace}
+          onClick={() => onOpenWorkspace?.('thesis-board')}
+          type="button"
+        >
+          Open theses <span aria-hidden="true">→</span>
+        </Button>
+      </section>
+
+      <div className="overview-layout">
+        <section aria-labelledby="overview-workflow-heading">
+          <div className="overview-section-heading">
+            <h2 id="overview-workflow-heading">Make progress on an idea</h2>
+            <p>Choose the tool that fits your next step.</p>
+          </div>
+          <ol className="overview-action-list">
+            {researchActions.map((action, index) => (
+              <li key={action.workspaceId}>
+                <button
+                  className="overview-action"
+                  disabled={!onOpenWorkspace}
+                  onClick={() => onOpenWorkspace?.(action.workspaceId)}
+                  type="button"
+                >
+                  <span className="overview-action-number" aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="overview-action-copy">
+                    <strong>{action.label}</strong>
+                    <span>{action.description}</span>
+                  </span>
+                  <span className="overview-action-arrow" aria-hidden="true">→</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section className="overview-saved" aria-labelledby="overview-saved-heading" aria-busy={isSummaryLoading}>
+          <div className="overview-section-heading">
+            <h2 id="overview-saved-heading">Saved in your tools</h2>
+            <p>A snapshot of the research on this device.</p>
+          </div>
+
+          {isSummaryLoading ? (
+            <p className="overview-summary-state" role="status">Loading your saved research…</p>
+          ) : summaryErrors.length > 0 ? (
+            <div className="overview-summary-state overview-summary-error" role="alert">
+              <strong>We couldn’t load your saved totals.</strong>
+              <ul>{summaryErrors.map((error) => <li key={error}>{error}</li>)}</ul>
+              {resolvedSummaryStorageClient ? (
+                <Button variant="secondary" size="sm" onClick={() => setRefreshCount((value) => value + 1)} type="button">
+                  Try again
+                </Button>
+              ) : null}
+            </div>
+          ) : summary ? (
+            <>
+              <dl className="overview-summary-list">
+                {getSummaryItems(summary).map((item) => (
+                  <div key={item.label}>
+                    <dt>{item.label}<span>{item.detail}</span></dt>
+                    <dd>{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {!hasSavedToolRecords ? (
+                <p className="overview-note">These tools don’t have saved records yet. Your theses are available separately in Theses.</p>
+              ) : null}
+              {updatedAt ? <p className="overview-updated">Updated {updatedAt}</p> : null}
+            </>
+          ) : (
+            <p className="overview-summary-state">Saved totals are unavailable in this preview. You can still explore the workspaces.</p>
+          )}
+
+          <p className="overview-note overview-saved-note">
+            Theses, reviews, and decisions are kept in Theses and aren’t included in these totals.
+          </p>
+        </section>
       </div>
     </div>
   );

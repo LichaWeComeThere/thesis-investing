@@ -43,17 +43,20 @@ describe('PortfolioRankerScreen', () => {
       />
     );
 
-    expect(html).toContain('Thesis Board');
+    expect(html).toContain('Compare ideas');
     expect(html).not.toContain('Portfolio Ranker');
-    expect(html).toContain('Rank investment ideas by thesis score');
+    expect(html).not.toContain('Thesis Board');
+    expect(html).not.toContain('MBS 72 / 100');
+    expect(html).toContain('Manual comparison entries are separate from your saved Theses.');
+    expect(html).toContain('Compare companies using your own scores from 0 to 100.');
     expect(html).toContain('Investment ideas');
-    expect(html).toContain('MBS 72 / 100');
-    expect(html).toContain('Thesis: Not set');
-    expect(html).toContain('Conviction: Not set');
-    expect(html).toContain('Risk: Not set');
-    expect(html).toContain('Theme: Not set');
-    expect(html).toContain('Last reviewed');
-    expect(html).toContain('Next review');
+    expect(html).toContain('Manual score 72 / 100');
+    expect(html).not.toContain('Thesis: Not set');
+    expect(html).not.toContain('Conviction: Not set');
+    expect(html).not.toContain('Risk: Not set');
+    expect(html).not.toContain('Theme: Not set');
+    expect(html).not.toContain('Last reviewed');
+    expect(html).not.toContain('Next review');
     const rankingPreview = html.slice(
       html.indexOf('portfolio-ranker-preview-list')
     );
@@ -62,12 +65,12 @@ describe('PortfolioRankerScreen', () => {
     );
     expect(html).toContain('Incomplete');
     expect(html).toContain('Not set');
-    expect(html).toContain('Weakest idea');
-    expect(html).toContain('Lowest current thesis score.');
-    expect(html).toContain('Re-evaluate thesis');
+    expect(html).toContain('Lowest score');
+    expect(html).toContain('Lowest manual score in this comparison.');
+    expect(html).toContain('Open scoring tool');
     expect(html).toContain('Strong thesis');
     expect(html).toContain('Needs review');
-    expect(html).toContain('Thesis ranking output');
+    expect(html).toContain('Comparison');
     expect(html).not.toContain('No validation errors');
     expect(html).not.toContain('Untitled holding');
   });
@@ -106,7 +109,7 @@ describe('PortfolioRankerScreen', () => {
       />
     );
 
-    expect(noScoresHtml).toContain('Add scores to identify the weakest idea.');
+    expect(noScoresHtml).toContain('Add scores to see which idea you rated lowest.');
     expect(noScoresHtml).toContain('Add ticker');
     expect(noScoresHtml).toContain('New idea');
 
@@ -124,7 +127,7 @@ describe('PortfolioRankerScreen', () => {
       />
     );
 
-    expect(oneIdeaHtml).toContain('Add more ideas to compare weakest thesis.');
+    expect(oneIdeaHtml).toContain('Add another scored idea to compare.');
   });
 
   it('converts populated rows into ranker inputs', () => {
@@ -173,7 +176,7 @@ describe('PortfolioRankerScreen', () => {
       <PortfolioRankerScreen storageClient={null} />
     );
 
-    expect(html).toContain('Thesis Board');
+    expect(html).toContain('Compare ideas');
   });
 
   it('shows four default sample ideas before expanding the board', () => {
@@ -187,9 +190,29 @@ describe('PortfolioRankerScreen', () => {
     expect(html).toContain('TSLA');
     expect(html).not.toContain('AVGO');
     expect(html).not.toContain('PLTR');
+    expect(html).toContain('Example ideas · Edit and save an idea to keep it on this device.');
     expect(html).toContain('Showing 4 focused sample ideas');
     expect(html).toContain('Show more ideas');
     expect(html).toContain('Ranked ideas</span><strong>4 / 4');
+  });
+
+  it('does not label supplied saved comparison entries as examples', () => {
+    const html = renderToStaticMarkup(
+      <PortfolioRankerScreen
+        initialPersistedRowIds={['my-idea']}
+        initialRows={[{
+          id: 'my-idea',
+          ticker: 'ACME',
+          companyName: 'Acme Research',
+          manualScore: '72',
+          notes: 'My comparison entry.'
+        }]}
+        storageClient={null}
+      />
+    );
+
+    expect(html).toContain('Acme Research');
+    expect(html).not.toContain('Example ideas · Edit and save an idea');
   });
 
   it('uses session theses for default demo ranker rows', () => {
@@ -205,7 +228,7 @@ describe('PortfolioRankerScreen', () => {
 
     expect(html).toContain('MVP');
     expect(html).toContain('MVP Session Co');
-    expect(html).toContain('MBS 74 / 100');
+    expect(html).toContain('Manual score 74 / 100');
   });
 
   it('maps a persisted portfolio ranker item into and out of a row state', () => {

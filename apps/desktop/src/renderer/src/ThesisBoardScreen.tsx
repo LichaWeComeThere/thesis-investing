@@ -24,6 +24,7 @@ import { getDefaultDecisionsStorageClient } from './decisionsStorageClient';
 import type { ThesisHistoryStorageApi } from '../../shared/thesisHistoryStorage';
 import { getDefaultThesisHistoryStorageClient } from './thesisHistoryStorageClient';
 import { ThesisHistoryPanel } from './ThesisHistoryPanel';
+import './thesis-workspace.css';
 
 import type {
   LivingThesisCatalystWriteInput,
@@ -145,6 +146,7 @@ export function ThesisBoardScreen({
   const [decisionNavigation, setDecisionNavigation] = useState<DecisionNavigationRequest>();
   const [feedback, setFeedback] = useState<BoardFeedback | null>(initialFeedback);
   const [filter, setFilter] = useState<BoardFilter>('all');
+  const [search, setSearch] = useState('');
   const [sort, setSort] = useState<BoardSort>('recently-updated');
   const editorFormRef = useRef<HTMLFormElement>(null);
 
@@ -205,8 +207,14 @@ export function ThesisBoardScreen({
   }, [initialLoadState, initialTheses, loadTheses]);
 
   const visibleTheses = useMemo(
-    () => sortTheses(filterTheses(theses, filter), sort),
-    [filter, sort, theses]
+    () => {
+      const query = search.trim().toLocaleLowerCase();
+      const matching = filterTheses(theses, filter).filter((thesis) =>
+        !query || [thesis.entityName, thesis.ticker, thesis.title, thesis.theme].some((value) => value?.toLocaleLowerCase().includes(query))
+      );
+      return sortTheses(matching, sort);
+    },
+    [filter, search, sort, theses]
   );
   const selectedThesis = theses.find((thesis) => thesis.id === selectedId);
 
@@ -239,7 +247,7 @@ export function ThesisBoardScreen({
     if (decisionGuarded) {
       setDecisionNavigation({ destination: 'a new thesis', onStay: () => setDecisionNavigation(undefined), onLeave: () => {
         setDecisionNavigation(undefined); setDecisionGuarded(false);
-        setDraft(emptyDraft); setIsCreating(true); setSelectedId(''); setFeedback(null);
+        setDraft(emptyDraft); setIsCreating(true); setSelectedId(''); setFeedback(null); setSearch(''); setFilter('all');
       } });
       return;
     }
@@ -251,6 +259,8 @@ export function ThesisBoardScreen({
       return;
     }
 
+    setSearch('');
+    setFilter('all');
     setDraft(emptyDraft);
     setIsCreating(true);
     setSelectedId('');
@@ -380,17 +390,12 @@ export function ThesisBoardScreen({
   }
 
   return (
-    <div className="thesis-board-screen living-thesis-board">
+    <div className="thesis-board-screen living-thesis-board thesis-workspace">
       <PageHeader
-        badge={<Badge variant="accent">Saved locally</Badge>}
-        description="Create and maintain durable Living Thesis records in one focused workspace."
-        eyebrow="Living Thesis workspace"
-        title="Thesis Board"
+        description="Build your investment case. Revisit it as the evidence changes."
+        title="Theses"
+        actions={<Button disabled={isSaving || reviewOpening} onClick={beginCreate} type="button">New thesis</Button>}
       />
-
-      <p className="living-thesis-provenance" role="note">
-        Your theses and saved review drafts stay on this device. Start a review to revisit your research one section at a time.
-      </p>
 
       {feedback ? (
         <BoardFeedbackPanel
@@ -399,21 +404,21 @@ export function ThesisBoardScreen({
         />
       ) : null}
 
-      {selectedThesis && !isCreating && loadState === 'loaded' ? <ReviewSessionLauncher
-        key={selectedThesis.id} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving || decisionGuarded} onOpen={setReview} onOpeningChange={setReviewOpening}
-      /> : null}
-
       <div className="living-thesis-board-layout">
-        <Card className="living-thesis-list-card" title="Living Thesis records">
+        <Card className="living-thesis-list-card" title="Your theses">
+          <label className="thesis-workspace-search">
+            <span>Search theses</span>
+            <input type="search" placeholder="Company, ticker, or idea" value={search} onChange={(event) => setSearch(event.currentTarget.value)} />
+          </label>
           <div className="living-thesis-list-toolbar">
             <label>
-              <span>Lifecycle</span>
+              <span>Status</span>
               <select
                 aria-label="Filter by lifecycle"
                 onChange={(event) => setFilter(event.currentTarget.value as BoardFilter)}
                 value={filter}
               >
-                <option value="all">All records</option>
+                <option value="all">All statuses</option>
                 {LIVING_THESIS_LIFECYCLES.map((lifecycle) => (
                   <option key={lifecycle} value={lifecycle}>
                     {lifecycleLabels[lifecycle]}
@@ -429,23 +434,21 @@ export function ThesisBoardScreen({
                 value={sort}
               >
                 <option value="recently-updated">Recently updated</option>
-                <option value="entity">Entity name</option>
+                <option value="entity">Company name</option>
                 <option value="next-review">Next review</option>
               </select>
             </label>
-            <Button disabled={isSaving || reviewOpening} onClick={beginCreate} size="sm" type="button">
-              New thesis
-            </Button>
           </div>
+          {loadState === 'loaded' && theses.length > 0 ? <p className="thesis-workspace-list-count">{visibleTheses.length} of {theses.length} {theses.length === 1 ? 'thesis' : 'theses'}</p> : null}
 
           {loadState === 'loading' ? (
             <BoardState title="Loading saved theses...">
-              Reading local Living Thesis records.
+              Reading your saved research.
             </BoardState>
           ) : null}
 
           {loadState === 'error' ? (
-            <BoardState alert title="Living Thesis records could not be loaded.">
+            <BoardState alert title="Your theses could not be loaded.">
               <span>Your saved data was not changed.</span>
               <Button onClick={() => void loadTheses(selectedId)} size="sm" type="button" variant="secondary">
                 Try again
@@ -454,8 +457,8 @@ export function ThesisBoardScreen({
           ) : null}
 
           {loadState === 'loaded' && theses.length === 0 ? (
-            <BoardState empty title="No Living Thesis records yet">
-              <span>Create a thesis when you are ready to save your research locally.</span>
+            <BoardState empty title="Your first thesis starts here">
+              <span>Write down an investment idea, the evidence behind it, and what could change your mind.</span>
               <Button disabled={isSaving} onClick={beginCreate} size="sm" type="button">
                 Create first thesis
               </Button>
@@ -463,7 +466,7 @@ export function ThesisBoardScreen({
           ) : null}
 
           {loadState === 'loaded' && theses.length > 0 ? (
-            <div className="living-thesis-list" role="list">
+            <div className="living-thesis-list" role="group" aria-label="Saved theses">
               {visibleTheses.map((thesis) => (
                 <button
                   aria-pressed={thesis.id === selectedId}
@@ -484,15 +487,14 @@ export function ThesisBoardScreen({
                     {thesis.ticker ?? 'No ticker'}{thesis.theme ? ` / ${thesis.theme}` : ''}
                   </small>
                   <span className="living-thesis-list-meta">
-                    <small>Version {thesis.version}</small>
-                    <small>Next review {thesis.nextReviewAt ?? 'not scheduled'}</small>
+                    <small>{thesis.nextReviewAt ? `Review ${thesis.nextReviewAt}` : 'No review scheduled'}</small>
                   </span>
                 </button>
               ))}
 
               {visibleTheses.length === 0 ? (
-                <BoardState title="No records match this lifecycle.">
-                  Choose another lifecycle filter.
+                <BoardState title="No matching theses.">
+                  Try another search or status filter.
                 </BoardState>
               ) : null}
             </div>
@@ -501,14 +503,17 @@ export function ThesisBoardScreen({
 
         {(isCreating || selectedThesis) && loadState !== 'error' ? (
           <div className="living-thesis-detail-column">
-          {selectedThesis && !isCreating && loadState === 'loaded' ? historyClient ? <ThesisHistoryPanel key={selectedThesis.id}
-            thesisId={selectedThesis.id} thesisVersion={selectedThesis.version} entityName={selectedThesis.entityName}
-            client={historyClient} decisionClient={decisionClient} disabled={isDirty || isSaving || reviewOpening}
-            onGuardChange={setDecisionGuarded} navigationRequest={navigationRequest ?? decisionNavigation}
-          /> : <DecisionLogPanel key={selectedThesis.id}
-            thesisId={selectedThesis.id} entityName={selectedThesis.entityName} client={decisionClient}
-            disabled={isDirty || isSaving || reviewOpening} onGuardChange={setDecisionGuarded}
-            navigationRequest={navigationRequest ?? decisionNavigation}
+          <header className="thesis-workspace-identity">
+            <div className="thesis-workspace-identity-top">
+              <span>{isCreating ? 'New thesis' : selectedThesis?.ticker || 'Investment thesis'}</span>
+              {!isCreating && selectedThesis ? <Badge variant={getLifecycleBadge(selectedThesis.lifecycle)}>{lifecycleLabels[selectedThesis.lifecycle]}</Badge> : null}
+            </div>
+            <h2>{isCreating ? 'What is your investment idea?' : selectedThesis?.entityName}</h2>
+            <p>{isCreating ? 'Start with the essentials. Add more detail as your research grows.' : selectedThesis?.title}</p>
+            <small>Your research is saved on this device.</small>
+          </header>
+          {selectedThesis && !isCreating && loadState === 'loaded' ? <ReviewSessionLauncher
+            key={`review-${selectedThesis.id}`} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving || decisionGuarded} onOpen={setReview} onOpeningChange={setReviewOpening}
           /> : null}
           <LivingThesisEditor
             draft={draft}
@@ -521,10 +526,19 @@ export function ThesisBoardScreen({
             onChange={updateDraft}
             onSubmit={saveDraft}
           />
+          {selectedThesis && !isCreating && loadState === 'loaded' ? historyClient ? <ThesisHistoryPanel key={`history-${selectedThesis.id}`}
+            thesisId={selectedThesis.id} thesisVersion={selectedThesis.version} entityName={selectedThesis.entityName}
+            client={historyClient} decisionClient={decisionClient} disabled={isDirty || isSaving || reviewOpening}
+            onGuardChange={setDecisionGuarded} navigationRequest={navigationRequest ?? decisionNavigation}
+          /> : <DecisionLogPanel key={`decisions-${selectedThesis.id}`}
+            thesisId={selectedThesis.id} entityName={selectedThesis.entityName} client={decisionClient}
+            disabled={isDirty || isSaving || reviewOpening} onGuardChange={setDecisionGuarded}
+            navigationRequest={navigationRequest ?? decisionNavigation}
+          /> : null}
           </div>
         ) : (
           <Card className="living-thesis-editor-card" title="Thesis details">
-            <BoardState title="Select or create a Living Thesis.">
+            <BoardState title="Choose a thesis to get started.">
               Saved research details will appear here.
             </BoardState>
           </Card>
@@ -618,43 +632,55 @@ function LivingThesisEditor({ draft, formRef, isCreating, isDirty, isSaving, dis
   onSubmit: () => Promise<void>;
 }): JSX.Element {
   return (
-    <Card className="living-thesis-editor-card" title={isCreating ? 'Create Living Thesis' : 'Thesis details'}>
-      <form ref={formRef} onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
+    <Card className="living-thesis-editor-card" title={isCreating ? 'The essentials' : 'Your investment case'}>
+      <form ref={formRef} onInvalidCapture={(event) => {
+        // Reveal invalid optional fields before the browser attempts to focus them.
+        const section = (event.target as HTMLElement).closest('details');
+        if (section) section.open = true;
+      }} onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
         <fieldset className="living-thesis-form" disabled={isSaving || disabled}>
-          <div className="living-thesis-form-heading">
-            <div>
-              <span>{isCreating ? 'New local record' : `Version ${draft.version}`}</span>
-              <strong>{draft.entityName || 'Untitled entity'}</strong>
-            </div>
+          <div className="thesis-workspace-form-status">
+            <p>Capture the idea in your own words. Fields marked required are the starting point.</p>
             {isDirty ? <Badge variant="warning">Unsaved changes</Badge> : null}
           </div>
 
           <div className="living-thesis-field-grid">
-            <TextField label="Entity name" onChange={(value) => onChange('entityName', value)} required value={draft.entityName} />
+            <TextField label="Company or asset" onChange={(value) => onChange('entityName', value)} required value={draft.entityName} />
             <TextField label="Ticker (optional)" onChange={(value) => onChange('ticker', value)} value={draft.ticker} />
-            <TextField label="Thesis title" onChange={(value) => onChange('title', value)} required value={draft.title} />
-            <TextField label="Theme (optional)" onChange={(value) => onChange('theme', value)} value={draft.theme} />
-            <SelectField label="Lifecycle" onChange={(value) => onChange('lifecycle', value as LivingThesisLifecycle)} options={LIVING_THESIS_LIFECYCLES.map((value) => ({ label: lifecycleLabels[value], value }))} value={draft.lifecycle} />
-            <SelectField label="Conviction" onChange={(value) => onChange('conviction', value as LivingThesisConviction)} options={LIVING_THESIS_CONVICTIONS.map((value) => ({ label: convictionLabels[value], value }))} value={draft.conviction} />
-            <SelectField label="Risk level" onChange={(value) => onChange('riskLevel', value as LivingThesisRiskLevel)} options={LIVING_THESIS_RISK_LEVELS.map((value) => ({ label: riskLevelLabels[value], value }))} value={draft.riskLevel} />
-            <TextField label="Review cadence (days)" min="1" onChange={(value) => onChange('reviewCadenceDays', value)} type="number" value={draft.reviewCadenceDays} />
-            <TextField label="Next review" onChange={(value) => onChange('nextReviewAt', value)} type="date" value={draft.nextReviewAt} />
           </div>
-
+          <TextField label="Thesis title" onChange={(value) => onChange('title', value)} required value={draft.title} />
           <TextAreaField label="Thesis summary" onChange={(value) => onChange('summary', value)} required value={draft.summary} />
-          <div className="living-thesis-case-grid">
-            <TextAreaField label="Bull case (optional)" onChange={(value) => onChange('bullCase', value)} value={draft.bullCase} />
-            <TextAreaField label="Bear case (optional)" onChange={(value) => onChange('bearCase', value)} value={draft.bearCase} />
-          </div>
 
-          <RiskEditor onChange={(risks) => onChange('risks', risks)} risks={draft.risks} />
-          <CatalystEditor catalysts={draft.catalysts} onChange={(catalysts) => onChange('catalysts', catalysts)} />
+          <details className="thesis-workspace-section">
+            <summary><span>Assessment & review dates</span><small>Status, conviction, and your next check-in</small></summary>
+            <div className="living-thesis-field-grid thesis-workspace-section-body">
+              <SelectField label="Thesis status" onChange={(value) => onChange('lifecycle', value as LivingThesisLifecycle)} options={LIVING_THESIS_LIFECYCLES.map((value) => ({ label: lifecycleLabels[value], value }))} value={draft.lifecycle} />
+              <TextField label="Theme (optional)" onChange={(value) => onChange('theme', value)} value={draft.theme} />
+              <SelectField label="Conviction" onChange={(value) => onChange('conviction', value as LivingThesisConviction)} options={LIVING_THESIS_CONVICTIONS.map((value) => ({ label: convictionLabels[value], value }))} value={draft.conviction} />
+              <SelectField label="Risk level" onChange={(value) => onChange('riskLevel', value as LivingThesisRiskLevel)} options={LIVING_THESIS_RISK_LEVELS.map((value) => ({ label: riskLevelLabels[value], value }))} value={draft.riskLevel} />
+              <TextField label="Review cadence (days)" min="1" onChange={(value) => onChange('reviewCadenceDays', value)} type="number" value={draft.reviewCadenceDays} />
+              <TextField label="Next review" onChange={(value) => onChange('nextReviewAt', value)} type="date" value={draft.nextReviewAt} />
+            </div>
+          </details>
+
+          <details className="thesis-workspace-section">
+            <summary><span>Supporting research</span><small>Bull case, bear case, risks, and catalysts</small></summary>
+            <div className="thesis-workspace-section-body">
+              <div className="living-thesis-case-grid">
+                <TextAreaField label="Bull case (optional)" onChange={(value) => onChange('bullCase', value)} value={draft.bullCase} />
+                <TextAreaField label="Bear case (optional)" onChange={(value) => onChange('bearCase', value)} value={draft.bearCase} />
+              </div>
+              <RiskEditor onChange={(risks) => onChange('risks', risks)} risks={draft.risks} />
+              <CatalystEditor catalysts={draft.catalysts} onChange={(catalysts) => onChange('catalysts', catalysts)} />
+            </div>
+          </details>
 
           <div className="living-thesis-form-actions">
             <Button disabled={isSaving} type="submit">
               {isSaving ? 'Saving...' : isCreating ? 'Create thesis' : 'Save changes'}
             </Button>
             <Button onClick={onCancel} type="button" variant="secondary">Cancel</Button>
+            {!isCreating ? <small>Version {draft.version}</small> : null}
           </div>
         </fieldset>
       </form>
@@ -669,7 +695,7 @@ function RiskEditor({ onChange, risks }: {
   return (
     <section className="living-thesis-children">
       <SectionHeading label="Risks" onAdd={() => onChange([...risks, { severity: 'unrated', status: 'open', title: '' }])} />
-      {risks.length === 0 ? <p className="living-thesis-child-empty">No structured risks recorded.</p> : risks.map((risk, index) => (
+      {risks.length === 0 ? <p className="living-thesis-child-empty">Add a risk when you identify something that could weaken your case.</p> : risks.map((risk, index) => (
         <div className="living-thesis-child-row" key={risk.id ?? `new-risk-${index}`}>
           <TextField label={`Risk ${index + 1}`} onChange={(value) => onChange(updateAt(risks, index, { ...risk, title: value }))} required value={risk.title} />
           <TextField label="Detail (optional)" onChange={(value) => onChange(updateAt(risks, index, { ...risk, detail: value }))} value={risk.detail ?? ''} />
@@ -689,7 +715,7 @@ function CatalystEditor({ catalysts, onChange }: {
   return (
     <section className="living-thesis-children">
       <SectionHeading label="Catalysts" onAdd={() => onChange([...catalysts, { status: 'open', title: '' }])} />
-      {catalysts.length === 0 ? <p className="living-thesis-child-empty">No structured catalysts recorded.</p> : catalysts.map((catalyst, index) => (
+      {catalysts.length === 0 ? <p className="living-thesis-child-empty">Add a catalyst when an event could help your thesis develop.</p> : catalysts.map((catalyst, index) => (
         <div className="living-thesis-child-row living-thesis-child-row--catalyst" key={catalyst.id ?? `new-catalyst-${index}`}>
           <TextField label={`Catalyst ${index + 1}`} onChange={(value) => onChange(updateAt(catalysts, index, { ...catalyst, title: value }))} required value={catalyst.title} />
           <TextField label="Detail (optional)" onChange={(value) => onChange(updateAt(catalysts, index, { ...catalyst, detail: value }))} value={catalyst.detail ?? ''} />
@@ -704,7 +730,7 @@ function CatalystEditor({ catalysts, onChange }: {
 function SectionHeading({ label, onAdd }: { label: string; onAdd: () => void }): JSX.Element {
   return (
     <div className="living-thesis-section-heading">
-      <div><span>Structured research</span><h3>{label}</h3></div>
+      <div><h3>{label}</h3></div>
       <Button onClick={onAdd} size="sm" type="button" variant="secondary">Add {label.slice(0, -1).toLowerCase()}</Button>
     </div>
   );
@@ -727,11 +753,11 @@ function BoardState({ alert = false, children, empty = false, title }: { alert?:
 }
 
 function TextField({ label, onChange, required = false, type = 'text', value, ...inputProps }: { label: string; onChange: (value: string) => void; required?: boolean; type?: 'date' | 'number' | 'text'; value: string; min?: string }): JSX.Element {
-  return <label className="living-thesis-field"><span>{label}</span><input {...inputProps} aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} required={required} type={type} value={value} /></label>;
+  return <label className="living-thesis-field"><span>{label}{required ? <small className="thesis-workspace-required">Required</small> : null}</span><input {...inputProps} aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} required={required} type={type} value={value} /></label>;
 }
 
 function TextAreaField({ label, onChange, required = false, value }: { label: string; onChange: (value: string) => void; required?: boolean; value: string }): JSX.Element {
-  return <label className="living-thesis-field living-thesis-field--wide"><span>{label}</span><textarea aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} required={required} rows={4} value={value} /></label>;
+  return <label className="living-thesis-field living-thesis-field--wide"><span>{label}{required ? <small className="thesis-workspace-required">Required</small> : null}</span><textarea aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} required={required} rows={4} value={value} /></label>;
 }
 
 function SelectField({ label, onChange, options, value }: { label: string; onChange: (value: string) => void; options: readonly { label: string; value: string }[]; value: string }): JSX.Element {

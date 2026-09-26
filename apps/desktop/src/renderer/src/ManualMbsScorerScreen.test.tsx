@@ -24,8 +24,8 @@ describe('ManualMbsScorerScreen', () => {
       />
     );
 
-    expect(html).toContain('Local Scoring');
-    expect(html).toContain('Score a business across seven core criteria');
+    expect(html).toContain('Score a company');
+    expect(html).toContain('Rate seven business factors and save your assessment.');
     expect(html).toContain('80 / 100');
     expect(html).toContain('80%');
     expect(html).toContain('Strong thesis');
@@ -47,9 +47,9 @@ describe('ManualMbsScorerScreen', () => {
       />
     );
 
-    expect(html).toContain('Auto-Fill');
-    expect(html).toContain('Beginner Guided');
-    expect(html).toContain('Advanced Manual');
+    expect(html).not.toContain('Auto-Fill');
+    expect(html).toContain('Guided questions');
+    expect(html).toContain('Enter ratings');
     expect(html).toContain(
       'Answer simple questions and the app converts them into 0-10 scores.'
     );
@@ -77,10 +77,10 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('Score 10 / 10');
   });
 
-  it('renders selected thesis controls from shared mock theses', () => {
+  it('identifies shared mock companies and session-only preview actions', () => {
     const html = renderToStaticMarkup(<ManualMbsScorerScreen />);
 
-    expect(html).toContain('Selected thesis');
+    expect(html).toContain('Example company');
     expect(html).toContain('NVDA - NVIDIA');
     expect(html).toContain('MSFT - Microsoft');
     expect(html).toContain('CRWD - CrowdStrike');
@@ -89,9 +89,9 @@ describe('ManualMbsScorerScreen', () => {
     expect(html).toContain('SOFI - SoFi Technologies');
     expect(html).toContain('PLTR - Palantir');
     expect(html).toContain('AMD - Advanced Micro Devices');
-    expect(html).toContain('Create new thesis from this score');
-    expect(html).toContain('Save score to selected thesis');
-    expect(html).toContain('Create new thesis from score');
+    expect(html).toContain('Add a company to this preview');
+    expect(html).toContain('Update example score');
+    expect(html).toContain('Add preview company');
   });
 
   it('renders saved MBS snapshots and storage errors', () => {

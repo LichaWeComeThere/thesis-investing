@@ -36,9 +36,9 @@ describe('ThemeBasketsScreen', () => {
   it('renders the theme library copy', () => {
     const html = renderToStaticMarkup(<ThemeBasketsScreen />);
 
-    expect(html).toContain('Theme Baskets');
-    expect(html).toContain('Theme Library');
-    expect(html).toContain('Browse curated research themes');
+    expect(html).toContain('Themes');
+    expect(html).toContain('Browse themes');
+    expect(html).toContain('Explore research themes and example companies.');
     expect(html).toContain('Why it matters');
   });
 

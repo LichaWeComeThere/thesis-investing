@@ -78,10 +78,10 @@
 }
 
 .reminders-validation {
-  background: #fff4d6;
-  border: 1px solid #f3ce74;
+  background: var(--ti-color-callout-warning-bg);
+  border: 1px solid var(--ti-color-callout-warning-border);
   border-radius: var(--ti-radius-md);
-  color: #5f3d00;
+  color: var(--ti-color-callout-warning-text);
   font-size: 15px;
   line-height: 1.5;
   margin-top: 18px;
@@ -89,7 +89,7 @@
 }
 
 .reminders-validation h3 {
-  color: #5f3d00;
+  color: var(--ti-color-callout-warning-text);
   font-size: 16px;
   line-height: 1.35;
   margin: 0 0 10px;
@@ -170,7 +170,7 @@
   font-weight: 700;
   line-height: 1.35;
   margin: 0 0 6px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .reminders-details h3 {
@@ -230,12 +230,12 @@
   }
 }
 
-/* Compact two-column calendar layout. */
+/* Saved reminders and the editor are separate, named workspace regions. */
 .reminders-screen {
   align-items: start;
   display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  gap: 20px;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.45fr);
   max-width: none;
   width: min(100%, 1360px);
 }
@@ -244,37 +244,31 @@
   grid-column: 1 / -1;
 }
 
-.reminders-screen > .ti-card {
+.reminders-screen > .reminders-form-card {
   grid-column: 1;
-}
-
-.reminders-screen > .ti-card,
-.reminders-layout > .ti-card {
-  padding: 22px !important;
-}
-
-.reminders-screen > .ti-card > div,
-.reminders-layout > .ti-card > div {
-  margin-top: 14px !important;
+  grid-row: 2 / span 2;
 }
 
 .reminders-layout {
   display: contents;
 }
 
-.reminders-layout > .ti-card:nth-child(1) {
-  grid-column: 1;
-}
-
-.reminders-layout > .ti-card:nth-child(2) {
+.reminders-layout > .reminders-list-card {
   grid-column: 2;
   grid-row: 2;
-  min-height: 360px;
+  min-width: 0;
 }
 
-.reminders-layout > .ti-card:nth-child(3) {
+.reminders-layout > .reminders-details-card {
   grid-column: 2;
   grid-row: 3;
+  min-width: 0;
+}
+
+.reminders-layout > .reminders-examples {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  min-width: 0;
 }
 
 .reminders-form-grid {
@@ -288,7 +282,7 @@
 .reminders-field input,
 .reminders-field textarea,
 .reminders-field select {
-  border-radius: 13px;
+  border-radius: 8px;
   padding: 8px 10px;
 }
 
@@ -319,16 +313,14 @@
 }
 
 .reminders-meta-grid div {
-  border-radius: 14px;
+  border-radius: 8px;
   padding: 10px;
 }
 
 .reminders-empty-state {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.018)),
-    rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 18px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   color: var(--ti-color-text-muted);
   display: grid;
   gap: 8px;
@@ -354,14 +346,18 @@
     max-width: 1120px;
   }
 
+  .reminders-screen > .reminders-form-card {
+    width: 100%;
+  }
+
   .reminders-layout {
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .reminders-layout > .ti-card:nth-child(1),
-  .reminders-layout > .ti-card:nth-child(2),
-  .reminders-layout > .ti-card:nth-child(3) {
+  .reminders-layout > .reminders-list-card,
+  .reminders-layout > .reminders-details-card,
+  .reminders-layout > .reminders-examples {
     grid-column: auto;
     grid-row: auto;
     min-height: 0;

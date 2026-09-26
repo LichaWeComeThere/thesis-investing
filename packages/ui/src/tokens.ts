@@ -2,36 +2,36 @@ import type { CSSProperties } from 'react';
 
 export const tokens = {
   colors: {
-    background: '#05080C',
-    backgroundDeep: '#05080C',
-    surface: '#111821',
-    surfaceMuted: '#111821',
-    surfaceElevated: '#16202B',
-    surfaceSoft: '#1B2530',
-    text: '#F4F7FA',
-    textSection: '#E8EEF5',
-    textMuted: '#9AA7B5',
-    textSubtle: '#7F8B99',
-    textQuiet: '#7F8B99',
-    border: 'rgba(255, 255, 255, 0.08)',
-    borderStrong: 'rgba(72, 224, 204, 0.45)',
-    primary: '#48E0CC',
-    primaryHover: '#5EEAD4',
-    accent: '#5EEAD4',
-    growth: '#35D07F',
-    warning: '#F2B84B',
-    risk: '#EF5F57',
-    data: '#4C8DFF',
-    onPrimary: '#03100F',
-    sidebar: '#070B10',
-    sidebarText: '#B7D7E0',
-    sidebarTextStrong: '#5EEAD4',
-    sidebarDivider: 'rgba(255, 255, 255, 0.09)',
-    focus: 'rgba(72, 224, 204, 0.36)',
-    rowHover: 'rgba(72, 224, 204, 0.075)',
-    calloutWarningBg: 'rgba(242, 184, 75, 0.11)',
-    calloutWarningBorder: 'rgba(242, 184, 75, 0.38)',
-    calloutWarningText: '#F2B84B'
+    background: '#F6F5F1',
+    backgroundDeep: '#F6F5F1',
+    surface: '#FFFFFF',
+    surfaceMuted: '#F1F3EE',
+    surfaceElevated: '#FFFFFF',
+    surfaceSoft: '#EDF2EC',
+    text: '#202925',
+    textSection: '#202925',
+    textMuted: '#59675E',
+    textSubtle: '#606C63',
+    textQuiet: '#606C63',
+    border: '#D9E0D8',
+    borderStrong: '#859387',
+    primary: '#245B46',
+    primaryHover: '#194733',
+    accent: '#245B46',
+    growth: '#286744',
+    warning: '#825812',
+    risk: '#A13C32',
+    data: '#37617A',
+    onPrimary: '#FFFFFF',
+    sidebar: '#EFEEE8',
+    sidebarText: '#536058',
+    sidebarTextStrong: '#245B46',
+    sidebarDivider: '#D9DDD4',
+    focus: '#245B46',
+    rowHover: '#F0F4EF',
+    calloutWarningBg: '#FBF5E8',
+    calloutWarningBorder: '#E3D2AC',
+    calloutWarningText: '#825812'
   },
   spacing: {
     xs: 4,
@@ -41,25 +41,25 @@ export const tokens = {
     xl: 24,
     xxl: 32,
     xxxl: 40,
-    card: 32
+    card: 24
   },
   radii: {
-    sm: 10,
-    md: 16,
-    lg: 20,
-    bento: 26,
+    sm: 6,
+    md: 8,
+    lg: 10,
+    bento: 10,
     pill: 999
   },
   typography: {
     fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     fontSize: {
       xs: 12,
       sm: 14,
-      md: 16,
-      lg: 18,
-      xl: 24,
-      xxl: 32,
+      md: 15,
+      lg: 16,
+      xl: 20,
+      xxl: 28,
       display: 28
     },
     lineHeight: {
@@ -74,15 +74,12 @@ export const tokens = {
     }
   },
   shadows: {
-    card:
-      '0 0 0 1px rgba(255, 255, 255, 0.045), 0 18px 50px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.045)',
-    cardHover:
-      '0 0 0 1px rgba(72, 224, 204, 0.2), 0 22px 58px rgba(0, 0, 0, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-    cardEmphasis:
-      '0 0 0 1px rgba(72, 224, 204, 0.28), 0 0 38px rgba(72, 224, 204, 0.14), 0 22px 58px rgba(0, 0, 0, 0.46)',
-    focus: '0 0 0 3px rgba(72, 224, 204, 0.26)',
-    surfaceInset: 'inset 0 1px 0 rgba(255, 255, 255, 0.045)',
-    badgeInset: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+    card: 'none',
+    cardHover: 'none',
+    cardEmphasis: 'none',
+    focus: '0 0 0 3px rgba(36, 91, 70, 0.18)',
+    surfaceInset: 'none',
+    badgeInset: 'none'
   }
 } as const;
 

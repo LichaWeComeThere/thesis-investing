@@ -80,7 +80,7 @@ afterEach(async () => {
 
 async function openBoard() {
   render(<App />);
-  fireEvent.click(screen.getByRole('button', { name: 'Thesis Board' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Theses' }));
   fireEvent.click(await screen.findByRole('button', { name: /Acme Research.*Durable execution/ }));
   await screen.findByRole('heading', { name: 'History' });
 }
@@ -190,7 +190,7 @@ describe('Thesis History with real local storage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add decision' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Decision' }), { target: { value: 'Wait for new retention evidence' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Reason' }), { target: { value: 'The current reporting period is incomplete.' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     fireEvent.click(within(await screen.findByRole('dialog', { name: 'Unsaved decision' })).getByRole('button', { name: 'Continue editing' }));
     expect(screen.getByDisplayValue('The current reporting period is incomplete.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Save decision' }));
@@ -198,7 +198,7 @@ describe('Thesis History with real local storage', () => {
     expect(value(await decisions.list(thesis.id))).toHaveLength(1);
     expect(value(await theses.getById(thesis.id))).toEqual(thesis);
     fireEvent.change(screen.getByRole('textbox', { name: 'Thesis summary' }), { target: { value: 'Unsaved Board research' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     const dialog = await screen.findByRole('dialog', { name: 'Unsaved thesis changes' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Continue editing' }));
     expect(screen.getByDisplayValue('Unsaved Board research')).toBeTruthy();
@@ -241,7 +241,8 @@ describe('Thesis History with real local storage', () => {
     await openBoard();
     await within(historyRegion()).findByText('Thesis created');
     expect(within(historyRegion()).queryByText('Currently archived')).toBeNull();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Lifecycle' }), { target: { value: 'archived' } });
+    fireEvent.click(screen.getByText('Assessment & review dates'));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Thesis status' }), { target: { value: 'archived' } });
     fireEvent.change(screen.getByRole('textbox', { name: 'Thesis summary' }), { target: { value: 'Research saved for later reference.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     await within(historyRegion()).findByText('Currently archived');

@@ -20,8 +20,8 @@ describe('PortfolioRankerScreen filters', () => {
       screen.getByRole('region', { name: 'Investment ideas' })
     );
     const search = screen.getByLabelText('Search ideas');
-    const thesisFilter = screen.getByLabelText('Filter ideas');
-    const statusFilter = screen.getByLabelText('Filter idea status');
+    const thesisFilter = screen.getByLabelText('Example thesis status');
+    const statusFilter = screen.getByLabelText('Example idea status');
 
     fireEvent.change(search, { target: { value: 'AI' } });
     fireEvent.change(thesisFilter, { target: { value: 'Strong' } });

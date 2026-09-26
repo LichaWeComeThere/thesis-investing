@@ -34,7 +34,7 @@ beforeEach(async () => {
 });
 afterEach(async () => { cleanup(); vi.restoreAllMocks(); await reviews.close(); await theses.close(); rmSync(directory, { recursive: true, force: true }); });
 async function openBoard() {
-  fireEvent.click(screen.getByRole('button', { name: 'Thesis Board' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Theses' }));
   await screen.findByDisplayValue(thesis.summary);
 }
 async function start() {
@@ -90,19 +90,19 @@ describe('guided review with real draft storage', () => {
   it('keeps edits on Continue editing and saves before sidebar navigation', async () => {
     await start(); await toSummary(); editSummary();
     const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); expect(event.defaultPrevented).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     const dialog = await screen.findByRole('dialog');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Continue editing' }));
     expect(screen.getByDisplayValue('Recheck customer retention next quarter.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Save and leave' }));
-    await screen.findByRole('heading', { name: 'Dashboard' });
+    await screen.findByRole('heading', { name: 'Overview' });
     expect((await current()).session.workflow.draft.summary).toBe('Recheck customer retention next quarter.');
     const cleanEvent = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(cleanEvent); expect(cleanEvent.defaultPrevented).toBe(false);
   });
   it('discards only edits after the last save when returning to the Board', async () => {
     await start(); await toSummary(); editSummary('Saved review text'); await saved(); editSummary('Temporary text');
-    fireEvent.click(screen.getByRole('button', { name: 'Return to Board' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Return to theses' }));
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Discard edits and leave' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Resume review' }));
     await screen.findByDisplayValue('Saved review text'); expect(screen.queryByDisplayValue('Temporary text')).toBeNull();
@@ -124,10 +124,10 @@ describe('guided review with real draft storage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
     expect(screen.getByRole('button', { name: 'Saving…' }).hasAttribute('disabled')).toBe(true);
     expect(document.querySelector('.review-fields')?.hasAttribute('disabled')).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     expect(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Continue editing' }).hasAttribute('disabled')).toBe(true);
     expect(spy).toHaveBeenCalledTimes(1); finish();
-    await screen.findByRole('heading', { name: 'Dashboard' });
+    await screen.findByRole('heading', { name: 'Overview' });
   });
   it('preserves newer draft work during a version conflict and requires confirmation to reload', async () => {
     await start(); await toSummary(); editSummary('This window draft');
@@ -264,12 +264,12 @@ describe('guided review with real draft storage', () => {
     expect(within(dialog).getByRole('button', { name: 'Keep editing' }).hasAttribute('disabled')).toBe(true);
     expect(document.querySelector('.review-fields')?.hasAttribute('disabled')).toBe(true);
     const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); expect(event.defaultPrevented).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     expect(screen.getByRole('dialog', { name: 'Complete this review?' })).toBeTruthy();
     expect(spy).toHaveBeenCalledTimes(1);
     finish(); await screen.findByText('Review completed. Your thesis and review history are saved.');
-    expect(screen.getByRole('heading', { name: 'Thesis Board' })).toBeTruthy();
-    expect(screen.queryByRole('heading', { name: 'Dashboard' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Theses' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Overview' })).toBeNull();
   });
   it('recovers a lost completion response by retrying the same review without duplicate history', async () => {
     await start(); await toPreview();
@@ -285,7 +285,7 @@ describe('guided review with real draft storage', () => {
     fireEvent.click(keepEditing); fireEvent(dialog, new Event('cancel', { cancelable: true }));
     expect(screen.getByRole('dialog', { name: 'Complete this review?' })).toBeTruthy();
     expect(document.querySelector('.review-fields')?.hasAttribute('disabled')).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     expect(screen.getByRole('dialog', { name: 'Complete this review?' })).toBeTruthy();
     const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); expect(event.defaultPrevented).toBe(true);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Complete review' }));

@@ -32,8 +32,8 @@ describe('RemindersScreen', () => {
       <RemindersScreen initialReminders={[sampleReminder]} />
     );
 
-    expect(html).toContain('Review Dates');
-    expect(html).toContain('Track thesis reviews, earnings follow-ups');
+    expect(html).toContain('Reminders');
+    expect(html).toContain('Choose when to revisit an idea or follow up on your research.');
     expect(html).toContain('Review operating margin thesis');
     expect(html).toContain('Thesis review');
     expect(html).toContain('MSFT');
@@ -53,7 +53,7 @@ describe('RemindersScreen', () => {
       <RemindersScreen initialForm={invalidForm} />
     );
 
-    expect(html).toContain('Validation');
+    expect(html).toContain('Check these details');
     expect(html).toContain('Reminder title is required.');
     expect(html).toContain('Reminder due date must use YYYY-MM-DD format.');
     expect(html).toContain('Reminder type is not supported.');
@@ -65,7 +65,7 @@ describe('RemindersScreen', () => {
       <RemindersScreen initialStorageErrors={['Reminders storage unavailable.']} />
     );
 
-    expect(html).toContain('Storage');
+    expect(html).toContain('Could not update your reminders');
     expect(html).toContain('Reminders storage unavailable.');
   });
 
@@ -91,7 +91,7 @@ describe('RemindersScreen', () => {
       <RemindersScreen storageClient={null} theses={[sessionThesis]} />
     );
 
-    expect(html).toContain('Upcoming thesis reviews');
+    expect(html).toContain('Explore example review dates');
     expect(html).toContain('Demo thesis data');
     expect(html).toContain('These example review dates are not saved reminders.');
     expect(html).toContain('MVP - MVP Session Co');
