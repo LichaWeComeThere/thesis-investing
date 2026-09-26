@@ -74,3 +74,20 @@ add an external API, or change storage/backup formats.
 
 The screenshots include the development size selector and surrounding browser
 preview canvas. These are verification captures, not image mockups.
+
+### Research notes layout correction
+
+The follow-up fixes a legacy three-column minimum width that clipped Note
+overview at laptop sizes. Research notes now uses its available content width
+to switch between one, two, and three columns. In the two-column layout, Note
+overview follows the editor. Long titles and status labels remain readable.
+
+Browser measurements confirmed no main-content horizontal overflow at widths
+390, 860, 1100, 1365, 1440, 1487, and 1600 pixels. A saved fictional note with a
+long title and `Challenged` status was also checked at compact and wide sizes.
+All 566 tests, lint, typecheck, production build, and whitespace checks passed.
+
+The updated captures show the app directly, without the development size selector:
+
+- [Research notes editor](screenshots/ui-redesign-research-notes.jpg)
+- [Note overview after vertical scrolling](screenshots/ui-redesign-research-notes-overview.jpg)

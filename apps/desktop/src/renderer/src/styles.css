@@ -7217,3 +7217,71 @@ input[type="range"] {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Research notes responds to its usable width after sidebar and page padding. */
+.thesis-monitor-screen {
+  container: research-notes / inline-size;
+}
+
+.thesis-monitor-screen .thesis-workspace-grid {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.thesis-monitor-screen .thesis-workspace-grid > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+.thesis-monitor-screen .ti-card__body,
+.thesis-monitor-screen .thesis-field,
+.thesis-monitor-screen .thesis-field input,
+.thesis-monitor-screen .thesis-field select,
+.thesis-monitor-screen .thesis-field textarea {
+  min-width: 0;
+}
+
+.thesis-monitor-screen .thesis-workspace-grid > .thesis-health-card {
+  grid-column: 1 / -1;
+  position: static;
+}
+
+.thesis-monitor-screen .thesis-queue-title,
+.thesis-monitor-screen .thesis-details h3 {
+  overflow-wrap: anywhere;
+}
+
+.thesis-monitor-screen .thesis-details--compact .thesis-details-header {
+  flex-direction: column;
+}
+
+@container research-notes (min-width: 800px) {
+  .thesis-monitor-screen .thesis-workspace-grid {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  }
+
+  .thesis-monitor-screen .thesis-workspace-grid > .thesis-health-card {
+    grid-column: 2;
+  }
+}
+
+@container research-notes (min-width: 1160px) {
+  .thesis-monitor-screen .thesis-workspace-grid {
+    grid-template-columns: minmax(220px, 250px) minmax(0, 1fr) minmax(240px, 280px);
+  }
+
+  .thesis-monitor-screen .thesis-workspace-grid > .thesis-health-card {
+    grid-column: auto;
+  }
+
+  .thesis-monitor-screen .thesis-health-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container research-notes (max-width: 540px) {
+  .thesis-monitor-screen .thesis-form-grid,
+  .thesis-monitor-screen .thesis-health-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

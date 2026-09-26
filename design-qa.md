@@ -21,6 +21,19 @@ See [design decisions, scope, and validation](docs/UI_REDESIGN.md).
 - Native Windows interaction/installer verification remains deferred. The browser
   preview does not exercise native file dialogs. GitHub checks are tracked on the PR.
 
+### Research notes follow-up
+
+- Fixed a laptop-width overflow caused by a later legacy three-column rule.
+  Container queries now follow usable content width, with Note overview below
+  the editor at intermediate sizes and no sticky overlap.
+- Confirmed no main-content horizontal overflow at 390, 860, 1100, 1365, 1440,
+  1487, and 1600 pixels. Checked a saved fictional note with a long title and
+  `Challenged` status; narrow overview metrics and title/status now stack.
+- Evidence: [editor](docs/screenshots/ui-redesign-research-notes.jpg) and
+  [overview](docs/screenshots/ui-redesign-research-notes-overview.jpg).
+- The same 566 tests and all local repository gates pass. Windows interactive
+  verification remains deferred.
+
 ## Ranking draft and filter corrections
 
 Date: 2026-09-26. Follow-up to `60e5eed` preserves the coworker's card layout
