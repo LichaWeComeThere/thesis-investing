@@ -37,11 +37,10 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border-radius: 20px;
+  border-radius: 8px;
   padding: 16px 18px;
   text-align: left;
-  transition:
-    background 180ms ease,
+  transition: background 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease,
     transform 180ms ease;
@@ -50,16 +49,14 @@
 }
 
 .theme-basket-list-item.selected {
-  background:
-    radial-gradient(circle at 94% 8%, rgba(72, 224, 204, 0.12), transparent 34%),
-    color-mix(in srgb, var(--ti-color-primary) 12%, var(--ti-color-surface-elevated));
-  border-color: rgba(72, 224, 204, 0.28);
+  background: color-mix(in srgb, var(--ti-color-primary) 12%, var(--ti-color-surface-elevated));
+  border-color: rgba(36, 91, 70, 0.28);
   box-shadow: var(--ti-shadow-surface-inset);
 }
 
 .theme-basket-list-item:hover {
-  border-color: rgba(72, 224, 204, 0.18);
-  transform: translateY(-1px);
+  border-color: rgba(36, 91, 70, 0.18);
+  transform: none;
 }
 
 .theme-basket-list-item:focus-visible {
@@ -80,11 +77,9 @@
 }
 
 .theme-basket-details {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.042), rgba(255, 255, 255, 0.018)),
-    rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 26px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -105,7 +100,7 @@
   font-weight: 700;
   line-height: 1.35;
   margin: 0 0 6px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .theme-basket-details h2 {
@@ -131,9 +126,9 @@
 }
 
 .theme-basket-section {
-  background: rgba(255, 255, 255, 0.022);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 20px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   padding: 16px;
 }
 
@@ -144,7 +139,7 @@
 }
 
 .theme-basket-example-table-wrap {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-lg);
   max-width: 100%;
@@ -185,10 +180,7 @@
 }
 
 .theme-baskets-library-card {
-  background:
-    radial-gradient(circle at 94% 2%, rgba(72, 224, 204, 0.08), transparent 30%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
-    var(--ti-color-surface) !important;
+  background: var(--ti-color-surface) !important;
 }
 
 @media (max-width: 780px) {

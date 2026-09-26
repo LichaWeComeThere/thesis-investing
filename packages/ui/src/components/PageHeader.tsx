@@ -18,25 +18,31 @@ export function PageHeader({
 }: PageHeaderProps): JSX.Element {
   return (
     <header
+      className="ti-page-header"
       style={{
         alignItems: 'flex-start',
         display: 'flex',
+        flexWrap: 'wrap',
         gap: tokens.spacing.xl,
         justifyContent: 'space-between',
         width: '100%'
       }}
     >
-      <div>
+      <div
+        className="ti-page-header__copy"
+        style={{ flex: '1 1 320px', minWidth: 0 }}
+      >
         {eyebrow ? (
           <p
+            className="ti-page-header__eyebrow"
             style={{
               color: tokens.colors.textSubtle,
               fontSize: tokens.typography.fontSize.xs,
-              fontWeight: tokens.typography.fontWeight.bold,
-              letterSpacing: '0.08em',
+              fontWeight: tokens.typography.fontWeight.semibold,
+              letterSpacing: 0,
               lineHeight: tokens.typography.lineHeight.normal,
               margin: `0 0 ${tokens.spacing.sm}px`,
-              textTransform: 'uppercase'
+              textTransform: 'none'
             }}
           >
             {eyebrow}
@@ -44,6 +50,7 @@ export function PageHeader({
         ) : null}
 
         <div
+          className="ti-page-header__title-row"
           style={{
             alignItems: 'center',
             display: 'flex',
@@ -55,7 +62,7 @@ export function PageHeader({
             style={{
               color: tokens.colors.text,
               fontSize: tokens.typography.fontSize.xxl,
-              fontWeight: tokens.typography.fontWeight.bold,
+              fontWeight: tokens.typography.fontWeight.semibold,
               lineHeight: tokens.typography.lineHeight.tight,
               margin: 0
             }}
@@ -69,10 +76,10 @@ export function PageHeader({
           <p
             style={{
               color: tokens.colors.textMuted,
-              fontSize: tokens.typography.fontSize.lg,
+              fontSize: tokens.typography.fontSize.md,
               lineHeight: tokens.typography.lineHeight.relaxed,
-              margin: `${tokens.spacing.lg}px 0 0`,
-              maxWidth: 760
+              margin: `10px 0 0`,
+              maxWidth: 660
             }}
           >
             {description}
@@ -80,7 +87,14 @@ export function PageHeader({
         ) : null}
       </div>
 
-      {actions ? <div>{actions}</div> : null}
+      {actions ? (
+        <div
+          className="ti-page-header__actions"
+          style={{ display: 'flex', flexWrap: 'wrap', gap: tokens.spacing.sm }}
+        >
+          {actions}
+        </div>
+      ) : null}
     </header>
   );
 }

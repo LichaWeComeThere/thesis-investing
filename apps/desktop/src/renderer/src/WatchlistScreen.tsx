@@ -86,9 +86,6 @@ export function WatchlistScreen({
       null,
     [selectedMockThesisId, watchlistTheses]
   );
-  const demoResearchingCount = watchlistTheses.filter(
-    (thesis) => thesis.ideaStatus === 'Researching'
-  ).length;
 
   useEffect(() => {
     const client = resolvedStorageClient;
@@ -282,14 +279,12 @@ export function WatchlistScreen({
   return (
     <div className="watchlist-screen">
       <PageHeader
-        badge={<Badge variant="accent">Local Watchlist</Badge>}
-        description="Track companies, tags, thesis references, and research context in one focused list."
-        eyebrow="Research Workspace"
+        description="Keep a short list of companies you want to research."
         title="Watchlist"
       />
 
       <div className="watchlist-workspace-grid">
-        <Card className="watchlist-form-card" title="Add or edit watchlist item">
+        <Card className="watchlist-form-card" title={selectedItem?.id === form.id ? "Edit company" : "Add a company"}>
           <div className="watchlist-form-grid">
             <label className="watchlist-field">
               <span>Ticker</span>
@@ -353,7 +348,7 @@ export function WatchlistScreen({
 
           {visibleValidationErrors.length > 0 ? (
             <div className="watchlist-validation" role="alert">
-              <h3>Validation</h3>
+              <h3>Check these details</h3>
               <ul>
                 {visibleValidationErrors.map((error) => (
                   <li key={error}>{error}</li>
@@ -364,7 +359,7 @@ export function WatchlistScreen({
 
           {storageErrors.length > 0 ? (
             <div className="watchlist-storage-status" role="alert">
-              <h3>Storage</h3>
+              <h3>Could not update your watchlist</h3>
               <ul>
                 {storageErrors.map((error) => (
                   <li key={error}>{error}</li>
@@ -388,110 +383,10 @@ export function WatchlistScreen({
           </div>
         </Card>
 
-        <Card className="watchlist-summary-card" emphasis title="Watchlist pulse">
-          <div className="watchlist-summary-hero">
-            <span>Saved watchlist items</span>
-            <strong>{items.length}</strong>
-            <Badge variant={items.length > 0 ? 'accent' : 'neutral'}>
-              Local saved data
-            </Badge>
-          </div>
-
-          <div className="watchlist-summary-grid">
-            <div>
-              <span>Demo researching</span>
-              <strong>{demoResearchingCount}</strong>
-            </div>
-            <div>
-              <span>Selected source</span>
-              <strong>
-                {selectedItem
-                  ? 'Local'
-                  : selectedMockThesis
-                    ? 'Demo'
-                    : 'None'}
-              </strong>
-            </div>
-          </div>
-
-          <div className="watchlist-next-action">
-            <h3>Next action</h3>
-            <p>
-              {selectedItem
-                ? 'Review the selected idea detail card below or update its local note.'
-                : selectedMockThesis
-                  ? 'Review the demo thesis context below or choose another example from the queue.'
-                  : 'Save a watchlist item to populate the detail panel.'}
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      <div className="watchlist-layout">
-        <Card title="Watchlist thesis context">
-          <p className="data-provenance-note" role="note">
-            <Badge variant="neutral">Demo thesis data</Badge>
-            <span>Example thesis context is not part of your saved watchlist.</span>
-          </p>
-          {isLoading ? (
-            <p>Loading persisted watchlist items...</p>
-          ) : watchlistTheses.length > 0 ? (
-            <div className="watchlist-table-wrap">
-              <table className="watchlist-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Ticker</th>
-                    <th scope="col">Company</th>
-                    <th scope="col">Theme</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {watchlistTheses.map((thesis) => (
-                    <tr key={thesis.id}>
-                      <td>{thesis.ticker}</td>
-                      <td>{thesis.companyName}</td>
-                      <td>{thesis.theme}</td>
-                      <td>
-                        <Badge variant={watchlistBadgeVariant(thesis)}>
-                          {thesis.ideaStatus}
-                        </Badge>
-                      </td>
-                      <td>
-                        <div className="watchlist-row-actions">
-                          <Button
-                            onClick={() => {
-                              setSelectedMockThesisId(thesis.id);
-                              setSelectedItemId(null);
-                            }}
-                            disabled={isWriting}
-                            size="sm"
-                            type="button"
-                            variant="secondary"
-                          >
-                            View thesis
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="watchlist-empty-state">
-              <h3>No watchlist items yet</h3>
-              <p>
-                Add a ticker to start tracking a thesis candidate.
-              </p>
-            </div>
-          )}
-
-          {items.length > 0 ? (
+        <Card className="watchlist-saved-card" title="Saved companies">
+          {isLoading ? <p>Loading watchlist...</p> : items.length > 0 ? (
             <>
               <p className="data-provenance-note" role="note">
-                <Badge variant="accent">Local saved data</Badge>
                 <span>These watchlist items persist on this device.</span>
               </p>
               <div className="watchlist-table-wrap">
@@ -538,10 +433,17 @@ export function WatchlistScreen({
                 </table>
               </div>
             </>
-          ) : null}
+          ) : (
+            <div className="watchlist-empty-state">
+              <h3>No companies saved yet</h3>
+              <p>Add a ticker and a note about why it interests you.</p>
+            </div>
+          )}
         </Card>
+      </div>
 
-        <Card title="Selected item details">
+      <div className="watchlist-layout">
+        <Card className="watchlist-details-card" title="Company details">
           {selectedItem ? (
             <article className="watchlist-details">
               <div className="watchlist-details-header">
@@ -570,7 +472,74 @@ export function WatchlistScreen({
                 <p>{selectedItem.note ?? 'No note provided.'}</p>
               </div>
             </article>
-          ) : selectedMockThesis ? (
+          ) : (
+            <div className="watchlist-empty-state">
+              <h3>No item selected</h3>
+              <p>
+                Select a saved company to see its details, or add a company above.
+              </p>
+            </div>
+          )}
+        </Card>
+        <details className="tool-about watchlist-examples">
+          <summary>Explore example companies</summary>
+          <p className="data-provenance-note" role="note">
+            <Badge variant="neutral">Demo thesis data</Badge>
+            <span>Example thesis context is not part of your saved watchlist.</span>
+          </p>
+          {watchlistTheses.length > 0 ? (
+            <div className="watchlist-table-wrap">
+              <table className="watchlist-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Ticker</th>
+                    <th scope="col">Company</th>
+                    <th scope="col">Theme</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {watchlistTheses.map((thesis) => (
+                    <tr key={thesis.id}>
+                      <td>{thesis.ticker}</td>
+                      <td>{thesis.companyName}</td>
+                      <td>{thesis.theme}</td>
+                      <td>
+                        <Badge variant={watchlistBadgeVariant(thesis)}>
+                          {thesis.ideaStatus}
+                        </Badge>
+                      </td>
+                      <td>
+                        <div className="watchlist-row-actions">
+                          <Button
+                            onClick={() => {
+                              setSelectedMockThesisId(thesis.id);
+                              setSelectedItemId(null);
+                            }}
+                            disabled={isWriting}
+                            size="sm"
+                            type="button"
+                            variant="secondary"
+                          >
+                            View example
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="watchlist-empty-state">
+              <h3>No examples available</h3>
+              <p>
+                Add a company above to start your own watchlist.
+              </p>
+            </div>
+          )}
+          {selectedMockThesis ? (
             <article className="watchlist-details">
               <p className="data-provenance-note" role="note">
                 <Badge variant="neutral">Demo thesis data</Badge>
@@ -609,16 +578,8 @@ export function WatchlistScreen({
                 <p>{selectedMockThesis.reviewTriggers.join(', ')}</p>
               </div>
             </article>
-          ) : (
-            <div className="watchlist-empty-state">
-              <h3>No item selected</h3>
-              <p>
-                Save a watchlist item or select a demo thesis to review the detail
-                panel.
-              </p>
-            </div>
-          )}
-        </Card>
+          ) : null}
+        </details>
       </div>
     </div>
   );

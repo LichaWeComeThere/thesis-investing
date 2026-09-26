@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from '../../apps/desktop/src/renderer/src/App';
 import '../../apps/desktop/src/renderer/src/styles.css';
+import '../../apps/desktop/src/renderer/src/workspace-shell.css';
 
 // Development-only bridge. The production renderer always uses Electron preload.
 const invoke = async (method: string, ...args: unknown[]) => {
@@ -11,6 +12,12 @@ const invoke = async (method: string, ...args: unknown[]) => {
 };
 Object.assign(window, { thesisInvesting: {
   platform: 'preview',
+  dashboardSummaries: { get: () => invoke('summary.get') },
+  watchlist: { list: () => invoke('watchlist.list'), save: (...args: unknown[]) => invoke('watchlist.save', ...args), remove: (id: string) => invoke('watchlist.remove', id) },
+  thesisNotes: { list: () => invoke('notes.list'), save: (...args: unknown[]) => invoke('notes.save', ...args) },
+  reminders: { list: () => invoke('reminders.list'), save: (...args: unknown[]) => invoke('reminders.save', ...args), remove: (id: string) => invoke('reminders.remove', id) },
+  portfolioRanker: { list: () => invoke('ranker.list'), save: (...args: unknown[]) => invoke('ranker.save', ...args), remove: (id: string) => invoke('ranker.remove', id) },
+  mbsScoreSnapshots: { list: () => invoke('scores.list'), save: (...args: unknown[]) => invoke('scores.save', ...args) },
   thesisHistory: { get: (thesisId: string) => invoke('history.get', thesisId) },
   decisions: { list: (thesisId: string) => invoke('decisions.list', thesisId), listCompletedReviews: (thesisId: string) => invoke('decisions.listCompletedReviews', thesisId), create: (...args: unknown[]) => invoke('decisions.create', ...args) },
   livingTheses: { list: () => invoke('theses.list'), getById: (id: string) => invoke('theses.getById', id), create: (...args: unknown[]) => invoke('theses.create', ...args), update: (...args: unknown[]) => invoke('theses.update', ...args) },

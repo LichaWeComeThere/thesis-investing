@@ -73,7 +73,7 @@ afterEach(async () => {
 
 async function openBoard(waitForHealth = true) {
   render(<App />);
-  fireEvent.click(screen.getByRole('button', { name: 'Thesis Board' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Theses' }));
   await screen.findByRole('heading', { name: 'History' });
   if (waitForHealth) await screen.findByRole('region', { name: 'Saved research' });
 }

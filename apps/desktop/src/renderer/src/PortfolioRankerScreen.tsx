@@ -468,20 +468,17 @@ export function PortfolioRankerScreen({
   return (
     <div className="portfolio-ranker-screen">
       <PageHeader
-        badge={<Badge variant="accent">Idea ranking</Badge>}
-        description="Rank investment ideas by thesis score, status, conviction, risk, and review priority."
-        eyebrow="Idea Ranking Board"
-        title="Thesis Board"
+        description="Compare companies using your own scores from 0 to 100."
+        title="Compare ideas"
       />
 
       <div className="portfolio-ranker-layout">
-        <Card className="portfolio-ranker-workspace-card" title="Thesis Board">
+        <Card className="portfolio-ranker-workspace-card">
           <div className="portfolio-ranker-toolbar">
             <div>
               <h2>Investment ideas</h2>
               <p>
-                Compact ranking cards keep score, thesis context, and review
-                status visible while you compare ideas.
+                Manual comparison entries are separate from your saved Theses.
               </p>
             </div>
             <Button
@@ -506,9 +503,9 @@ export function PortfolioRankerScreen({
               />
             </label>
             <label className="portfolio-ranker-filter">
-              <span>Filter</span>
+              <span>Example thesis status</span>
               <select
-                aria-label="Filter ideas"
+                aria-label="Example thesis status"
                 disabled={isWriting || isLoading || Boolean(editingRow)}
                 onChange={(event) =>
                   setThesisFilter(event.currentTarget.value as ThesisFilterValue)
@@ -523,9 +520,9 @@ export function PortfolioRankerScreen({
               </select>
             </label>
             <label className="portfolio-ranker-filter">
-              <span>Status</span>
+              <span>Example idea status</span>
               <select
-                aria-label="Filter idea status"
+                aria-label="Example idea status"
                 disabled={isWriting || isLoading || Boolean(editingRow)}
                 onChange={(event) =>
                   setIdeaStatusFilter(
@@ -542,6 +539,12 @@ export function PortfolioRankerScreen({
               </select>
             </label>
           </div>
+
+          {initialRows === undefined && persistedRowIds.size === 0 ? (
+            <p className="data-provenance-note" role="note">
+              Example ideas · Edit and save an idea to keep it on this device.
+            </p>
+          ) : null}
 
           <section
             aria-label="Investment ideas"
@@ -575,7 +578,7 @@ export function PortfolioRankerScreen({
                         className={`portfolio-ranker-score-badge ${getScoreToneClass(rankedItem)}`}
                         variant={getScoreBadgeVariant(rankedItem)}
                       >
-                        MBS {formatRowScorePreview(row)}
+                        Manual score {formatRowScorePreview(row)}
                       </Badge>
                       <details
                         className="portfolio-ranker-overflow-menu"
@@ -721,39 +724,52 @@ export function PortfolioRankerScreen({
                     </section>
                   ) : (
                     <>
-                      <div className="portfolio-ranker-thesis-meta">
-                        <Badge variant={thesisStatus.variant}>
-                          {thesisStatus.label}
-                        </Badge>
-                        <span className="portfolio-ranker-meta-chip">
-                          Change:{' '}
-                          {thesis ? formatScoreChange(thesis) : 'Not set'}
-                        </span>
-                        <span className="portfolio-ranker-meta-chip">
-                          Conviction: {thesis?.conviction ?? 'Not set'}
-                        </span>
-                        <span className="portfolio-ranker-meta-chip portfolio-ranker-meta-chip--risk">
-                          Risk: {thesis?.riskLevel ?? 'Not set'}
-                        </span>
-                        <span className="portfolio-ranker-meta-chip">
-                          Theme: {thesis?.theme ?? 'Not set'}
-                        </span>
-                      </div>
+                      {row.notes ? (
+                        <p className="portfolio-ranker-note">{row.notes}</p>
+                      ) : null}
+                      {thesis ? (
+                        <details className="tool-about portfolio-ranker-example-context">
+                          <summary>Example context</summary>
+                          <p className="data-provenance-note">
+                            Sample research matched by ticker. This is not a link
+                            to a saved Thesis.
+                          </p>
+                          <div className="portfolio-ranker-thesis-meta">
+                            <Badge variant={thesisStatus.variant}>
+                              {thesisStatus.label}
+                            </Badge>
+                            <span className="portfolio-ranker-meta-chip">
+                              Example change:{' '}
+                              {thesis ? formatScoreChange(thesis) : 'Not set'}
+                            </span>
+                            <span className="portfolio-ranker-meta-chip">
+                              Conviction: {thesis?.conviction ?? 'Not set'}
+                            </span>
+                            <span className="portfolio-ranker-meta-chip portfolio-ranker-meta-chip--risk">
+                              Risk: {thesis?.riskLevel ?? 'Not set'}
+                            </span>
+                            <span className="portfolio-ranker-meta-chip">
+                              Theme: {thesis?.theme ?? 'Not set'}
+                            </span>
+                          </div>
+
+                          <div className="portfolio-ranker-review-dates">
+                            <span>
+                              Last reviewed{' '}
+                              <strong>
+                                {thesis?.lastReviewedDate ?? 'Not set'}
+                              </strong>
+                            </span>
+                            <span>
+                              Next review{' '}
+                              <strong>
+                                {thesis?.nextReviewDate ?? 'Not set'}
+                              </strong>
+                            </span>
+                          </div>
+                        </details>
+                      ) : null}
                       <div className="portfolio-ranker-card-footer">
-                        <div className="portfolio-ranker-review-dates">
-                          <span>
-                            Last reviewed{' '}
-                            <strong>
-                              {thesis?.lastReviewedDate ?? 'Not set'}
-                            </strong>
-                          </span>
-                          <span>
-                            Next review{' '}
-                            <strong>
-                              {thesis?.nextReviewDate ?? 'Not set'}
-                            </strong>
-                          </span>
-                        </div>
                         <Button
                           disabled={isWriting || isLoading || guardedDraft}
                           onClick={() => startEditingRow(row)}
@@ -820,7 +836,7 @@ export function PortfolioRankerScreen({
 
           {storageErrors.length > 0 ? (
             <div className="portfolio-ranker-storage-status" role="alert">
-              <h3>Storage</h3>
+              <h3>Could not update your ideas</h3>
               <ul>
                 {storageErrors.map((error) => (
                   <li key={error}>{error}</li>
@@ -833,7 +849,7 @@ export function PortfolioRankerScreen({
         <Card
           className="portfolio-ranker-output-card"
           emphasis
-          title="Thesis ranking output"
+          title="Comparison"
         >
           <div className="portfolio-ranker-output-hero">
             <div>
@@ -891,41 +907,43 @@ export function PortfolioRankerScreen({
             <div className="portfolio-ranker-empty-state">
               <h3>No ideas ranked yet</h3>
               <p>
-                Add your first idea with a ticker and manual score to generate
-                a deterministic ranking.
+                Add a company ticker and a score from 0 to 100 to compare ideas.
               </p>
             </div>
           )}
 
-          <div className="portfolio-ranker-score-guide">
-            <h3>Scoring guide</h3>
+          <details className="portfolio-ranker-score-guide tool-about">
+            <summary>About this comparison</summary>
+            <p>
+              Ranks use only the manual scores shown here. They do not update
+              your saved Theses or use live market data.
+            </p>
             <div>
               <span className="portfolio-ranker-guide-dot portfolio-ranker-guide-dot--risk" />
               <p>
-                <strong>0</strong> Weak thesis / high risk
+                <strong>0</strong> Lowest personal rating
               </p>
             </div>
             <div>
               <span className="portfolio-ranker-guide-dot portfolio-ranker-guide-dot--warning" />
               <p>
-                <strong>50</strong> Average thesis / mixed factors
+                <strong>50</strong> Midpoint
               </p>
             </div>
             <div>
               <span className="portfolio-ranker-guide-dot portfolio-ranker-guide-dot--growth" />
               <p>
-                <strong>100</strong> Strong thesis / high conviction
+                <strong>100</strong> Highest personal rating
               </p>
             </div>
-          </div>
+          </details>
 
           <div
             className={`portfolio-ranker-weakest-card ${weakestIdea ? weakestIdeaToneClass(weakestIdea.manualScore) : ''}`}
           >
             <div className="portfolio-ranker-weakest-header">
               <div>
-                <span>Review priority</span>
-                <h3>Weakest idea</h3>
+                <h3>Lowest score</h3>
               </div>
               {weakestIdea || validRankedItems.length === 0 ? (
                 <button
@@ -934,7 +952,7 @@ export function PortfolioRankerScreen({
                   onClick={() => onOpenWorkspace?.('mbs-scorer')}
                   type="button"
                 >
-                  Re-evaluate thesis
+                  Open scoring tool
                   <span className="portfolio-ranker-weakest-action-arrow" aria-hidden="true">
                     <svg
                       fill="none"
@@ -977,20 +995,20 @@ export function PortfolioRankerScreen({
                   </div>
                   <div>
                     <dt>Action</dt>
-                    <dd>Re-evaluate thesis</dd>
+                    <dd>Open scoring tool</dd>
                   </div>
                 </dl>
                 <p>
                   {weakestIdea.normalizedTicker} is the lowest valid scored idea
-                  on the current board.
+                  in this comparison.
                 </p>
               </>
             ) : validRankedItems.length === 1 ? (
               <p>
-                Add more ideas to compare weakest thesis.
+                Add another scored idea to compare.
               </p>
             ) : (
-              <p>Add scores to identify the weakest idea.</p>
+              <p>Add scores to see which idea you rated lowest.</p>
             )}
 
             {hasIncompleteRankerItems ? (
@@ -1179,7 +1197,7 @@ function getScoreToneClass(item: ManualPortfolioRankedItem | undefined): string 
 }
 
 function getWeakestIdeaReason(): string {
-  return 'Lowest current thesis score.';
+  return 'Lowest manual score in this comparison.';
 }
 
 function formatStatus(item: ManualPortfolioRankedItem | undefined): string {

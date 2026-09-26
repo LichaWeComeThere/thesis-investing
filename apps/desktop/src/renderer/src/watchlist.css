@@ -123,7 +123,7 @@
 }
 
 .watchlist-table-wrap {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-lg);
   overflow-x: auto;
@@ -185,7 +185,7 @@
   font-weight: 700;
   line-height: 1.35;
   margin: 0 0 6px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .watchlist-details h3 {
@@ -235,22 +235,10 @@
 }
 
 .watchlist-form-card {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
-    var(--ti-color-surface) !important;
+  background: var(--ti-color-surface) !important;
 }
 
-.watchlist-layout .ti-card p {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.018)),
-    rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 22px;
-  color: var(--ti-color-text-muted);
-  font-size: 15px;
-  line-height: 1.55;
-  padding: 18px;
-}
+
 
 @media (max-width: 780px) {
   .watchlist-form-grid,
@@ -320,17 +308,12 @@
   padding: 10px;
 }
 
-.watchlist-layout .ti-card p {
-  border-radius: 16px;
-  padding: 12px;
-}
+
 
 .watchlist-empty-state {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.018)),
-    rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 18px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   color: var(--ti-color-text-muted);
   display: grid;
   gap: 8px;
@@ -383,5 +366,42 @@
 
   .watchlist-row-actions {
     min-width: 0;
+  }
+}
+
+/* Give saved companies room to scan beside the focused entry form. */
+.watchlist-screen .watchlist-workspace-grid {
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.4fr);
+  gap: 20px;
+}
+
+.watchlist-screen .watchlist-workspace-grid > .ti-card {
+  min-width: 0;
+  position: static;
+}
+
+.watchlist-saved-card .watchlist-table {
+  min-width: 460px;
+}
+
+.watchlist-saved-card .watchlist-table-wrap {
+  margin-top: 16px;
+}
+
+.watchlist-screen .watchlist-layout {
+  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.watchlist-details-card,
+.watchlist-examples {
+  min-width: 0;
+}
+
+@media (max-width: 1080px) {
+  .watchlist-screen .watchlist-workspace-grid,
+  .watchlist-screen .watchlist-layout {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

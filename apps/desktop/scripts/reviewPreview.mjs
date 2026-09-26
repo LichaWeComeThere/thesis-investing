@@ -17,6 +17,7 @@ let reviews;
 let theses;
 let decisions;
 let history;
+const toolServices = {};
 const server = await createServer({
   configFile: false, root: previewRoot,
   resolve: { alias: {
@@ -34,7 +35,22 @@ const server = await createServer({
         let body = '';
         for await (const part of request) { body += part; if (body.length > 2000000) throw new Error('Too large'); }
         const { method, args } = JSON.parse(body);
-        const handlers = { 'theses.list': () => theses.list(), 'theses.getById': (...input) => theses.getById(...input), 'theses.create': (...input) => theses.create(...input), 'theses.update': (...input) => theses.update(...input), 'reviews.getActive': (...input) => reviews.getActive(...input), 'reviews.start': (...input) => reviews.start(...input), 'reviews.resume': (...input) => reviews.resume(...input), 'reviews.saveDraft': (...input) => reviews.saveDraft(...input), 'reviews.complete': (...input) => reviews.complete(...input), 'decisions.list': (...input) => decisions.list(...input), 'decisions.listCompletedReviews': (...input) => decisions.listCompletedReviews(...input), 'decisions.create': (...input) => decisions.create(...input), 'history.get': (...input) => history.get(...input) };
+        const handlers = {
+          'summary.get': () => toolServices.dashboard.get(),
+          'watchlist.list': () => toolServices.watchlist.list(),
+          'watchlist.save': (...input) => toolServices.watchlist.save(...input),
+          'watchlist.remove': (...input) => toolServices.watchlist.remove(...input),
+          'notes.list': () => toolServices.notes.list(),
+          'notes.save': (...input) => toolServices.notes.save(...input),
+          'reminders.list': () => toolServices.reminders.list(),
+          'reminders.save': (...input) => toolServices.reminders.save(...input),
+          'reminders.remove': (...input) => toolServices.reminders.remove(...input),
+          'ranker.list': () => toolServices.ranker.list(),
+          'ranker.save': (...input) => toolServices.ranker.save(...input),
+          'ranker.remove': (...input) => toolServices.ranker.remove(...input),
+          'scores.list': () => toolServices.scores.list(),
+          'scores.save': (...input) => toolServices.scores.save(...input),
+          'theses.list': () => theses.list(), 'theses.getById': (...input) => theses.getById(...input), 'theses.create': (...input) => theses.create(...input), 'theses.update': (...input) => theses.update(...input), 'reviews.getActive': (...input) => reviews.getActive(...input), 'reviews.start': (...input) => reviews.start(...input), 'reviews.resume': (...input) => reviews.resume(...input), 'reviews.saveDraft': (...input) => reviews.saveDraft(...input), 'reviews.complete': (...input) => reviews.complete(...input), 'decisions.list': (...input) => decisions.list(...input), 'decisions.listCompletedReviews': (...input) => decisions.listCompletedReviews(...input), 'decisions.create': (...input) => decisions.create(...input), 'history.get': (...input) => history.get(...input) };
         if (!Object.hasOwn(handlers, method) || !Array.isArray(args)) throw new Error('Invalid');
         const result = await handlers[method](...args);
         response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify(result));
@@ -58,6 +74,18 @@ const decisionService = createDecisionsStorageService(() => createSqliteStorage(
 reviews = createReviewSessionsIpcHandlers(reviewService);
 decisions = createDecisionsIpcHandlers(decisionService);
 theses = createLivingThesesStorageService(() => createSqliteStorage({ filename }));
+// Exercise the existing local-storage contracts with this isolated example file.
+for (const [key, file, factory] of [
+  ['dashboard', 'dashboardSummariesStorageService', 'createSqliteDashboardSummariesStorageService'],
+  ['watchlist', 'watchlistStorageService', 'createSqliteWatchlistStorageService'],
+  ['notes', 'thesisNotesStorageService', 'createSqliteThesisNotesStorageService'],
+  ['reminders', 'remindersStorageService', 'createSqliteRemindersStorageService'],
+  ['ranker', 'portfolioRankerStorageService', 'createSqlitePortfolioRankerStorageService'],
+  ['scores', 'mbsScoreSnapshotsStorageService', 'createSqliteMbsScoreSnapshotsStorageService']
+]) {
+  const module = await server.ssrLoadModule(resolve(appRoot, `src/main/${file}.ts`));
+  toolServices[key] = module[factory](filename);
+}
 const existing = await theses.list();
 if (!existing.ok) throw new Error('Could not load the example database');
 if (existing.value.length === 0) {
@@ -66,5 +94,5 @@ if (existing.value.length === 0) {
 }
 await server.listen();
 console.log('Guided review example workspace is ready.');
-async function close() { await server.close(); await reviewService.close(); await decisionService.close(); await historyService.close(); await theses.close(); process.exit(0); }
+async function close() { await server.close(); await reviewService.close(); await decisionService.close(); await historyService.close(); await theses.close(); await Promise.all(Object.values(toolServices).map((service) => service.close())); process.exit(0); }
 process.on('SIGTERM', close); process.on('SIGINT', close);

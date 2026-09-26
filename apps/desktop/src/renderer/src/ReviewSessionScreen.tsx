@@ -57,7 +57,7 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, onComplet
   const activeIndex = Math.max(0, Math.min(5, steps.findIndex((step) => step.id === workflow.activeStep) < 0 ? 5 : steps.findIndex((step) => step.id === workflow.activeStep)));
   const activeStep = steps[activeIndex];
   const draft = workflow.draft;
-  const request = navigationRequest ?? (leaving ? { destination: 'the Thesis Board', onLeave: onReturn, onStay: () => setLeaving(false) } : undefined);
+  const request = navigationRequest ?? (leaving ? { destination: 'Theses', onLeave: onReturn, onStay: () => setLeaving(false) } : undefined);
 
   useEffect(() => { headingRef.current?.focus(); }, [workflow.activeStep]);
   useEffect(() => {
@@ -156,8 +156,8 @@ export function ReviewSessionScreen({ initialReview, client, onReturn, onComplet
   return (
     <div className="guided-review">
       <header className="review-heading">
-        <div><p className="review-eyebrow">Thesis Board</p><h1>Guided review</h1><p>One section at a time. Save your progress whenever you need a break.</p></div>
-        <Button type="button" variant="ghost" disabled={completing || confirming} onClick={returnToBoard}>Return to Board</Button>
+        <div><p className="review-eyebrow">Theses</p><h1>Guided review</h1><p>One section at a time. Save your progress whenever you need a break.</p></div>
+        <Button type="button" variant="ghost" disabled={completing || confirming} onClick={returnToBoard}>Return to theses</Button>
       </header>
       <section className="review-context" aria-label="Review context">
         <div><strong>{workflow.baseline.entityName}{workflow.baseline.ticker ? ` (${workflow.baseline.ticker})` : ''}</strong><p>{workflow.baseline.title}</p></div>

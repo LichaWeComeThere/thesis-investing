@@ -359,13 +359,11 @@ export function RemindersScreen({
   return (
     <div className="reminders-screen">
       <PageHeader
-        badge={<Badge variant="accent">Review Dates</Badge>}
-        description="Track thesis reviews, earnings follow-ups, and custom research dates in one local calendar list."
-        eyebrow="Research Calendar"
+        description="Choose when to revisit an idea or follow up on your research."
         title="Reminders"
       />
 
-      <Card title="Add or edit reminder">
+      <Card className="reminders-form-card" title={selectedReminder?.id === form.id ? "Edit reminder" : "New reminder"}>
         <div className="reminders-form-grid">
           <label className="reminders-field">
             <span>Title</span>
@@ -441,7 +439,7 @@ export function RemindersScreen({
 
         {visibleValidationErrors.length > 0 ? (
           <div className="reminders-validation" role="alert">
-            <h3>Validation</h3>
+            <h3>Check these details</h3>
             <ul>
               {visibleValidationErrors.map((error) => (
                 <li key={error}>{error}</li>
@@ -452,7 +450,7 @@ export function RemindersScreen({
 
         {storageErrors.length > 0 ? (
           <div className="reminders-validation" role="alert">
-            <h3>Storage</h3>
+            <h3>Could not update your reminders</h3>
             <ul>
               {storageErrors.map((error) => (
                 <li key={error}>{error}</li>
@@ -477,63 +475,13 @@ export function RemindersScreen({
       </Card>
 
       <div className="reminders-layout">
-        <Card title="Upcoming thesis reviews">
-          <p className="data-provenance-note" role="note">
-            <Badge variant="neutral">Demo thesis data</Badge>
-            <span>These example review dates are not saved reminders.</span>
-          </p>
-          <div className="reminders-table-wrap">
-            <table className="reminders-table">
-              <thead>
-                <tr>
-                  <th scope="col">Due date</th>
-                  <th scope="col">Thesis</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcomingReviewTheses.map((thesis) => (
-                  <tr key={thesis.id}>
-                    <td>{thesis.nextReviewDate}</td>
-                    <td>
-                      {thesis.ticker} - {thesis.companyName}
-                    </td>
-                    <td>
-                      <Badge
-                        variant={
-                          thesis.id === nextReviewThesis?.id
-                            ? 'warning'
-                            : reminderThesisBadgeVariant(thesis)
-                        }
-                      >
-                        {thesis.ideaStatus}
-                      </Badge>
-                    </td>
-                    <td>
-                      <Button
-                        onClick={() => onOpenWorkspace?.('thesis-monitor')}
-                        size="sm"
-                        type="button"
-                        variant="secondary"
-                      >
-                        Open thesis
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card title="Local reminders">
+        <Card className="reminders-list-card" title="Your reminders">
           <p className="data-provenance-note" role="note">
             <Badge variant="accent">Local saved data</Badge>
             <span>These reminders persist on this device.</span>
           </p>
           {isLoading ? (
-            <p>Loading persisted reminders...</p>
+            <p>Loading reminders...</p>
           ) : reminders.length > 0 ? (
             <div className="reminders-table-wrap">
               <table className="reminders-table">
@@ -609,7 +557,7 @@ export function RemindersScreen({
           )}
         </Card>
 
-        <Card title="Selected reminder details">
+        <Card className="reminders-details-card" title="Reminder details">
           {selectedReminder ? (
             <article className="reminders-details">
               <div className="reminders-details-header">
@@ -650,6 +598,57 @@ export function RemindersScreen({
             </div>
           )}
         </Card>
+        <details className="tool-about reminders-examples">
+          <summary>Explore example review dates</summary>
+          <p className="data-provenance-note" role="note">
+            <Badge variant="neutral">Demo thesis data</Badge>
+            <span>These example review dates are not saved reminders.</span>
+          </p>
+          <div className="reminders-table-wrap">
+            <table className="reminders-table">
+              <thead>
+                <tr>
+                  <th scope="col">Due date</th>
+                  <th scope="col">Thesis</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcomingReviewTheses.map((thesis) => (
+                  <tr key={thesis.id}>
+                    <td>{thesis.nextReviewDate}</td>
+                    <td>
+                      {thesis.ticker} - {thesis.companyName}
+                    </td>
+                    <td>
+                      <Badge
+                        variant={
+                          thesis.id === nextReviewThesis?.id
+                            ? 'warning'
+                            : reminderThesisBadgeVariant(thesis)
+                        }
+                      >
+                        {thesis.ideaStatus}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Button
+                        onClick={() => onOpenWorkspace?.('thesis-monitor')}
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        Open research notes
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+
       </div>
     </div>
   );

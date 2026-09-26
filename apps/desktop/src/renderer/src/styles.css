@@ -1,8 +1,8 @@
 :root {
-  color: #F4F7FA;
-  background: #05080C;
+  color: #202925;
+  background: #F6F5F1;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -45,7 +45,7 @@
 
 .thesis-board-list-item {
   align-items: center;
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   color: var(--ti-color-text);
@@ -66,9 +66,9 @@
 
 .thesis-board-list-item:hover,
 .thesis-board-list-item--selected {
-  background: rgba(72, 224, 204, 0.08);
+  background: rgba(36, 91, 70, 0.08);
   border-color: var(--ti-color-border-strong);
-  box-shadow: var(--ti-shadow-surface-inset);
+  box-shadow: none;
 }
 
 .thesis-board-list-item:focus-visible {
@@ -82,12 +82,12 @@
   border-radius: 8px;
   display: inline-flex;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   justify-content: center;
 }
 
 .thesis-board-rank-number {
-  background: rgba(76, 141, 255, 0.12);
+  background: rgba(55, 97, 122, 0.12);
   color: var(--ti-color-data);
   height: 34px;
   width: 34px;
@@ -113,7 +113,7 @@
 }
 
 .thesis-board-list-score {
-  background: rgba(53, 208, 127, 0.12);
+  background: rgba(40, 103, 68, 0.12);
   color: var(--ti-color-growth);
   min-height: 34px;
   min-width: 44px;
@@ -131,9 +131,9 @@
   color: var(--ti-color-primary);
   display: inline-flex;
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .thesis-board-detail-header h2 {
@@ -151,7 +151,7 @@
 }
 
 .thesis-board-metric {
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   display: grid;
@@ -165,9 +165,9 @@
 .thesis-board-text-field span {
   color: var(--ti-color-text-subtle);
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .thesis-board-metric strong {
@@ -197,7 +197,7 @@
 .thesis-board-edit-grid select,
 .thesis-board-text-field textarea,
 .thesis-board-category-row input {
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   color: var(--ti-color-text);
@@ -226,7 +226,7 @@
 
 .thesis-board-score-hero {
   align-items: center;
-  background: rgba(72, 224, 204, 0.08);
+  background: rgba(36, 91, 70, 0.08);
   border: 1px solid var(--ti-color-border-strong);
   border-radius: 8px;
   display: grid;
@@ -239,9 +239,9 @@
 .thesis-board-score-context span {
   color: var(--ti-color-text-muted);
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .thesis-board-score-hero strong {
@@ -251,14 +251,14 @@
 }
 
 .thesis-board-score-hero--weak {
-  background: rgba(239, 95, 87, 0.08);
-  border-color: rgba(239, 95, 87, 0.36);
+  background: rgba(161, 60, 50, 0.08);
+  border-color: rgba(161, 60, 50, 0.36);
 }
 
 .thesis-board-score-hero--mixed,
 .thesis-board-score-hero--incomplete {
-  background: rgba(242, 184, 75, 0.08);
-  border-color: rgba(242, 184, 75, 0.36);
+  background: rgba(130, 88, 18, 0.08);
+  border-color: rgba(130, 88, 18, 0.36);
 }
 
 .thesis-board-score-context {
@@ -269,7 +269,7 @@
 
 .thesis-board-score-context strong {
   color: var(--ti-color-text-section);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .thesis-board-category-list {
@@ -280,7 +280,7 @@
 
 .thesis-board-category-row {
   align-items: center;
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   display: grid;
@@ -317,7 +317,7 @@
 }
 
 .thesis-board-driver-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   padding: 12px;
@@ -422,8 +422,8 @@
 
 .thesis-board-prototype-note {
   align-items: center;
-  background: rgba(72, 224, 204, 0.08);
-  border: 1px solid rgba(72, 224, 204, 0.22);
+  background: rgba(36, 91, 70, 0.08);
+  border: 1px solid rgba(36, 91, 70, 0.22);
   border-radius: 8px;
   color: var(--ti-color-text-muted);
   display: flex;
@@ -462,11 +462,8 @@
 }
 
 .thesis-board-detail-card {
-  border-color: rgba(72, 224, 204, 0.18) !important;
-  box-shadow:
-    0 0 0 1px rgba(72, 224, 204, 0.08),
-    0 24px 70px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+  border-color: rgba(36, 91, 70, 0.18) !important;
+  box-shadow: none !important;
 }
 
 .thesis-board-rank-card,
@@ -487,10 +484,10 @@
 
 .thesis-board-panel-kicker span {
   color: var(--ti-color-primary);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .thesis-board-panel-kicker strong {
@@ -503,9 +500,7 @@
 }
 
 .thesis-board-list-item {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-    rgba(255, 255, 255, 0.02);
+  background: var(--ti-color-surface-muted);
   gap: 9px;
   grid-template-columns: 30px minmax(0, 1fr) 50px;
   min-height: 70px;
@@ -513,17 +508,12 @@
 }
 
 .thesis-board-list-item:hover {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .thesis-board-list-item--selected {
-  background:
-    linear-gradient(135deg, rgba(72, 224, 204, 0.16), rgba(76, 141, 255, 0.06)),
-    rgba(72, 224, 204, 0.08);
-  box-shadow:
-    0 0 0 1px rgba(72, 224, 204, 0.18),
-    0 14px 34px rgba(0, 0, 0, 0.22),
-    inset 3px 0 0 var(--ti-color-primary);
+  background: rgba(36, 91, 70, 0.08);
+  box-shadow: none;
 }
 
 .thesis-board-rank-number {
@@ -545,7 +535,7 @@
 
 .thesis-board-list-copy small {
   color: var(--ti-color-text-subtle);
-  font-size: 11px;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -553,10 +543,8 @@
 
 .thesis-board-list-score {
   align-content: center;
-  background:
-    linear-gradient(180deg, rgba(53, 208, 127, 0.2), rgba(53, 208, 127, 0.08)),
-    rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(53, 208, 127, 0.32);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid rgba(40, 103, 68, 0.32);
   color: var(--ti-color-growth);
   display: grid;
   gap: 0;
@@ -574,8 +562,8 @@
 .thesis-board-list-score small {
   color: var(--ti-color-text-subtle);
   font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1.2;
 }
 
@@ -594,7 +582,7 @@
 .thesis-board-detail-header p {
   color: var(--ti-color-text-muted);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 600;
   margin: 8px 0 0;
 }
 
@@ -607,8 +595,8 @@
 
 .thesis-board-status-stack span {
   color: var(--ti-color-text-subtle);
-  font-size: 11px;
-  letter-spacing: 0.09em;
+  font-size: 12px;
+  letter-spacing: 0;
 }
 
 .thesis-board-metric-grid {
@@ -617,9 +605,7 @@
 }
 
 .thesis-board-metric {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)),
-    rgba(255, 255, 255, 0.02);
+  background: var(--ti-color-surface-muted);
   min-height: 68px;
   padding: 12px 14px;
 }
@@ -639,10 +625,8 @@
 }
 
 .thesis-board-summary-card {
-  background:
-    linear-gradient(135deg, rgba(72, 224, 204, 0.12), rgba(76, 141, 255, 0.055)),
-    rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(72, 224, 204, 0.22);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid rgba(36, 91, 70, 0.22);
   border-radius: 8px;
   display: grid;
   gap: 12px;
@@ -661,9 +645,9 @@
 .thesis-board-note-card span {
   color: var(--ti-color-text-subtle);
   font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .thesis-board-summary-card strong {
@@ -696,7 +680,7 @@
 }
 
 .thesis-board-note-card {
-  background: rgba(255, 255, 255, 0.028);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   display: grid;
@@ -733,12 +717,12 @@
 }
 
 .thesis-board-note-card:hover {
-  border-color: rgba(72, 224, 204, 0.22);
-  transform: translateY(-1px);
+  border-color: rgba(36, 91, 70, 0.22);
+  transform: none;
 }
 
 .thesis-board-score-card {
-  border-color: rgba(72, 224, 204, 0.22) !important;
+  border-color: rgba(36, 91, 70, 0.22) !important;
 }
 
 .thesis-board-score-hero {
@@ -753,14 +737,14 @@
 }
 
 .thesis-board-score-hero strong {
-  font-size: 56px;
+  font-size: 40px;
   letter-spacing: 0;
 }
 
 .thesis-board-score-hero small {
   color: var(--ti-color-text-muted);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 600;
   margin-bottom: 6px;
 }
 
@@ -790,13 +774,13 @@
 }
 
 .thesis-board-category-row {
-  background: rgba(255, 255, 255, 0.028);
+  background: var(--ti-color-surface-muted);
   grid-template-columns: minmax(0, 1fr) 64px;
   padding: 12px;
 }
 
 .thesis-board-category-meter {
-  background: rgba(255, 255, 255, 0.075);
+  background: var(--ti-color-surface-muted);
   border-radius: 999px;
   display: block !important;
   height: 6px;
@@ -805,15 +789,14 @@
 }
 
 .thesis-board-category-meter span {
-  background:
-    linear-gradient(90deg, var(--ti-color-data), var(--ti-color-primary));
+  background: var(--ti-color-primary);
   border-radius: inherit;
   display: block;
   height: 100%;
 }
 
 .thesis-board-category-row input {
-  font-weight: 800;
+  font-weight: 600;
   min-height: 38px;
   padding: 8px;
 }
@@ -824,29 +807,27 @@
 }
 
 .thesis-board-driver-card {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
-    rgba(255, 255, 255, 0.02);
+  background: var(--ti-color-surface-muted);
   min-height: 142px;
   padding: 14px;
 }
 
 .thesis-board-driver-card--strong {
-  border-color: rgba(53, 208, 127, 0.28);
+  border-color: rgba(40, 103, 68, 0.28);
 }
 
 .thesis-board-driver-card--weak {
-  border-color: rgba(242, 184, 75, 0.3);
+  border-color: rgba(130, 88, 18, 0.3);
 }
 
 .thesis-board-driver-card h3 {
   font-size: 13px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .thesis-board-driver-card li {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--ti-color-border);
   padding-top: 8px;
 }
 
@@ -926,14 +907,14 @@
 
 .thesis-board-filter-button,
 .thesis-board-add-idea-button {
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   color: var(--ti-color-text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   min-height: 30px;
   padding: 6px 8px;
   transition:
@@ -945,8 +926,8 @@
 .thesis-board-filter-button:hover,
 .thesis-board-filter-button--active,
 .thesis-board-add-idea-button:hover {
-  background: rgba(72, 224, 204, 0.1);
-  border-color: rgba(72, 224, 204, 0.3);
+  background: rgba(36, 91, 70, 0.1);
+  border-color: rgba(36, 91, 70, 0.3);
   color: var(--ti-color-primary);
 }
 
@@ -964,14 +945,14 @@
 
 .thesis-board-sort-row label > span {
   color: var(--ti-color-text-subtle);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .thesis-board-sort-row select {
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   color: var(--ti-color-text);
@@ -995,12 +976,12 @@
 }
 
 .thesis-board-card-meta small {
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.065);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   color: var(--ti-color-text-muted);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1.2;
   padding: 4px 6px;
   white-space: normal;
@@ -1008,25 +989,25 @@
 
 .thesis-board-score-change {
   border-radius: 8px;
-  font-size: 10px;
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1.2;
   margin-top: 5px;
   padding: 3px 5px;
 }
 
 .thesis-board-score-change--up {
-  background: rgba(53, 208, 127, 0.12);
+  background: rgba(40, 103, 68, 0.12);
   color: var(--ti-color-growth);
 }
 
 .thesis-board-score-change--down {
-  background: rgba(239, 95, 87, 0.12);
+  background: rgba(161, 60, 50, 0.12);
   color: var(--ti-color-risk);
 }
 
 .thesis-board-score-change--flat {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ti-color-surface-muted);
   color: var(--ti-color-text-subtle);
 }
 
@@ -1051,12 +1032,12 @@
 
 * {
   box-sizing: border-box;
-  scrollbar-color: rgba(72, 224, 204, 0.35) transparent;
+  scrollbar-color: rgba(36, 91, 70, 0.35) transparent;
   scrollbar-width: thin;
 }
 
 html {
-  scrollbar-color: rgba(72, 224, 204, 0.35) #070B10;
+  scrollbar-color: rgba(36, 91, 70, 0.35) #F6F5F1;
   scrollbar-width: thin;
 }
 
@@ -1066,18 +1047,18 @@ html {
 }
 
 *::-webkit-scrollbar-track {
-  background: #070B10;
+  background: #F6F5F1;
   border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(72, 224, 204, 0.28);
-  border: 2px solid #070B10;
+  background: rgba(36, 91, 70, 0.28);
+  border: 2px solid #F6F5F1;
   border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(72, 224, 204, 0.55);
+  background: rgba(36, 91, 70, 0.55);
 }
 
 *::-webkit-scrollbar-corner {
@@ -1091,7 +1072,7 @@ html {
 .theme-basket-example-table-wrapper,
 .scrollable-panel,
 .custom-scrollbar {
-  scrollbar-color: rgba(154, 167, 181, 0.24) transparent;
+  scrollbar-color: rgba(89, 103, 94, 0.24) transparent;
   scrollbar-width: thin;
 }
 
@@ -1112,7 +1093,7 @@ html {
 .theme-basket-example-table-wrapper::-webkit-scrollbar-thumb,
 .scrollable-panel::-webkit-scrollbar-thumb,
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(154, 167, 181, 0.22);
+  background: rgba(89, 103, 94, 0.22);
   border-color: transparent;
 }
 
@@ -1123,7 +1104,7 @@ html {
 .theme-basket-example-table-wrapper::-webkit-scrollbar-thumb:hover,
 .scrollable-panel::-webkit-scrollbar-thumb:hover,
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(72, 224, 204, 0.45);
+  background: rgba(36, 91, 70, 0.45);
 }
 
 body {
@@ -1201,7 +1182,7 @@ select {
   font-weight: 700;
   letter-spacing: 0;
   margin: 0 0 10px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .brand-area h1 {
@@ -1227,7 +1208,7 @@ select {
 }
 
 .nav-item:hover:not([aria-current="page"]) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ti-color-surface-muted);
   color: var(--ti-color-surface);
 }
 
@@ -1714,7 +1695,7 @@ select {
   font-weight: 700;
   line-height: 1.35;
   margin: 0 0 6px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .thesis-details h3 {
@@ -2007,18 +1988,15 @@ select {
   }
 }
 
-/* Premium dark fintech visual polish. Styling only; workflow behavior is unchanged. */
+/* Shared workspace surfaces and keyboard feedback. */
 :root {
-  color: var(--ti-color-text);
-  background:
-    radial-gradient(circle at 78% 8%, rgba(72, 224, 204, 0.08), transparent 32%),
-    linear-gradient(135deg, var(--ti-color-background-deep), var(--ti-color-background));
+  color: #202925;
+  background: #F6F5F1;
+  color-scheme: light;
 }
 
 body {
-  background:
-    radial-gradient(circle at 78% 8%, rgba(72, 224, 204, 0.08), transparent 32%),
-    linear-gradient(135deg, var(--ti-color-background-deep), var(--ti-color-background));
+  background: #F6F5F1;
 }
 
 button {
@@ -2026,24 +2004,19 @@ button {
 }
 
 ::selection {
-  background: rgba(72, 224, 204, 0.28);
+  background: rgba(36, 91, 70, 0.28);
   color: var(--ti-color-text);
 }
 
-.ti-card:hover {
-  border-color: rgba(72, 224, 204, 0.18);
-  box-shadow: var(--ti-shadow-card-hover) !important;
-  transform: translateY(-1px);
-}
 
 .ti-button:hover:not(:disabled) {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
+  filter: none;
+  transform: none;
 }
 
 .ti-button:active:not(:disabled) {
-  filter: brightness(0.98);
-  transform: translateY(0);
+  filter: none;
+  transform: none;
 }
 
 .ti-button:focus-visible,
@@ -2056,19 +2029,15 @@ select:focus-visible {
 }
 
 .app-shell {
-  background:
-    radial-gradient(circle at 82% 0%, rgba(72, 224, 204, 0.08), transparent 34%),
-    linear-gradient(135deg, var(--ti-color-background-deep), var(--ti-color-background));
+  background: var(--ti-color-background);
   grid-template-columns: 232px minmax(0, 1fr);
 }
 
 .sidebar {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.022), transparent 24%),
-    var(--ti-color-sidebar);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 0 22px 22px 0;
-  box-shadow: 10px 0 34px rgba(0, 0, 0, 0.18);
+  background: var(--ti-color-sidebar);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 0;
+  box-shadow: none;
   color: var(--ti-color-sidebar-text);
   gap: 18px;
   margin: 8px 0 8px 8px;
@@ -2095,7 +2064,7 @@ select:focus-visible {
 .brand-eyebrow {
   color: var(--ti-color-accent);
   font-size: var(--ti-font-size-xs);
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 .navigation-list {
@@ -2103,18 +2072,18 @@ select:focus-visible {
 }
 
 .nav-item {
-  border-radius: 18px !important;
+  border-radius: 8px;
   min-height: 40px;
-  padding-inline: 8px !important;
+  padding-inline: 8px;
 }
 
 .nav-item:hover:not([aria-current="page"]) {
-  background: rgba(255, 255, 255, 0.012) !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  color: var(--ti-color-sidebar-text-strong) !important;
-  filter: none !important;
-  transform: none !important;
+  background: var(--ti-color-surface-muted);
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ti-color-sidebar-text-strong);
+  filter: none;
+  transform: none;
 }
 
 .nav-item[aria-current="page"] {
@@ -2124,7 +2093,7 @@ select:focus-visible {
 .nav-item[aria-current="page"]::before {
   background: var(--ti-color-primary);
   border-radius: var(--ti-radius-pill);
-  box-shadow: 0 0 18px rgba(72, 224, 204, 0.45);
+  box-shadow: none;
   content: "";
   height: 22px;
   left: -7px;
@@ -2154,9 +2123,7 @@ select:focus-visible {
 }
 
 .onboarding-screen {
-  background:
-    radial-gradient(circle at 50% 0%, rgba(72, 224, 204, 0.1), transparent 34%),
-    linear-gradient(135deg, var(--ti-color-background-deep), var(--ti-color-background));
+  background: var(--ti-color-background);
 }
 
 .onboarding-layout {
@@ -2186,12 +2153,10 @@ select:focus-visible {
 .watchlist-disclaimer,
 .theme-baskets-disclaimer,
 .dashboard-disclaimer {
-  background:
-    linear-gradient(135deg, rgba(72, 224, 204, 0.075), rgba(76, 141, 255, 0.035)),
-    var(--ti-color-surface-muted);
-  border-color: rgba(72, 224, 204, 0.16);
+  background: var(--ti-color-surface-muted);
+  border-color: rgba(36, 91, 70, 0.16);
   border-radius: var(--ti-radius-lg);
-  box-shadow: var(--ti-shadow-surface-inset);
+  box-shadow: none;
   color: var(--ti-color-text-muted);
   margin-bottom: 26px;
   padding: 16px 18px;
@@ -2235,9 +2200,9 @@ select:focus-visible {
 .watchlist-field input,
 .watchlist-field textarea {
   background: var(--ti-color-surface-soft);
-  border-color: rgba(255, 255, 255, 0.09);
+  border-color: var(--ti-color-border);
   border-radius: var(--ti-radius-md);
-  box-shadow: var(--ti-shadow-surface-inset);
+  box-shadow: none;
   color: var(--ti-color-text);
   min-height: 44px;
   transition:
@@ -2256,7 +2221,7 @@ select:focus-visible {
 .watchlist-field input:hover,
 .watchlist-field textarea:hover {
   background: var(--ti-color-surface-elevated);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: var(--ti-color-border);
 }
 
 .mbs-field input::placeholder,
@@ -2280,12 +2245,10 @@ select:focus-visible {
 .theme-basket-list-item,
 .watchlist-meta-grid div,
 .thesis-meta-grid div {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)),
-    var(--ti-color-surface-muted);
-  border-color: rgba(255, 255, 255, 0.085);
+  background: var(--ti-color-surface-muted);
+  border-color: var(--ti-color-border);
   border-radius: var(--ti-radius-lg);
-  box-shadow: var(--ti-shadow-surface-inset);
+  box-shadow: none;
 }
 
 .mbs-score-card {
@@ -2294,11 +2257,8 @@ select:focus-visible {
 }
 
 .mbs-score-card:first-child {
-  background:
-    radial-gradient(circle at 88% 10%, rgba(72, 224, 204, 0.18), transparent 38%),
-    linear-gradient(145deg, rgba(72, 224, 204, 0.12), rgba(255, 255, 255, 0.035)),
-    var(--ti-color-surface-elevated);
-  border-color: rgba(72, 224, 204, 0.28);
+  background: var(--ti-color-surface-elevated);
+  border-color: rgba(36, 91, 70, 0.28);
 }
 
 .mbs-score-label,
@@ -2309,8 +2269,8 @@ select:focus-visible {
 .watchlist-meta-grid dt {
   color: var(--ti-color-text-subtle);
   font-size: var(--ti-font-size-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .mbs-score-card strong {
@@ -2335,14 +2295,14 @@ select:focus-visible {
 .portfolio-ranker-row:hover,
 .thesis-note-list-item:hover,
 .theme-basket-list-item:hover {
-  border-color: rgba(72, 224, 204, 0.18);
-  transform: translateY(-1px);
+  border-color: rgba(36, 91, 70, 0.18);
+  transform: none;
 }
 
 .portfolio-ranker-results,
 .watchlist-table-wrap,
 .theme-basket-example-table-wrap {
-  background: rgba(255, 255, 255, 0.018);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-lg);
 }
@@ -2360,7 +2320,7 @@ select:focus-visible {
 .watchlist-table td,
 .theme-basket-example-table th,
 .theme-basket-example-table td {
-  border-bottom-color: rgba(255, 255, 255, 0.065);
+  border-bottom-color: var(--ti-color-border);
   padding: 14px 14px;
 }
 
@@ -2379,7 +2339,7 @@ select:focus-visible {
 .portfolio-ranker-status {
   border-radius: var(--ti-radius-pill);
   padding: 6px 10px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-status.ranked {
@@ -2423,11 +2383,9 @@ select:focus-visible {
 
 .thesis-note-list-item[aria-current="true"],
 .theme-basket-list-item.selected {
-  background:
-    linear-gradient(135deg, rgba(72, 224, 204, 0.16), rgba(76, 141, 255, 0.055)),
-    var(--ti-color-surface-elevated);
+  background: var(--ti-color-surface-elevated);
   border-color: var(--ti-color-border-strong);
-  box-shadow: var(--ti-shadow-card-emphasis);
+  box-shadow: none;
 }
 
 .thesis-details h3,
@@ -2440,7 +2398,7 @@ select:focus-visible {
 .watchlist-details-eyebrow,
 .theme-basket-details-eyebrow {
   color: var(--ti-color-accent);
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 .watchlist-row-actions {
@@ -2469,7 +2427,7 @@ select:focus-visible {
   .sidebar {
     border-bottom: 1px solid var(--ti-color-sidebar-divider);
     border-right: 0;
-    border-radius: 0 0 24px 24px;
+    border-radius: 0 0 10px 10px;
     gap: 16px;
     margin: 0;
     min-height: auto;
@@ -2494,8 +2452,8 @@ select:focus-visible {
 /* Sidebar navigation icon polish. Visual-only: routing and selected state are unchanged. */
 .nav-item {
   align-items: center;
-  color: var(--ti-color-sidebar-text) !important;
-  gap: 9px !important;
+  color: var(--ti-color-sidebar-text);
+  gap: 9px;
   overflow: visible;
   transition:
     border-color 170ms ease,
@@ -2505,8 +2463,8 @@ select:focus-visible {
 
 .nav-item-label {
   color: var(--ti-color-sidebar-text);
-  font-size: var(--ti-font-size-sm);
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1.2;
   transition:
     color 170ms ease,
@@ -2516,9 +2474,9 @@ select:focus-visible {
 
 .nav-item-icon-shell {
   align-items: center;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
   color: var(--ti-color-text-subtle);
   display: inline-flex;
   flex: 0 0 auto;
@@ -2542,31 +2500,26 @@ select:focus-visible {
 
 .nav-item:hover:not([aria-current="page"]) .nav-item-label {
   color: var(--ti-color-accent);
-  text-shadow: 0 0 16px rgba(72, 224, 204, 0.22);
-  transform: translateX(2px);
+  text-shadow: none;
+  transform: none;
 }
 
 .nav-item:hover:not([aria-current="page"]) .nav-item-icon-shell {
-  background: rgba(72, 224, 204, 0.07);
-  border-color: rgba(72, 224, 204, 0.2);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 18px rgba(72, 224, 204, 0.13);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
   color: var(--ti-color-accent);
-  transform: translate(1px, -1px) scale(1.04);
+  transform: none;
 }
 
 .nav-item:hover:not([aria-current="page"]) .nav-item-icon {
-  transform: scale(1.12);
+  transform: none;
 }
 
 .nav-item[aria-current="page"] {
-  background:
-    linear-gradient(135deg, rgba(72, 224, 204, 0.14), rgba(76, 141, 255, 0.055)) !important;
-  border-color: var(--ti-color-border-strong) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 24px rgba(72, 224, 204, 0.09) !important;
+  background: var(--ti-color-surface-soft);
+  border-color: var(--ti-color-border-strong);
+  box-shadow: none;
 }
 
 .nav-item[aria-current="page"] .nav-item-label,
@@ -2575,15 +2528,13 @@ select:focus-visible {
 }
 
 .nav-item[aria-current="page"] .nav-item-icon-shell {
-  background: rgba(72, 224, 204, 0.12);
-  border-color: rgba(72, 224, 204, 0.36);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 22px rgba(72, 224, 204, 0.16);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .nav-item[aria-current="page"] .nav-item-icon {
-  transform: scale(1.05);
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2597,7 +2548,7 @@ select:focus-visible {
   }
 }
 
-/* Module layout refinement: presentation-only structure for dashboard-style UX. */
+/* Tool layouts. */
 .mbs-screen,
 .portfolio-ranker-screen {
   width: min(100%, 1180px);
@@ -2626,12 +2577,10 @@ select:focus-visible {
 }
 
 .mbs-category-card {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
-    var(--ti-color-surface-muted);
-  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-lg);
-  box-shadow: var(--ti-shadow-surface-inset);
+  box-shadow: none;
   padding: 14px;
   transition:
     border-color 180ms ease,
@@ -2639,8 +2588,8 @@ select:focus-visible {
 }
 
 .mbs-category-card:hover {
-  border-color: rgba(72, 224, 204, 0.18);
-  transform: translateY(-1px);
+  border-color: rgba(36, 91, 70, 0.18);
+  transform: none;
 }
 
 .mbs-category-card-header {
@@ -2669,12 +2618,10 @@ select:focus-visible {
 }
 
 .mbs-hero-score {
-  background:
-    radial-gradient(circle at 86% 8%, rgba(72, 224, 204, 0.2), transparent 38%),
-    rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(72, 224, 204, 0.24);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid rgba(36, 91, 70, 0.24);
   border-radius: var(--ti-radius-lg);
-  box-shadow: var(--ti-shadow-surface-inset);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2683,12 +2630,12 @@ select:focus-visible {
 
 .mbs-hero-score strong {
   color: var(--ti-color-text);
-  font-size: 42px;
+  font-size: 36px;
   line-height: 1;
 }
 
 .mbs-output-section {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-md);
   margin-top: 0;
@@ -2750,9 +2697,9 @@ select:focus-visible {
   display: block;
   font-size: var(--ti-font-size-xs);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   margin-bottom: 5px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-row-summary h3 {
@@ -2805,10 +2752,8 @@ select:focus-visible {
 }
 
 .portfolio-ranker-output-hero div {
-  background:
-    radial-gradient(circle at 85% 10%, rgba(72, 224, 204, 0.13), transparent 40%),
-    rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(72, 224, 204, 0.18);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid rgba(36, 91, 70, 0.18);
   border-radius: var(--ti-radius-lg);
   padding: 16px;
 }
@@ -2818,9 +2763,9 @@ select:focus-visible {
   display: block;
   font-size: var(--ti-font-size-xs);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   margin-bottom: 8px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-output-hero strong {
@@ -2830,7 +2775,7 @@ select:focus-visible {
 }
 
 .portfolio-ranker-empty-state {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-lg);
   padding: 20px;
@@ -2870,7 +2815,7 @@ select:focus-visible {
   }
 }
 
-/* MBS scorer workspace polish: layout and presentation only. */
+/* Company scoring workspace. */
 .mbs-screen {
   margin-inline: auto;
   max-width: none;
@@ -2887,22 +2832,15 @@ select:focus-visible {
 }
 
 .mbs-form-card {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022)),
-    var(--ti-color-surface) !important;
-  border-color: rgba(255, 255, 255, 0.095) !important;
-  box-shadow:
-    var(--ti-shadow-card),
-    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+  background: var(--ti-color-surface) !important;
+  border-color: var(--ti-color-border) !important;
+  box-shadow: none !important;
 }
 
 .mbs-score-panel-card {
-  background:
-    radial-gradient(circle at 88% 0%, rgba(72, 224, 204, 0.11), transparent 36%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.062), rgba(255, 255, 255, 0.026)),
-    var(--ti-color-surface-elevated) !important;
-  border-color: rgba(72, 224, 204, 0.18) !important;
-  box-shadow: var(--ti-shadow-card-emphasis) !important;
+  background: var(--ti-color-surface-elevated) !important;
+  border-color: rgba(36, 91, 70, 0.18) !important;
+  box-shadow: none !important;
 }
 
 .mbs-workspace-grid > .mbs-score-panel-card {
@@ -2921,19 +2859,16 @@ select:focus-visible {
 }
 
 .mbs-section-kicker .ti-badge {
-  background: rgba(72, 224, 204, 0.105) !important;
-  border-color: rgba(72, 224, 204, 0.24) !important;
+  background: rgba(36, 91, 70, 0.105) !important;
+  border-color: rgba(36, 91, 70, 0.24) !important;
   color: var(--ti-color-accent) !important;
 }
 
 .mbs-thesis-link-panel {
-  background:
-    radial-gradient(circle at 94% 4%, rgba(72, 224, 204, 0.09), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.02)),
-    rgba(255, 255, 255, 0.022);
-  border: 1px solid rgba(72, 224, 204, 0.16);
-  border-radius: 22px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid rgba(36, 91, 70, 0.16);
+  border-radius: 10px;
+  box-shadow: none;
   display: grid;
   gap: 14px;
   margin-bottom: 22px;
@@ -2952,12 +2887,12 @@ select:focus-visible {
 .mbs-selected-thesis-card span {
   color: var(--ti-color-text-subtle);
   display: block;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1.25;
   margin-bottom: 6px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .mbs-thesis-link-header h2 {
@@ -2977,9 +2912,9 @@ select:focus-visible {
 .mbs-thesis-select-field input,
 .mbs-thesis-select-field select {
   background: var(--ti-color-surface-soft);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 16px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
+  box-shadow: none;
   color: var(--ti-color-text);
   min-height: 44px;
   padding: 10px 12px;
@@ -2988,9 +2923,9 @@ select:focus-visible {
 
 .mbs-thesis-select-field input:focus,
 .mbs-thesis-select-field select:focus {
-  border-color: rgba(72, 224, 204, 0.55);
+  border-color: rgba(36, 91, 70, 0.55);
   box-shadow:
-    0 0 0 3px rgba(72, 224, 204, 0.12),
+    0 0 0 3px rgba(36, 91, 70, 0.12),
     var(--ti-shadow-surface-inset);
   outline: none;
 }
@@ -3003,9 +2938,9 @@ select:focus-visible {
 }
 
 .mbs-selected-thesis-card div {
-  background: rgba(27, 37, 48, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 16px;
+  background: var(--ti-color-surface);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   min-width: 0;
   padding: 12px;
 }
@@ -3043,21 +2978,16 @@ select:focus-visible {
 }
 
 .mbs-category-card {
-  border-radius: 20px;
+  border-radius: 10px;
   gap: 10px;
   padding: 16px;
 }
 
 .mbs-category-card:hover,
 .mbs-category-card:focus-within {
-  background:
-    radial-gradient(circle at 94% 8%, rgba(72, 224, 204, 0.08), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.062), rgba(255, 255, 255, 0.026)),
-    var(--ti-color-surface-muted);
-  border-color: rgba(72, 224, 204, 0.25);
-  box-shadow:
-    var(--ti-shadow-surface-inset),
-    0 16px 38px rgba(0, 0, 0, 0.18);
+  background: var(--ti-color-surface-muted);
+  border-color: rgba(36, 91, 70, 0.25);
+  box-shadow: none;
 }
 
 .mbs-category-card-header {
@@ -3074,8 +3004,8 @@ select:focus-visible {
 }
 
 .mbs-score-range {
-  background: rgba(72, 224, 204, 0.1);
-  border: 1px solid rgba(72, 224, 204, 0.22);
+  background: rgba(36, 91, 70, 0.1);
+  border: 1px solid rgba(36, 91, 70, 0.22);
   border-radius: var(--ti-radius-pill);
   color: var(--ti-color-accent);
   flex: 0 0 auto;
@@ -3085,13 +3015,13 @@ select:focus-visible {
 
 .mbs-field input,
 .mbs-notes-field textarea {
-  border-radius: 16px;
+  border-radius: 8px;
 }
 
 .mbs-notes-panel {
-  background: rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 22px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
   margin-top: 22px;
   padding: 18px;
 }
@@ -3105,10 +3035,8 @@ select:focus-visible {
 }
 
 .mbs-hero-score {
-  border-radius: 24px;
-  box-shadow:
-    var(--ti-shadow-surface-inset),
-    0 22px 60px rgba(72, 224, 204, 0.11);
+  border-radius: 10px;
+  box-shadow: none;
   padding: 22px;
 }
 
@@ -3122,81 +3050,77 @@ select:focus-visible {
 }
 
 .mbs-hero-score {
-  --mbs-rating-border: rgba(72, 224, 204, 0.38);
-  --mbs-rating-glow: rgba(72, 224, 204, 0.11);
-  --mbs-rating-soft: rgba(72, 224, 204, 0.14);
-  background:
-    radial-gradient(circle at 86% 8%, var(--mbs-rating-soft), transparent 38%),
-    rgba(255, 255, 255, 0.04);
+  --mbs-rating-border: rgba(36, 91, 70, 0.38);
+  --mbs-rating-glow: rgba(36, 91, 70, 0.11);
+  --mbs-rating-soft: rgba(36, 91, 70, 0.14);
+  background: var(--ti-color-surface-muted);
   border-color: var(--mbs-rating-border);
-  box-shadow:
-    var(--ti-shadow-surface-inset),
-    0 22px 60px var(--mbs-rating-glow);
+  box-shadow: none;
 }
 
 .mbs-hero-score--exceptional {
-  --mbs-rating-border: rgba(53, 208, 127, 0.38);
-  --mbs-rating-glow: rgba(53, 208, 127, 0.11);
-  --mbs-rating-soft: rgba(53, 208, 127, 0.14);
+  --mbs-rating-border: rgba(40, 103, 68, 0.38);
+  --mbs-rating-glow: rgba(40, 103, 68, 0.11);
+  --mbs-rating-soft: rgba(40, 103, 68, 0.14);
 }
 
 .mbs-hero-score--strong {
-  --mbs-rating-border: rgba(72, 224, 204, 0.35);
-  --mbs-rating-glow: rgba(72, 224, 204, 0.1);
-  --mbs-rating-soft: rgba(72, 224, 204, 0.12);
+  --mbs-rating-border: rgba(36, 91, 70, 0.35);
+  --mbs-rating-glow: rgba(36, 91, 70, 0.1);
+  --mbs-rating-soft: rgba(36, 91, 70, 0.12);
 }
 
 .mbs-hero-score--mixed {
-  --mbs-rating-border: rgba(76, 141, 255, 0.35);
-  --mbs-rating-glow: rgba(76, 141, 255, 0.1);
-  --mbs-rating-soft: rgba(76, 141, 255, 0.13);
+  --mbs-rating-border: rgba(55, 97, 122, 0.35);
+  --mbs-rating-glow: rgba(55, 97, 122, 0.1);
+  --mbs-rating-soft: rgba(55, 97, 122, 0.13);
 }
 
 .mbs-hero-score--incomplete {
-  --mbs-rating-border: rgba(242, 184, 75, 0.38);
-  --mbs-rating-glow: rgba(242, 184, 75, 0.11);
-  --mbs-rating-soft: rgba(242, 184, 75, 0.14);
+  --mbs-rating-border: rgba(130, 88, 18, 0.38);
+  --mbs-rating-glow: rgba(130, 88, 18, 0.11);
+  --mbs-rating-soft: rgba(130, 88, 18, 0.14);
 }
 
 .mbs-hero-score--weak {
-  --mbs-rating-border: rgba(239, 95, 87, 0.38);
-  --mbs-rating-glow: rgba(239, 95, 87, 0.11);
-  --mbs-rating-soft: rgba(239, 95, 87, 0.14);
+  --mbs-rating-border: rgba(161, 60, 50, 0.38);
+  --mbs-rating-glow: rgba(161, 60, 50, 0.11);
+  --mbs-rating-soft: rgba(161, 60, 50, 0.14);
 }
 
 .mbs-rating-badge--exceptional {
-  background: rgba(53, 208, 127, 0.14) !important;
-  border-color: rgba(53, 208, 127, 0.38) !important;
+  background: rgba(40, 103, 68, 0.14) !important;
+  border-color: rgba(40, 103, 68, 0.38) !important;
   color: var(--ti-color-growth) !important;
 }
 
 .mbs-rating-badge--strong {
-  background: rgba(72, 224, 204, 0.12) !important;
-  border-color: rgba(72, 224, 204, 0.35) !important;
+  background: rgba(36, 91, 70, 0.12) !important;
+  border-color: rgba(36, 91, 70, 0.35) !important;
   color: var(--ti-color-primary) !important;
 }
 
 .mbs-rating-badge--mixed {
-  background: rgba(76, 141, 255, 0.13) !important;
-  border-color: rgba(76, 141, 255, 0.35) !important;
+  background: rgba(55, 97, 122, 0.13) !important;
+  border-color: rgba(55, 97, 122, 0.35) !important;
   color: var(--ti-color-data) !important;
 }
 
 .mbs-rating-badge--incomplete {
-  background: rgba(242, 184, 75, 0.14) !important;
-  border-color: rgba(242, 184, 75, 0.38) !important;
+  background: rgba(130, 88, 18, 0.14) !important;
+  border-color: rgba(130, 88, 18, 0.38) !important;
   color: var(--ti-color-warning) !important;
 }
 
 .mbs-rating-badge--weak {
-  background: rgba(239, 95, 87, 0.14) !important;
-  border-color: rgba(239, 95, 87, 0.38) !important;
+  background: rgba(161, 60, 50, 0.14) !important;
+  border-color: rgba(161, 60, 50, 0.38) !important;
   color: var(--ti-color-risk) !important;
 }
 
 .mbs-rating-badge--expensive {
-  background: rgba(242, 184, 75, 0.14) !important;
-  border-color: rgba(242, 184, 75, 0.38) !important;
+  background: rgba(130, 88, 18, 0.14) !important;
+  border-color: rgba(130, 88, 18, 0.38) !important;
   color: var(--ti-color-warning) !important;
 }
 
@@ -3206,7 +3130,7 @@ select:focus-visible {
 }
 
 .mbs-score-card {
-  border-radius: 18px;
+  border-radius: 8px;
   min-height: 96px;
   padding: 14px;
 }
@@ -3224,21 +3148,19 @@ select:focus-visible {
 .mbs-driver-card,
 .mbs-interpretation-card,
 .mbs-complete-indicator {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
-    rgba(255, 255, 255, 0.024);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
+  box-shadow: none;
   padding: 14px;
 }
 
 .mbs-driver-card {
-  border-color: rgba(72, 224, 204, 0.16);
+  border-color: rgba(36, 91, 70, 0.16);
 }
 
 .mbs-driver-card--weakest {
-  border-color: rgba(242, 184, 75, 0.18);
+  border-color: rgba(130, 88, 18, 0.18);
 }
 
 .mbs-driver-card-header {
@@ -3257,9 +3179,9 @@ select:focus-visible {
 
 .mbs-driver-list li {
   align-items: center;
-  background: rgba(27, 37, 48, 0.76);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
+  background: var(--ti-color-surface);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   color: var(--ti-color-text);
   display: flex;
   font-size: var(--ti-font-size-sm);
@@ -3288,11 +3210,8 @@ select:focus-visible {
 }
 
 .mbs-interpretation-card {
-  background:
-    radial-gradient(circle at 92% 0%, rgba(76, 141, 255, 0.1), transparent 36%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
-    rgba(255, 255, 255, 0.024);
-  border-color: rgba(76, 141, 255, 0.18);
+  background: var(--ti-color-surface-muted);
+  border-color: rgba(55, 97, 122, 0.18);
 }
 
 .mbs-interpretation-card p {
@@ -3304,10 +3223,8 @@ select:focus-visible {
 
 .mbs-complete-indicator {
   align-items: center;
-  background:
-    linear-gradient(145deg, rgba(53, 208, 127, 0.075), rgba(255, 255, 255, 0.025)),
-    rgba(255, 255, 255, 0.024);
-  border-color: rgba(53, 208, 127, 0.18);
+  background: var(--ti-color-surface-muted);
+  border-color: rgba(40, 103, 68, 0.18);
   color: var(--ti-color-text);
   display: flex;
   gap: 10px;
@@ -3315,17 +3232,17 @@ select:focus-visible {
 
 .mbs-complete-indicator span {
   align-items: center;
-  background: rgba(53, 208, 127, 0.13);
-  border: 1px solid rgba(53, 208, 127, 0.32);
+  background: rgba(40, 103, 68, 0.13);
+  border: 1px solid rgba(40, 103, 68, 0.32);
   border-radius: var(--ti-radius-pill);
   color: var(--ti-color-growth);
   display: inline-flex;
   flex: 0 0 auto;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   height: 26px;
   justify-content: center;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   width: 34px;
 }
 
@@ -3334,37 +3251,31 @@ select:focus-visible {
 }
 
 .mbs-complete-indicator--warning {
-  background:
-    linear-gradient(145deg, rgba(242, 184, 75, 0.075), rgba(255, 255, 255, 0.025)),
-    rgba(255, 255, 255, 0.024);
-  border-color: rgba(242, 184, 75, 0.2);
+  background: var(--ti-color-surface-muted);
+  border-color: rgba(130, 88, 18, 0.2);
 }
 
 .mbs-complete-indicator--warning span {
-  background: rgba(242, 184, 75, 0.13);
-  border-color: rgba(242, 184, 75, 0.34);
+  background: rgba(130, 88, 18, 0.13);
+  border-color: rgba(130, 88, 18, 0.34);
   color: var(--ti-color-warning);
 }
 
 .mbs-output-section {
   border-top: 0;
-  border-radius: 20px;
+  border-radius: 10px;
   margin-top: 0;
   padding: 16px;
 }
 
 .mbs-output-section--missing {
-  background:
-    linear-gradient(145deg, rgba(242, 184, 75, 0.055), rgba(255, 255, 255, 0.025)),
-    rgba(255, 255, 255, 0.026);
-  border-color: rgba(242, 184, 75, 0.16);
+  background: var(--ti-color-surface-muted);
+  border-color: rgba(130, 88, 18, 0.16);
 }
 
 .mbs-output-section--warnings {
-  background:
-    linear-gradient(145deg, rgba(242, 184, 75, 0.07), rgba(255, 255, 255, 0.022)),
-    rgba(255, 255, 255, 0.024);
-  border-color: rgba(242, 184, 75, 0.2);
+  background: var(--ti-color-surface-muted);
+  border-color: rgba(130, 88, 18, 0.2);
 }
 
 .mbs-output-section summary {
@@ -3407,8 +3318,8 @@ select:focus-visible {
 }
 
 .mbs-chip {
-  background: rgba(242, 184, 75, 0.09);
-  border: 1px solid rgba(242, 184, 75, 0.18);
+  background: rgba(130, 88, 18, 0.09);
+  border: 1px solid rgba(130, 88, 18, 0.18);
   border-radius: var(--ti-radius-pill);
   color: var(--ti-color-text);
   font-size: var(--ti-font-size-xs);
@@ -3426,9 +3337,9 @@ select:focus-visible {
 }
 
 .mbs-message-list li {
-  background: rgba(242, 184, 75, 0.075);
-  border: 1px solid rgba(242, 184, 75, 0.14);
-  border-radius: 14px;
+  background: rgba(130, 88, 18, 0.075);
+  border: 1px solid rgba(130, 88, 18, 0.14);
+  border-radius: 8px;
   color: var(--ti-color-callout-warning-text);
   font-size: var(--ti-font-size-sm);
   line-height: 1.45;
@@ -3510,34 +3421,29 @@ select:focus-visible {
 }
 
 .portfolio-ranker-layout > .ti-card:last-child {
-  background:
-    radial-gradient(circle at 86% 0%, rgba(72, 224, 204, 0.12), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.062), rgba(255, 255, 255, 0.026)),
-    var(--ti-color-surface-elevated) !important;
-  border-color: rgba(72, 224, 204, 0.18) !important;
-  box-shadow: var(--ti-shadow-card-emphasis) !important;
+  background: var(--ti-color-surface-elevated) !important;
+  border-color: rgba(36, 91, 70, 0.18) !important;
+  box-shadow: none !important;
 }
 
 .portfolio-ranker-layout > .ti-card:first-child {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
-    var(--ti-color-surface) !important;
+  background: var(--ti-color-surface) !important;
 }
 
 .portfolio-ranker-row {
-  border-radius: 22px;
+  border-radius: 10px;
 }
 
 .portfolio-ranker-editor {
-  background: rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 18px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   margin-top: 2px;
   padding: 14px;
 }
 
 .portfolio-ranker-results {
-  border-radius: 22px;
+  border-radius: 10px;
 }
 
 .portfolio-ranker-table tr {
@@ -3569,30 +3475,22 @@ select:focus-visible {
 }
 
 .portfolio-ranker-workspace-card {
-  background:
-    radial-gradient(circle at 96% 0%, rgba(72, 224, 204, 0.08), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.02)),
-    var(--ti-color-surface) !important;
+  background: var(--ti-color-surface) !important;
   min-height: clamp(690px, calc(100vh - 150px), 1040px);
 }
 
 .portfolio-ranker-output-card {
-  background:
-    radial-gradient(circle at 88% 0%, rgba(72, 224, 204, 0.14), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.066), rgba(255, 255, 255, 0.025)),
-    var(--ti-color-surface-elevated) !important;
-  border-color: rgba(72, 224, 204, 0.18) !important;
-  box-shadow: var(--ti-shadow-card-emphasis) !important;
+  background: var(--ti-color-surface-elevated) !important;
+  border-color: rgba(36, 91, 70, 0.18) !important;
+  box-shadow: none !important;
   min-height: clamp(650px, calc(100vh - 150px), 980px);
 }
 
 .portfolio-ranker-filter-row {
   align-items: end;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.036), rgba(255, 255, 255, 0.016)),
-    rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 22px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.36fr) minmax(150px, 0.36fr);
@@ -3612,17 +3510,17 @@ select:focus-visible {
 .portfolio-ranker-filter span {
   color: var(--ti-color-text-subtle);
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .portfolio-ranker-search input,
 .portfolio-ranker-filter select {
   background: var(--ti-color-surface-soft);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 16px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
+  box-shadow: none;
   color: var(--ti-color-text);
   min-height: 42px;
   padding: 10px 12px;
@@ -3638,13 +3536,10 @@ select:focus-visible {
 }
 
 .portfolio-ranker-row {
-  background:
-    radial-gradient(circle at 100% 0%, rgba(76, 141, 255, 0.07), transparent 32%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.019)),
-    var(--ti-color-surface-muted);
-  border: 1px solid rgba(255, 255, 255, 0.085);
-  border-radius: 24px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
+  box-shadow: none;
   gap: 16px;
   padding: 18px;
   transition:
@@ -3655,15 +3550,10 @@ select:focus-visible {
 }
 
 .portfolio-ranker-row:hover {
-  background:
-    radial-gradient(circle at 100% 0%, rgba(72, 224, 204, 0.09), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.064), rgba(255, 255, 255, 0.024)),
-    var(--ti-color-surface-elevated);
-  border-color: rgba(72, 224, 204, 0.22);
-  box-shadow:
-    var(--ti-shadow-surface-inset),
-    0 16px 34px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
+  background: var(--ti-color-surface-elevated);
+  border-color: rgba(36, 91, 70, 0.22);
+  box-shadow: none;
+  transform: none;
 }
 
 .portfolio-ranker-row-header {
@@ -3675,15 +3565,13 @@ select:focus-visible {
 
 .portfolio-ranker-rank-badge {
   align-items: center;
-  background:
-    linear-gradient(180deg, rgba(72, 224, 204, 0.18), rgba(72, 224, 204, 0.08)),
-    rgba(72, 224, 204, 0.06);
-  border: 1px solid rgba(72, 224, 204, 0.28);
-  border-radius: 16px;
+  background: rgba(36, 91, 70, 0.06);
+  border: 1px solid rgba(36, 91, 70, 0.28);
+  border-radius: 8px;
   color: var(--ti-color-accent);
   display: inline-flex;
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 600;
   height: 42px;
   justify-content: center;
   min-width: 42px;
@@ -3712,12 +3600,12 @@ select:focus-visible {
 
 .portfolio-ranker-sector-badge {
   align-self: flex-start;
-  background: rgba(76, 141, 255, 0.1);
-  border: 1px solid rgba(76, 141, 255, 0.22);
+  background: rgba(55, 97, 122, 0.1);
+  border: 1px solid rgba(55, 97, 122, 0.22);
   border-radius: var(--ti-radius-pill);
   color: var(--ti-color-data);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1.2;
   padding: 5px 8px;
 }
@@ -3730,17 +3618,17 @@ select:focus-visible {
 }
 
 .portfolio-ranker-row-stats span {
-  background: rgba(255, 255, 255, 0.034);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 16px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   color: var(--ti-color-text-subtle);
   display: flex;
   flex-direction: column;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   gap: 4px;
   padding: 10px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-row-stats strong {
@@ -3758,20 +3646,20 @@ select:focus-visible {
 }
 
 .portfolio-ranker-row-body div {
-  background: rgba(255, 255, 255, 0.024);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 18px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   padding: 12px;
 }
 
 .portfolio-ranker-row-body span {
   color: var(--ti-color-text-subtle);
   display: block;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
   margin-bottom: 6px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-row-body p {
@@ -3793,9 +3681,9 @@ select:focus-visible {
 }
 
 .portfolio-ranker-editor {
-  background: rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 18px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   flex: 1;
   margin-top: 0;
   min-width: 0;
@@ -3806,7 +3694,7 @@ select:focus-visible {
   color: var(--ti-color-accent);
   cursor: pointer;
   font-size: var(--ti-font-size-sm);
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -3828,7 +3716,7 @@ select:focus-visible {
 
 .portfolio-ranker-actions {
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.075);
+  border-top: 1px solid var(--ti-color-border);
   margin-top: 20px;
   padding-top: 18px;
 }
@@ -3839,7 +3727,7 @@ select:focus-visible {
 }
 
 .portfolio-ranker-output-hero div {
-  border-radius: 22px;
+  border-radius: 10px;
   min-height: 112px;
 }
 
@@ -3848,9 +3736,9 @@ select:focus-visible {
 }
 
 .portfolio-ranker-preview-list {
-  background: rgba(255, 255, 255, 0.024);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 22px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -3862,18 +3750,18 @@ select:focus-visible {
 }
 
 .portfolio-ranker-preview-heading {
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--ti-color-surface-muted);
   color: var(--ti-color-text-subtle);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
   padding: 12px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-preview-row {
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.065);
+  border-top: 1px solid var(--ti-color-border);
   color: var(--ti-color-text-muted);
   font-size: 13px;
   line-height: 1.35;
@@ -3885,9 +3773,9 @@ select:focus-visible {
 }
 
 .portfolio-ranker-preview-row:hover {
-  background: #16202B;
-  border-color: rgba(72, 224, 204, 0.2);
-  box-shadow: inset 2px 0 0 rgba(72, 224, 204, 0.5);
+  background: #FFFFFF;
+  border-color: rgba(36, 91, 70, 0.2);
+  box-shadow: none;
 }
 
 .portfolio-ranker-preview-row strong {
@@ -3896,22 +3784,20 @@ select:focus-visible {
 
 .portfolio-ranker-preview-row span:nth-child(2) {
   color: var(--ti-color-text);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .portfolio-ranker-feedback {
-  background: rgba(255, 255, 255, 0.022);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 20px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
   padding: 14px;
 }
 
 .portfolio-ranker-score-guide {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.036), rgba(255, 255, 255, 0.016)),
-    rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 22px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
   display: grid;
   gap: 12px;
   margin-top: 18px;
@@ -3953,25 +3839,23 @@ select:focus-visible {
 
 .portfolio-ranker-guide-dot--risk {
   background: var(--ti-color-risk);
-  box-shadow: 0 0 16px rgba(239, 95, 87, 0.24);
+  box-shadow: none;
 }
 
 .portfolio-ranker-guide-dot--warning {
   background: var(--ti-color-warning);
-  box-shadow: 0 0 16px rgba(242, 184, 75, 0.22);
+  box-shadow: none;
 }
 
 .portfolio-ranker-guide-dot--growth {
   background: var(--ti-color-growth);
-  box-shadow: 0 0 16px rgba(53, 208, 127, 0.22);
+  box-shadow: none;
 }
 
 .portfolio-ranker-weakest-card {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.018)),
-    rgba(255, 255, 255, 0.022);
-  border: 1px solid rgba(255, 255, 255, 0.078);
-  border-radius: 22px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
   display: grid;
   gap: 14px;
   margin-top: 18px;
@@ -3984,26 +3868,22 @@ select:focus-visible {
 }
 
 .portfolio-ranker-weakest-card:hover {
-  background:
-    linear-gradient(145deg, rgba(72, 224, 204, 0.055), rgba(255, 255, 255, 0.022)),
-    #16202B;
-  border-color: rgba(72, 224, 204, 0.32);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 12px 28px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
+  background: #FFFFFF;
+  border-color: rgba(36, 91, 70, 0.32);
+  box-shadow: none;
+  transform: none;
 }
 
 .portfolio-ranker-weakest-card--steady {
-  border-color: rgba(72, 224, 204, 0.2);
+  border-color: rgba(36, 91, 70, 0.2);
 }
 
 .portfolio-ranker-weakest-card--warning {
-  border-color: rgba(242, 184, 75, 0.28);
+  border-color: rgba(130, 88, 18, 0.28);
 }
 
 .portfolio-ranker-weakest-card--risk {
-  border-color: rgba(239, 95, 87, 0.28);
+  border-color: rgba(161, 60, 50, 0.28);
 }
 
 .portfolio-ranker-weakest-header {
@@ -4017,12 +3897,12 @@ select:focus-visible {
 .portfolio-ranker-weakest-score span {
   color: var(--ti-color-text-subtle);
   display: block;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1.25;
   margin-bottom: 6px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-weakest-header h3 {
@@ -4034,19 +3914,15 @@ select:focus-visible {
 
 .portfolio-ranker-weakest-action {
   align-items: center;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
-    var(--ti-color-surface-elevated);
-  border: 1px solid rgba(72, 224, 204, 0.34);
+  background: var(--ti-color-surface-elevated);
+  border: 1px solid rgba(36, 91, 70, 0.34);
   border-radius: var(--ti-radius-pill);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 10px 24px rgba(0, 0, 0, 0.18);
-  color: #F4F7FA;
+  box-shadow: none;
+  color: #202925;
   cursor: pointer;
   display: inline-flex;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
   gap: 8px;
   line-height: 1.2;
   padding: 9px 13px;
@@ -4059,25 +3935,20 @@ select:focus-visible {
 }
 
 .portfolio-ranker-weakest-action:hover {
-  background:
-    linear-gradient(180deg, rgba(72, 224, 204, 0.13), rgba(255, 255, 255, 0.035)),
-    var(--ti-color-surface-elevated);
-  border-color: rgba(72, 224, 204, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 24px rgba(72, 224, 204, 0.18),
-    0 14px 30px rgba(0, 0, 0, 0.24);
-  color: #5EEAD4;
-  transform: translateY(-1px) scale(1.02);
+  background: var(--ti-color-surface-elevated);
+  border-color: rgba(36, 91, 70, 0.72);
+  box-shadow: none;
+  color: #245B46;
+  transform: none;
 }
 
 .portfolio-ranker-weakest-action:active {
-  transform: translateY(0) scale(0.98);
+  transform: none;
 }
 
 .portfolio-ranker-weakest-action-arrow {
   align-items: center;
-  color: #48E0CC;
+  color: #245B46;
   display: inline-flex;
   height: 16px;
   justify-content: center;
@@ -4091,14 +3962,14 @@ select:focus-visible {
 }
 
 .portfolio-ranker-weakest-action:hover .portfolio-ranker-weakest-action-arrow {
-  color: #5EEAD4;
-  transform: translateX(-2px) rotate(-5deg);
+  color: #245B46;
+  transform: none;
 }
 
 .portfolio-ranker-weakest-score {
-  background: rgba(255, 255, 255, 0.032);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 18px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   padding: 12px;
 }
 
@@ -4140,7 +4011,7 @@ select:focus-visible {
 }
 
 .portfolio-ranker-row {
-  border-radius: 18px;
+  border-radius: 8px;
   gap: 12px;
   padding: 14px;
 }
@@ -4157,7 +4028,7 @@ select:focus-visible {
 }
 
 .portfolio-ranker-rank-badge {
-  border-radius: 14px;
+  border-radius: 8px;
   font-size: 16px;
   height: 38px;
   min-width: 38px;
@@ -4180,26 +4051,26 @@ select:focus-visible {
 }
 
 .portfolio-ranker-score-badge--strong {
-  background: rgba(53, 208, 127, 0.13) !important;
-  border-color: rgba(53, 208, 127, 0.34) !important;
+  background: rgba(40, 103, 68, 0.13) !important;
+  border-color: rgba(40, 103, 68, 0.34) !important;
   color: var(--ti-color-growth) !important;
 }
 
 .portfolio-ranker-score-badge--mixed {
-  background: rgba(76, 141, 255, 0.13) !important;
-  border-color: rgba(76, 141, 255, 0.34) !important;
+  background: rgba(55, 97, 122, 0.13) !important;
+  border-color: rgba(55, 97, 122, 0.34) !important;
   color: var(--ti-color-data) !important;
 }
 
 .portfolio-ranker-score-badge--warning {
-  background: rgba(242, 184, 75, 0.13) !important;
-  border-color: rgba(242, 184, 75, 0.34) !important;
+  background: rgba(130, 88, 18, 0.13) !important;
+  border-color: rgba(130, 88, 18, 0.34) !important;
   color: var(--ti-color-warning) !important;
 }
 
 .portfolio-ranker-score-badge--risk {
-  background: rgba(239, 95, 87, 0.13) !important;
-  border-color: rgba(239, 95, 87, 0.34) !important;
+  background: rgba(161, 60, 50, 0.13) !important;
+  border-color: rgba(161, 60, 50, 0.34) !important;
   color: var(--ti-color-risk) !important;
 }
 
@@ -4210,18 +4081,18 @@ select:focus-visible {
 }
 
 .portfolio-ranker-meta-chip {
-  background: rgba(27, 37, 48, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: var(--ti-color-surface);
+  border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-pill);
   color: var(--ti-color-text-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.2;
   padding: 7px 9px;
 }
 
 .portfolio-ranker-meta-chip--risk {
-  border-color: rgba(242, 184, 75, 0.14);
+  border-color: rgba(130, 88, 18, 0.14);
 }
 
 .portfolio-ranker-review-dates {
@@ -4232,18 +4103,18 @@ select:focus-visible {
 }
 
 .portfolio-ranker-review-dates span {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 14px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   color: var(--ti-color-text-subtle);
   display: grid;
-  font-size: 11px;
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: 600;
   gap: 3px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   line-height: 1.25;
   padding: 9px 10px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-review-dates strong {
@@ -4276,20 +4147,20 @@ select:focus-visible {
 }
 
 .portfolio-ranker-weakest-detail-list div {
-  background: rgba(255, 255, 255, 0.026);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   padding: 11px 12px;
 }
 
 .portfolio-ranker-weakest-detail-list dt {
   color: var(--ti-color-text-subtle);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1.2;
   margin-bottom: 5px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .portfolio-ranker-weakest-detail-list dd {
@@ -4317,13 +4188,10 @@ select:focus-visible {
 }
 
 .thesis-queue-rail {
-  background:
-    radial-gradient(circle at 92% 0%, rgba(72, 224, 204, 0.11), transparent 32%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.02)),
-    var(--ti-color-surface);
+  background: var(--ti-color-surface);
   border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-bento);
-  box-shadow: var(--ti-shadow-card);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -4335,7 +4203,7 @@ select:focus-visible {
 }
 
 .thesis-queue-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  border-bottom: 1px solid var(--ti-color-border);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -4371,17 +4239,15 @@ select:focus-visible {
   min-height: 0;
   overflow-y: auto;
   padding: 2px 6px 6px;
-  scrollbar-color: rgba(72, 224, 204, 0.34) transparent;
+  scrollbar-color: rgba(36, 91, 70, 0.34) transparent;
   scrollbar-width: thin;
 }
 
 .thesis-queue-card {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.046), rgba(255, 255, 255, 0.018)),
-    var(--ti-color-surface-muted);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
+  box-shadow: none;
   color: var(--ti-color-text);
   cursor: pointer;
   display: flex;
@@ -4398,11 +4264,9 @@ select:focus-visible {
 }
 
 .thesis-empty-state {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.018)),
-    rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 18px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   color: var(--ti-color-text-muted);
   display: grid;
   gap: 8px;
@@ -4423,26 +4287,16 @@ select:focus-visible {
 }
 
 .thesis-queue-card:hover {
-  background:
-    linear-gradient(145deg, rgba(72, 224, 204, 0.07), rgba(255, 255, 255, 0.025)),
-    var(--ti-color-surface-elevated);
-  border-color: rgba(72, 224, 204, 0.22);
-  box-shadow:
-    var(--ti-shadow-surface-inset),
-    0 12px 26px rgba(0, 0, 0, 0.18);
-  transform: translateY(-1px);
+  background: var(--ti-color-surface-elevated);
+  border-color: rgba(36, 91, 70, 0.22);
+  box-shadow: none;
+  transform: none;
 }
 
 .thesis-queue-card[aria-current="true"] {
-  background:
-    radial-gradient(circle at 92% 10%, rgba(72, 224, 204, 0.16), transparent 36%),
-    linear-gradient(145deg, rgba(72, 224, 204, 0.12), rgba(76, 141, 255, 0.045)),
-    var(--ti-color-surface-elevated);
-  border-color: rgba(72, 224, 204, 0.46);
-  box-shadow:
-    0 0 0 1px rgba(72, 224, 204, 0.12),
-    0 16px 34px rgba(0, 0, 0, 0.24),
-    0 0 26px rgba(72, 224, 204, 0.1);
+  background: var(--ti-color-surface-elevated);
+  border-color: rgba(36, 91, 70, 0.46);
+  box-shadow: none;
 }
 
 .thesis-queue-card-topline,
@@ -4481,14 +4335,14 @@ select:focus-visible {
 .thesis-queue-open {
   color: var(--ti-color-accent);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.3;
 }
 
 .thesis-queue-workflow {
-  background: rgba(255, 255, 255, 0.028);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 18px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   padding: 14px;
 }
 
@@ -4506,12 +4360,12 @@ select:focus-visible {
 }
 
 .thesis-queue-workflow span {
-  background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
   border-radius: var(--ti-radius-pill);
   color: var(--ti-color-text-subtle);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1.2;
   padding: 5px 8px;
 }
@@ -4525,9 +4379,7 @@ select:focus-visible {
 .thesis-form-card,
 .watchlist-form-card,
 .planned-workspace-card {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.022)),
-    var(--ti-color-surface) !important;
+  background: var(--ti-color-surface) !important;
 }
 
 .thesis-form-card {
@@ -4537,12 +4389,9 @@ select:focus-visible {
 
 .thesis-health-card,
 .watchlist-summary-card {
-  background:
-    radial-gradient(circle at 88% 0%, rgba(72, 224, 204, 0.12), transparent 36%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.064), rgba(255, 255, 255, 0.026)),
-    var(--ti-color-surface-elevated) !important;
-  border-color: rgba(72, 224, 204, 0.18) !important;
-  box-shadow: var(--ti-shadow-card-emphasis) !important;
+  background: var(--ti-color-surface-elevated) !important;
+  border-color: rgba(36, 91, 70, 0.18) !important;
+  box-shadow: none !important;
 }
 
 .thesis-health-card {
@@ -4552,12 +4401,10 @@ select:focus-visible {
 
 .thesis-health-hero,
 .watchlist-summary-hero {
-  background:
-    radial-gradient(circle at 90% 8%, rgba(72, 224, 204, 0.18), transparent 36%),
-    rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(72, 224, 204, 0.22);
-  border-radius: 24px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid rgba(36, 91, 70, 0.22);
+  border-radius: 10px;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -4571,8 +4418,8 @@ select:focus-visible {
   color: var(--ti-color-text-subtle);
   font-size: var(--ti-font-size-xs);
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .thesis-health-hero strong,
@@ -4597,10 +4444,10 @@ select:focus-visible {
 
 .thesis-health-grid div,
 .watchlist-summary-grid div {
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.085);
-  border-radius: 18px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -4617,9 +4464,9 @@ select:focus-visible {
 
 .thesis-next-action,
 .watchlist-next-action {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border);
-  border-radius: 20px;
+  border-radius: 10px;
   margin-top: 16px;
   padding: 16px;
 }
@@ -4648,7 +4495,7 @@ select:focus-visible {
 .thesis-note-list-item,
 .watchlist-meta-grid div,
 .thesis-meta-grid div {
-  border-radius: 18px;
+  border-radius: 8px;
 }
 
 .thesis-note-list-item:hover {
@@ -4657,20 +4504,16 @@ select:focus-visible {
 
 .thesis-details,
 .watchlist-details {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.036), rgba(255, 255, 255, 0.016)),
-    rgba(255, 255, 255, 0.018);
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 24px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
   padding: 18px;
 }
 
 .thesis-selected-snapshot {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.018)),
-    rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 20px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 10px;
   margin-top: 18px;
   padding: 18px;
 }
@@ -4748,12 +4591,10 @@ select:focus-visible {
 }
 
 .settings-disclaimer {
-  background:
-    linear-gradient(135deg, rgba(72, 224, 204, 0.075), rgba(76, 141, 255, 0.035)),
-    var(--ti-color-surface-muted);
-  border: 1px solid rgba(72, 224, 204, 0.16);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid rgba(36, 91, 70, 0.16);
   border-radius: var(--ti-radius-lg);
-  box-shadow: var(--ti-shadow-surface-inset);
+  box-shadow: none;
   padding: 16px 18px;
 }
 
@@ -4784,7 +4625,7 @@ select:focus-visible {
   font-size: var(--ti-font-size-sm);
   letter-spacing: 0;
   margin: 0 0 8px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .local-data-backup-guidance ul,
@@ -4817,8 +4658,8 @@ select:focus-visible {
 }
 
 .local-data-import-preview {
-  background: rgba(76, 141, 255, 0.08);
-  border: 1px solid rgba(76, 141, 255, 0.18);
+  background: rgba(55, 97, 122, 0.08);
+  border: 1px solid rgba(55, 97, 122, 0.18);
   border-radius: var(--ti-radius-md);
   display: grid;
   gap: 12px;
@@ -4839,7 +4680,7 @@ select:focus-visible {
 
 .local-data-import-counts div,
 .local-data-record-counts div {
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--ti-color-surface-muted);
   border: 1px solid var(--ti-color-border-muted);
   border-radius: var(--ti-radius-sm);
   display: grid;
@@ -4891,7 +4732,7 @@ select:focus-visible {
   font-size: var(--ti-font-size-sm);
   letter-spacing: 0;
   margin: 0 0 12px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .local-data-status-grid ul,
@@ -4938,16 +4779,16 @@ select:focus-visible {
 
 .local-data-status-message,
 .local-data-status-error {
-  background: rgba(76, 141, 255, 0.08);
-  border: 1px solid rgba(76, 141, 255, 0.18);
+  background: rgba(55, 97, 122, 0.08);
+  border: 1px solid rgba(55, 97, 122, 0.18);
   border-radius: var(--ti-radius-md);
   margin: 0;
   padding: 12px;
 }
 
 .local-data-status-error {
-  background: rgba(255, 184, 77, 0.1);
-  border-color: rgba(255, 184, 77, 0.26);
+  background: rgba(130, 88, 18, 0.1);
+  border-color: rgba(130, 88, 18, 0.26);
   color: var(--ti-color-text);
 }
 
@@ -4964,14 +4805,14 @@ select:focus-visible {
 
 .planned-workspace-empty > span {
   align-items: center;
-  background: rgba(72, 224, 204, 0.1);
-  border: 1px solid rgba(72, 224, 204, 0.24);
-  border-radius: 18px;
+  background: rgba(36, 91, 70, 0.1);
+  border: 1px solid rgba(36, 91, 70, 0.24);
+  border-radius: 8px;
   color: var(--ti-color-accent);
   display: inline-flex;
   flex: 0 0 auto;
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 600;
   height: 52px;
   justify-content: center;
   width: 52px;
@@ -5159,7 +5000,7 @@ select:focus-visible {
 }
 
 .mbs-thesis-link-panel {
-  border-radius: 18px;
+  border-radius: 8px;
   gap: 8px;
   margin-bottom: 10px;
   padding: 10px;
@@ -5184,7 +5025,7 @@ select:focus-visible {
 }
 
 .mbs-selected-thesis-card div {
-  border-radius: 14px;
+  border-radius: 8px;
   padding: 7px 8px;
 }
 
@@ -5194,7 +5035,7 @@ select:focus-visible {
 }
 
 .mbs-selected-thesis-card small {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.2;
 }
 
@@ -5216,9 +5057,9 @@ select:focus-visible {
 
 .mbs-scoring-mode-panel {
   align-items: center;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px 12px;
@@ -5230,17 +5071,17 @@ select:focus-visible {
 .mbs-scoring-mode-label {
   color: var(--ti-color-text-subtle);
   flex: 0 0 100%;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
   line-height: 1.2;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .mbs-scoring-mode-toggle {
-  background: rgba(5, 8, 12, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 13px;
+  background: var(--ti-color-surface);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   display: flex;
   gap: 6px;
   padding: 4px;
@@ -5260,12 +5101,10 @@ select:focus-visible {
 
 .mbs-autofill-panel {
   align-items: center;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
-    var(--ti-color-surface-muted);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 14px;
-  box-shadow: var(--ti-shadow-surface-inset);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
+  box-shadow: none;
   display: flex;
   gap: 12px;
   justify-content: space-between;
@@ -5293,7 +5132,7 @@ select:focus-visible {
 }
 
 .mbs-category-card {
-  border-radius: 14px;
+  border-radius: 8px;
   gap: 5px;
   padding: 8px;
 }
@@ -5303,18 +5142,15 @@ select:focus-visible {
 }
 
 .mbs-field-description {
-  display: -webkit-box;
-  font-size: 11px;
-  line-height: 1.3;
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
   min-height: 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
 }
 
 .mbs-score-guide {
   color: var(--ti-color-text-muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.3;
 }
 
@@ -5344,7 +5180,7 @@ select:focus-visible {
 
 .mbs-guided-question small {
   color: var(--ti-color-accent);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.25;
 }
@@ -5357,9 +5193,9 @@ select:focus-visible {
 
 .mbs-guided-option {
   align-items: center;
-  background: rgba(10, 17, 24, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 11px;
+  background: var(--ti-color-surface);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   color: var(--ti-color-text-muted);
   cursor: pointer;
   display: flex;
@@ -5377,37 +5213,33 @@ select:focus-visible {
 }
 
 .mbs-guided-option:hover {
-  background: rgba(72, 224, 204, 0.08);
-  border-color: rgba(72, 224, 204, 0.24);
+  background: rgba(36, 91, 70, 0.08);
+  border-color: rgba(36, 91, 70, 0.24);
   color: var(--ti-color-text);
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .mbs-guided-option[aria-pressed="true"] {
-  background:
-    linear-gradient(180deg, rgba(72, 224, 204, 0.18), rgba(72, 224, 204, 0.08)),
-    rgba(10, 17, 24, 0.84);
-  border-color: rgba(72, 224, 204, 0.45);
-  box-shadow:
-    0 0 0 1px rgba(72, 224, 204, 0.11),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: var(--ti-color-surface-soft);
+  border-color: var(--ti-color-primary);
+  box-shadow: none;
   color: var(--ti-color-text);
 }
 
 .mbs-guided-option span {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
   min-width: 0;
 }
 
 .mbs-guided-option strong {
-  background: rgba(72, 224, 204, 0.12);
-  border: 1px solid rgba(72, 224, 204, 0.22);
+  background: rgba(36, 91, 70, 0.12);
+  border: 1px solid rgba(36, 91, 70, 0.22);
   border-radius: var(--ti-radius-pill);
   color: var(--ti-color-accent);
   flex: 0 0 auto;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
   padding: 4px 6px;
 }
@@ -5421,13 +5253,13 @@ select:focus-visible {
 .thesis-field select,
 .watchlist-field input,
 .watchlist-field textarea {
-  border-radius: 13px;
+  border-radius: 8px;
   min-height: 34px;
   padding: 7px 9px;
 }
 
 .mbs-notes-panel {
-  border-radius: 18px;
+  border-radius: 8px;
   margin-top: 10px;
   padding: 10px;
 }
@@ -5441,7 +5273,7 @@ select:focus-visible {
 }
 
 .mbs-hero-score {
-  border-radius: 18px;
+  border-radius: 8px;
   gap: 6px;
   padding: 13px;
 }
@@ -5471,7 +5303,7 @@ select:focus-visible {
 .mbs-interpretation-card,
 .mbs-complete-indicator,
 .mbs-output-section {
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 10px;
 }
 
@@ -5528,7 +5360,7 @@ select:focus-visible {
 }
 
 .portfolio-ranker-row {
-  border-radius: 18px;
+  border-radius: 8px;
   gap: 9px;
   padding: 12px;
 }
@@ -5538,7 +5370,7 @@ select:focus-visible {
 }
 
 .portfolio-ranker-rank-badge {
-  border-radius: 13px;
+  border-radius: 8px;
   font-size: 15px;
   height: 34px;
   min-width: 34px;
@@ -5580,9 +5412,9 @@ select:focus-visible {
 
 .portfolio-ranker-show-more {
   align-items: center;
-  background: rgba(255, 255, 255, 0.024);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   display: flex;
   gap: 12px;
   justify-content: space-between;
@@ -5599,9 +5431,9 @@ select:focus-visible {
 
 .portfolio-ranker-filter-empty {
   align-items: center;
-  background: #16202B;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  background: #FFFFFF;
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -5644,7 +5476,7 @@ select:focus-visible {
 
 .portfolio-ranker-score-guide,
 .portfolio-ranker-weakest-card {
-  border-radius: 16px;
+  border-radius: 8px;
   margin-top: 12px;
   padding: 12px;
 }
@@ -5707,7 +5539,7 @@ select:focus-visible {
 
 .thesis-health-hero,
 .watchlist-summary-hero {
-  border-radius: 18px;
+  border-radius: 8px;
   padding: 16px;
 }
 
@@ -5724,27 +5556,27 @@ select:focus-visible {
 
 .thesis-health-grid div,
 .watchlist-summary-grid div {
-  border-radius: 16px;
+  border-radius: 8px;
   min-height: 76px;
   padding: 12px;
 }
 
 .thesis-next-action,
 .watchlist-next-action {
-  border-radius: 16px;
+  border-radius: 8px;
   margin-top: 12px;
   padding: 12px;
 }
 
 .thesis-selected-snapshot {
-  border-radius: 16px;
+  border-radius: 8px;
   margin-top: 12px;
   padding: 12px;
 }
 
 .thesis-details,
 .watchlist-details {
-  border-radius: 18px;
+  border-radius: 8px;
   gap: 14px;
   padding: 14px;
 }
@@ -5767,18 +5599,18 @@ select:focus-visible {
 }
 
 .theme-basket-list-item {
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 12px 14px;
 }
 
 .theme-basket-details {
-  border-radius: 20px;
+  border-radius: 10px;
   gap: 14px;
   padding: 16px;
 }
 
 .theme-basket-section {
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 12px;
 }
 
@@ -5819,7 +5651,7 @@ select:focus-visible {
 .local-data-import-panel,
 .local-data-backup-guidance,
 .local-data-troubleshooting {
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 12px;
 }
 
@@ -5999,7 +5831,7 @@ select:focus-visible {
 
 .thesis-rank-title-block small {
   color: var(--ti-color-text-subtle);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.25;
 }
 
@@ -6022,12 +5854,12 @@ select:focus-visible {
 }
 
 .thesis-rank-meta-row span {
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.065);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   color: var(--ti-color-text-muted);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1.2;
   max-width: 100%;
   overflow-wrap: anywhere;
@@ -6082,8 +5914,8 @@ select:focus-visible {
 }
 
 .living-thesis-provenance {
-  background: rgba(72, 224, 204, 0.07);
-  border: 1px solid rgba(72, 224, 204, 0.22);
+  background: rgba(36, 91, 70, 0.07);
+  border: 1px solid rgba(36, 91, 70, 0.22);
   border-radius: 8px;
   color: var(--ti-color-text-muted);
   font-size: 13px;
@@ -6094,8 +5926,8 @@ select:focus-visible {
 
 .living-thesis-feedback {
   align-items: flex-start;
-  background: rgba(20, 184, 166, 0.08);
-  border: 1px solid rgba(45, 212, 191, 0.28);
+  background: rgba(36, 91, 70, 0.08);
+  border: 1px solid rgba(36, 91, 70, 0.28);
   border-radius: 8px;
   color: var(--ti-color-text-muted);
   display: flex;
@@ -6115,13 +5947,13 @@ select:focus-visible {
 
 .living-thesis-feedback--conflict,
 .living-thesis-feedback--warning {
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(130, 88, 18, 0.08);
+  border-color: rgba(130, 88, 18, 0.3);
 }
 
 .living-thesis-feedback--error {
-  background: rgba(239, 68, 68, 0.07);
-  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(161, 60, 50, 0.07);
+  border-color: rgba(161, 60, 50, 0.28);
 }
 
 .living-thesis-board-layout {
@@ -6157,8 +5989,8 @@ select:focus-visible {
 .living-thesis-field {
   color: var(--ti-color-text-muted);
   display: grid;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   gap: 6px;
   letter-spacing: 0;
 }
@@ -6167,7 +5999,7 @@ select:focus-visible {
 .living-thesis-field input,
 .living-thesis-field select,
 .living-thesis-field textarea {
-  background: rgba(8, 16, 30, 0.7);
+  background: var(--ti-color-surface);
   border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   color: var(--ti-color-text);
@@ -6189,7 +6021,7 @@ select:focus-visible {
 .living-thesis-field select:focus,
 .living-thesis-field textarea:focus {
   border-color: var(--ti-color-border-strong);
-  box-shadow: 0 0 0 3px rgba(72, 224, 204, 0.1);
+  box-shadow: 0 0 0 3px rgba(36, 91, 70, 0.1);
   outline: none;
 }
 
@@ -6203,8 +6035,8 @@ select:focus-visible {
 }
 
 .living-thesis-list-item {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
   border-radius: 8px;
   color: var(--ti-color-text);
   cursor: pointer;
@@ -6219,8 +6051,8 @@ select:focus-visible {
 
 .living-thesis-list-item:hover,
 .living-thesis-list-item--selected {
-  background: rgba(72, 224, 204, 0.07);
-  border-color: rgba(72, 224, 204, 0.28);
+  background: rgba(36, 91, 70, 0.07);
+  border-color: rgba(36, 91, 70, 0.28);
 }
 
 .living-thesis-list-item:focus-visible {
@@ -6237,7 +6069,7 @@ select:focus-visible {
 .living-thesis-list-item > small,
 .living-thesis-list-meta small {
   color: var(--ti-color-text-subtle);
-  font-size: 11px;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
@@ -6300,8 +6132,8 @@ select:focus-visible {
 .living-thesis-leave-dialog {
   background: var(--ti-color-surface-elevated);
   border: 1px solid var(--ti-color-border-strong);
-  border-radius: 16px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  box-shadow: none;
   color: var(--ti-color-text);
   font: inherit;
   max-width: min(560px, calc(100vw - 48px));
@@ -6367,9 +6199,9 @@ select:focus-visible {
 .living-thesis-form-heading span,
 .living-thesis-section-heading span {
   color: var(--ti-color-text-subtle);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
 }
 
 .living-thesis-form-heading strong {
@@ -6389,7 +6221,7 @@ select:focus-visible {
 }
 
 .living-thesis-children {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--ti-color-border);
   display: grid;
   gap: 10px;
   padding-top: 16px;
@@ -6410,9 +6242,9 @@ select:focus-visible {
 
 .living-thesis-child-row {
   align-items: end;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-left: 3px solid rgba(248, 113, 113, 0.62);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
+  border-left: 3px solid rgba(161, 60, 50, 0.62);
   border-radius: 8px;
   display: grid;
   gap: 8px;
@@ -6421,13 +6253,13 @@ select:focus-visible {
 }
 
 .living-thesis-child-row--catalyst {
-  border-left-color: rgba(45, 212, 191, 0.68);
+  border-left-color: rgba(36, 91, 70, 0.68);
   grid-template-columns: minmax(140px, 1fr) minmax(180px, 1.5fr) 120px auto;
 }
 
 .living-thesis-form-actions {
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--ti-color-border);
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -6809,7 +6641,7 @@ select:focus-visible {
 
 .living-thesis-health-section {
   background: var(--ti-color-surface-soft);
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 16px;
   line-height: 1.6;
   min-width: 0;
@@ -6878,7 +6710,7 @@ select:focus-visible {
   }
 }
 
-/* Thesis Board card editor */
+/* Compare ideas: saved row editor. */
 .portfolio-ranker-editor-help,
 .portfolio-ranker-editor-errors p {
   font-size: 14px;
@@ -6911,14 +6743,14 @@ select:focus-visible {
 
 .portfolio-ranker-overflow-menu > summary {
   align-items: center;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ti-color-surface-muted);
+  border: 1px solid var(--ti-color-border);
   border-radius: 10px;
   color: var(--ti-color-text-muted);
   cursor: pointer;
   display: inline-flex;
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 600;
   height: 34px;
   justify-content: center;
   letter-spacing: 0;
@@ -6938,23 +6770,23 @@ select:focus-visible {
 
 .portfolio-ranker-overflow-menu > summary:hover,
 .portfolio-ranker-overflow-menu[open] > summary {
-  background: rgba(72, 224, 204, 0.09);
-  border-color: rgba(72, 224, 204, 0.32);
+  background: rgba(36, 91, 70, 0.09);
+  border-color: rgba(36, 91, 70, 0.32);
   color: var(--ti-color-accent);
 }
 
 .portfolio-ranker-overflow-menu > summary:focus-visible,
 .portfolio-ranker-overflow-popover button:focus-visible {
-  border-color: rgba(72, 224, 204, 0.55);
-  box-shadow: 0 0 0 3px rgba(72, 224, 204, 0.18);
+  border-color: rgba(36, 91, 70, 0.55);
+  box-shadow: 0 0 0 3px rgba(36, 91, 70, 0.18);
   outline: none;
 }
 
 .portfolio-ranker-overflow-popover {
-  background: #16202B;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #FFFFFF;
+  border: 1px solid var(--ti-color-border);
   border-radius: 10px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
   min-width: 150px;
   padding: 6px;
   position: absolute;
@@ -6971,7 +6803,7 @@ select:focus-visible {
   cursor: pointer;
   font: inherit;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   padding: 9px 10px;
   text-align: left;
   transition:
@@ -6981,8 +6813,8 @@ select:focus-visible {
 }
 
 .portfolio-ranker-overflow-popover button:hover {
-  background: rgba(239, 95, 87, 0.1);
-  border-color: rgba(239, 95, 87, 0.2);
+  background: rgba(161, 60, 50, 0.1);
+  border-color: rgba(161, 60, 50, 0.2);
 }
 
 .portfolio-ranker-overflow-popover button:disabled {
@@ -7000,22 +6832,16 @@ select:focus-visible {
 
 .portfolio-ranker-row.portfolio-ranker-row--expanded,
 .portfolio-ranker-row.portfolio-ranker-row--expanded:hover {
-  background:
-    radial-gradient(circle at 100% 0%, rgba(72, 224, 204, 0.11), transparent 36%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022)),
-    var(--ti-color-surface-elevated);
-  border-color: rgba(72, 224, 204, 0.38);
-  box-shadow:
-    var(--ti-shadow-surface-inset),
-    0 0 0 1px rgba(72, 224, 204, 0.08),
-    0 16px 34px rgba(0, 0, 0, 0.2);
+  background: var(--ti-color-surface-elevated);
+  border-color: rgba(36, 91, 70, 0.38);
+  box-shadow: none;
   transform: none;
 }
 
 .portfolio-ranker-expanded-editor {
-  background: #16202B;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: #FFFFFF;
+  border: 1px solid var(--ti-color-border);
+  border-radius: 8px;
   box-sizing: border-box;
   display: grid;
   gap: 14px;
@@ -7053,8 +6879,8 @@ select:focus-visible {
 
 .portfolio-ranker-expanded-editor input:focus-visible,
 .portfolio-ranker-expanded-editor textarea:focus-visible {
-  border-color: rgba(72, 224, 204, 0.55);
-  box-shadow: 0 0 0 3px rgba(72, 224, 204, 0.16);
+  border-color: rgba(36, 91, 70, 0.55);
+  box-shadow: 0 0 0 3px rgba(36, 91, 70, 0.16);
   outline: none;
 }
 
@@ -7109,5 +6935,353 @@ select:focus-visible {
 
   .portfolio-ranker-editor-actions > .ti-button {
     flex: 1 1 120px;
+  }
+}
+
+/* Research desk: shared control, disclosure, and reading treatments. */
+.ti-button--primary:hover:not(:disabled) {
+  --ti-button-background: var(--ti-color-primary-hover);
+}
+
+.ti-button--secondary:hover:not(:disabled),
+.ti-button--ghost:hover:not(:disabled),
+.ti-button--sidebar:hover:not(:disabled) {
+  --ti-button-background: var(--ti-color-surface-soft);
+}
+
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ti-color-primary);
+  outline-offset: 3px;
+}
+
+.content-area input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.content-area select,
+.content-area textarea {
+  background: var(--ti-color-surface);
+  border-color: #859387;
+  border-radius: 6px;
+  color: var(--ti-color-text);
+  font-size: 14px;
+}
+
+.content-area input::placeholder,
+.content-area textarea::placeholder {
+  color: #68736B;
+  opacity: 1;
+}
+
+.content-area input:disabled,
+.content-area select:disabled,
+.content-area textarea:disabled {
+  background: var(--ti-color-surface-muted);
+  color: var(--ti-color-text-muted);
+  cursor: not-allowed;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"] {
+  accent-color: var(--ti-color-primary);
+}
+
+.ti-page-header {
+  padding-bottom: 4px;
+}
+
+.ti-page-header__actions {
+  align-items: center;
+}
+
+.tool-about {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--ti-color-border);
+  color: var(--ti-color-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 14px 0 0;
+}
+
+.tool-about > summary {
+  color: var(--ti-color-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  list-style-position: inside;
+  min-height: 28px;
+}
+
+.tool-about > summary::marker {
+  color: var(--ti-color-text-subtle);
+}
+
+.tool-about[open] > summary {
+  color: var(--ti-color-text);
+  margin-bottom: 12px;
+}
+
+.tool-about > :last-child {
+  margin-bottom: 0;
+}
+
+.tool-about p + p {
+  margin-top: 10px;
+}
+
+.data-provenance-note {
+  color: var(--ti-color-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.living-thesis-leave-dialog {
+  border-color: var(--ti-color-border);
+  box-shadow: 0 18px 48px rgba(32, 41, 37, 0.18);
+  padding: 28px;
+}
+
+.living-thesis-leave-dialog::backdrop {
+  background: rgba(32, 41, 37, 0.38);
+}
+
+.portfolio-ranker-overflow-popover {
+  box-shadow: 0 8px 24px rgba(32, 41, 37, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto;
+    transition-duration: 0s;
+    animation-duration: 0s;
+  }
+}
+
+.mbs-input-grid .mbs-category-card {
+  background: var(--ti-color-surface);
+  border: 0;
+  border-bottom: 1px solid var(--ti-color-border);
+  border-radius: 0;
+  gap: 10px;
+  padding: 16px 0;
+}
+
+.mbs-input-grid {
+  column-gap: 24px;
+}
+
+.mbs-guided-option {
+  min-height: 40px;
+}
+
+.tool-about.mbs-thesis-link-panel {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--ti-color-border);
+  border-radius: 0;
+  padding: 14px 0 0;
+}
+
+/* Scoring uses available workspace width, never fixed minimum factor columns. */
+.mbs-screen .mbs-workspace-grid {
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 300px);
+}
+
+.mbs-screen .mbs-workspace-grid > .ti-card,
+.mbs-screen .mbs-category-card,
+.mbs-screen .mbs-field,
+.mbs-screen .mbs-guided-question,
+.mbs-screen .mbs-guided-option {
+  min-width: 0;
+}
+
+.mbs-screen .mbs-input-grid,
+.mbs-screen .mbs-input-grid--guided {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
+}
+
+.mbs-screen .mbs-guided-option span,
+.mbs-screen .mbs-category-card-header {
+  overflow-wrap: anywhere;
+}
+
+.mbs-screen .mbs-score-summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mbs-screen .mbs-score-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  gap: 4px;
+  min-height: 0;
+  padding: 0;
+}
+
+.mbs-screen .mbs-score-card strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.mbs-screen .mbs-hero-score {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ti-color-border);
+  border-radius: 0;
+  gap: 10px;
+  padding: 0 0 18px;
+}
+
+.mbs-screen .mbs-driver-grid {
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 8px;
+}
+
+.mbs-screen .mbs-driver-card,
+.mbs-screen .mbs-interpretation-card,
+.mbs-screen .mbs-output-section {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--ti-color-border);
+  border-radius: 0;
+  padding: 16px 0 0;
+}
+
+.mbs-screen .mbs-driver-list {
+  gap: 0;
+}
+
+.mbs-screen .mbs-driver-list li {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ti-color-border);
+  border-radius: 0;
+  font-weight: 400;
+  gap: 12px;
+  min-height: 0;
+  padding: 9px 0;
+}
+
+.mbs-screen .mbs-driver-list li:last-child {
+  border-bottom: 0;
+}
+
+.mbs-screen .mbs-driver-list strong {
+  font-size: 14px;
+}
+
+.mbs-screen .mbs-complete-indicator {
+  background: transparent;
+  border: 0;
+  padding: 10px 0;
+}
+
+.watchlist-field,
+.reminders-field,
+.watchlist-field input,
+.watchlist-field textarea,
+.reminders-field input,
+.reminders-field textarea,
+.reminders-field select {
+  min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .mbs-screen .mbs-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mbs-screen .mbs-workspace-grid > .mbs-score-panel-card {
+    position: static;
+  }
+
+  .mbs-screen .mbs-driver-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .mbs-screen .mbs-input-grid,
+  .mbs-screen .mbs-input-grid--guided,
+  .mbs-screen .mbs-driver-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Research notes responds to its usable width after sidebar and page padding. */
+.thesis-monitor-screen {
+  container: research-notes / inline-size;
+}
+
+.thesis-monitor-screen .thesis-workspace-grid {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.thesis-monitor-screen .thesis-workspace-grid > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+.thesis-monitor-screen .ti-card__body,
+.thesis-monitor-screen .thesis-field,
+.thesis-monitor-screen .thesis-field input,
+.thesis-monitor-screen .thesis-field select,
+.thesis-monitor-screen .thesis-field textarea {
+  min-width: 0;
+}
+
+.thesis-monitor-screen .thesis-workspace-grid > .thesis-health-card {
+  grid-column: 1 / -1;
+  position: static;
+}
+
+.thesis-monitor-screen .thesis-queue-title,
+.thesis-monitor-screen .thesis-details h3 {
+  overflow-wrap: anywhere;
+}
+
+.thesis-monitor-screen .thesis-details--compact .thesis-details-header {
+  flex-direction: column;
+}
+
+@container research-notes (min-width: 800px) {
+  .thesis-monitor-screen .thesis-workspace-grid {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  }
+
+  .thesis-monitor-screen .thesis-workspace-grid > .thesis-health-card {
+    grid-column: 2;
+  }
+}
+
+@container research-notes (min-width: 1160px) {
+  .thesis-monitor-screen .thesis-workspace-grid {
+    grid-template-columns: minmax(220px, 250px) minmax(0, 1fr) minmax(240px, 280px);
+  }
+
+  .thesis-monitor-screen .thesis-workspace-grid > .thesis-health-card {
+    grid-column: auto;
+  }
+
+  .thesis-monitor-screen .thesis-health-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container research-notes (max-width: 540px) {
+  .thesis-monitor-screen .thesis-form-grid,
+  .thesis-monitor-screen .thesis-health-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

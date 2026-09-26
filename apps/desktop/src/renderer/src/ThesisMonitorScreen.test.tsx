@@ -32,34 +32,39 @@ describe('ThesisMonitorScreen', () => {
       <ThesisMonitorScreen initialNotes={[sampleNote]} />
     );
 
-    expect(html).toContain('Thesis Notes');
-    expect(html).toContain('Thesis Queue');
-    expect(html).toContain('plan the next review');
+    expect(html).toContain('Research notes');
+    expect(html).toContain('Your notes');
+    expect(html).toContain('questions to revisit');
     expect(html).toContain('Durable software thesis');
     expect(html).toContain('MSFT');
     expect(html).toContain('Review customer retention');
+    expect(html).toContain('Medium conviction');
+    expect(html).not.toContain('Score 68');
   });
 
   it('renders thesis queue cards when no local notes exist', () => {
     const html = renderToStaticMarkup(<ThesisMonitorScreen />);
 
-    expect(html).toContain('Review and update saved thesis notes');
-    expect(html).toContain('No local thesis notes yet');
-    expect(html).toContain('Demo thesis preview');
+    expect(html).toContain('Saved on this device');
+    expect(html).toContain('Your first note starts here');
+    expect(html).toContain('Explore example notes');
+    const savedOverview = html.slice(html.indexOf('Selected note'));
+    expect(savedOverview).not.toContain('NVIDIA');
+    expect(savedOverview).toContain('Select a saved note to see its details');
     expect(html).toContain('Demo thesis data');
     expect(html).toContain('This example is separate from your saved thesis notes.');
-    expect(html).toContain('Local notes');
-    expect(html).toContain('+ New Thesis');
+    expect(html).toContain('Saved notes');
+    expect(html).toContain('+ New note');
     expect(html).toContain('NVDA');
     expect(html).toContain('NVIDIA');
     expect(html).toContain('AI accelerator demand');
     expect(html).toContain('CRWD');
     expect(html).toContain('Endpoint leadership remains strong');
     expect(html).toContain('Caution');
-    expect(html).toContain('Selected thesis snapshot');
+    expect(html).toContain('Selected note');
     expect(html).toContain('Bull case');
     expect(html).toContain('Review triggers');
-    expect(html).toContain('Review workflow');
+    expect(html).toContain('About this tool');
   });
 
   it('renders session theses in the sample queue from props', () => {
@@ -90,7 +95,7 @@ describe('ThesisMonitorScreen', () => {
       <ThesisMonitorScreen initialForm={invalidForm} />
     );
 
-    expect(html).toContain('Validation');
+    expect(html).toContain('Check these details');
     expect(html).toContain('Thesis note title is required.');
     expect(html).toContain('Thesis note body is required.');
     expect(html).toContain('Thesis note ticker must be a valid ticker symbol.');
@@ -102,7 +107,7 @@ describe('ThesisMonitorScreen', () => {
       <ThesisMonitorScreen initialStorageErrors={['Thesis storage unavailable.']} />
     );
 
-    expect(html).toContain('Storage');
+    expect(html).toContain('Could not update your notes');
     expect(html).toContain('Thesis storage unavailable.');
   });
 

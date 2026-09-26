@@ -1,11 +1,11 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
-import type { DashboardSummary } from '../../shared/dashboardSummariesStorage';
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type {
+  DashboardSummary,
+  DashboardSummariesStorageResult
+} from '../../shared/dashboardSummariesStorage';
 import { DashboardScreen } from './DashboardScreen';
-import {
-  cloneMockTheses,
-  createMockThesisFromMbsScore
-} from './data/mockTheses';
 
 const zeroSummary: DashboardSummary = {
   activeThesisNotes: 0,
@@ -47,157 +47,124 @@ const nonzeroSummary: DashboardSummary = {
   watchThesisNotes: 4
 };
 
+afterEach(cleanup);
+
 describe('DashboardScreen', () => {
-  it('renders investor command center sections', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen initialSummary={zeroSummary} />
-    );
+  it('centers the overview on saved theses instead of demo market signals', () => {
+    render(<DashboardScreen initialSummary={zeroSummary} summaryStorageClient={null} />);
 
-    expect(html).toContain('Investor Command Center');
-    expect(html).toContain('Local Saved Data');
-    expect(html).toContain('Demo Thesis Analytics');
-    expect(html).toContain('Demo Research Context');
-    expect(html).toContain('Review Priority');
-    expect(html).toContain('Market Regime');
-    expect(html).toContain('Demo Thesis Activity');
-    expect(html).toContain('Continue Research');
+    expect(screen.getByRole('heading', { name: 'Overview', level: 1 })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Start with your thesis.' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Open theses' })).toBeTruthy();
+    expect(screen.queryByText('Market Pulse')).toBeNull();
+    expect(screen.queryByText('Demo Thesis Analytics')).toBeNull();
+    expect(screen.queryByText('Under Pressure')).toBeNull();
+    expect(screen.queryByText('Needs Review Now')).toBeNull();
   });
 
-  it('renders shared thesis health state', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen initialSummary={zeroSummary} />
-    );
+  it('opens the intended workspace from every overview action', () => {
+    const onOpenWorkspace = vi.fn();
+    render(<DashboardScreen onOpenWorkspace={onOpenWorkspace} summaryStorageClient={null} />);
 
-    expect(html).toContain('Theses tracked');
-    expect(html).toContain('<strong>8</strong>');
-    expect(html).toContain('Shared demo thesis records.');
-    expect(html).toContain('Needs review');
-    expect(html).toContain('4 review due soon.');
-    expect(html).toContain('Active ideas');
-    expect(html).toContain('Weakening theses');
-    expect(html).toContain('Strong conviction');
-    expect(html).toContain('No persisted local workflow records yet.');
+    const destinations = [
+      ['Open theses', 'thesis-board'],
+      ['Build your watchlist', 'watchlist'],
+      ['Score a company', 'mbs-scorer'],
+      ['Compare ideas', 'portfolio-ranker'],
+      ['Write research notes', 'thesis-monitor']
+    ];
+    for (const [label, destination] of destinations) {
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(label) }));
+      expect(onOpenWorkspace).toHaveBeenLastCalledWith(destination);
+    }
   });
 
-  it('keeps nonzero persisted workflow totals visible beside demo analytics', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen initialSummary={nonzeroSummary} />
-    );
+  it('does not describe missing tool records as an empty thesis collection', () => {
+    render(<DashboardScreen initialSummary={zeroSummary} summaryStorageClient={null} />);
 
-    expect(html).toContain('Saved watchlist items');
-    expect(html).toContain('Local watchlist records.');
-    expect(html).toContain('3 active / 1 draft / 4 watch');
-    expect(html).toContain('1 overdue / 2 completed / 6 total');
-    expect(html).toContain('Ranker inputs');
-    expect(html).toContain('Latest NVDA: 76.9 / 100');
-    expect(html).toContain('Demo Thesis Analytics');
-    expect(html).not.toContain('No persisted local workflow records yet.');
+    expect(screen.getByText('These tools don’t have saved records yet. Your theses are available separately in Theses.')).toBeTruthy();
+    expect(screen.getByText('Theses, reviews, and decisions are kept in Theses and aren’t included in these totals.')).toBeTruthy();
+    expect(screen.queryByText(/No saved theses/i)).toBeNull();
   });
 
-  it('renders loading state when a summary client is available', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen
-        summaryStorageClient={{
-          get: async () => ({ ok: true, value: nonzeroSummary })
-        }}
-      />
-    );
+  it('reports the persisted totals and latest score without inventing thesis counts', () => {
+    render(<DashboardScreen initialSummary={nonzeroSummary} summaryStorageClient={null} />);
 
-    expect(html).toContain('Loading saved local records.');
+    const expectedCounts = [
+      ['Watchlist companies', '7'],
+      ['Research notes', '8'],
+      ['Comparison ideas', '6'],
+      ['Saved scores', '5'],
+      ['Open reminders', '4']
+    ];
+    for (const [label, count] of expectedCounts) {
+      const row = screen.getByText(label).parentElement!;
+      expect(within(row).getByRole('definition').textContent).toBe(count);
+    }
+    expect(screen.getByText('3 active · 1 draft · 4 watching')).toBeTruthy();
+    expect(screen.getByText('1 overdue · 2 completed · 6 total')).toBeTruthy();
+    expect(screen.getByText('NVDA: 76.9 / 100')).toBeTruthy();
+    expect(screen.queryByText(/These tools don’t have saved records yet/)).toBeNull();
   });
 
-  it('renders storage errors without crashing', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen
-        initialSummaryErrors={['Dashboard summary storage unavailable.']}
-      />
-    );
+  it('does not present zero counts while a storage request is pending', async () => {
+    let resolveSummary!: (value: DashboardSummariesStorageResult<DashboardSummary>) => void;
+    const get = vi.fn(() => new Promise<DashboardSummariesStorageResult<DashboardSummary>>((resolve) => {
+      resolveSummary = resolve;
+    }));
+    render(<DashboardScreen summaryStorageClient={{ get }} />);
 
-    expect(html).toContain('Unable to load local summary.');
-    expect(html).toContain('Dashboard summary storage unavailable.');
+    expect(screen.getByRole('status').textContent).toContain('Loading your saved research');
+    expect(screen.queryByRole('definition')).toBeNull();
+    await act(async () => { resolveSummary({ ok: true, value: nonzeroSummary }); });
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByText('NVDA: 76.9 / 100')).toBeTruthy();
   });
 
-  it('renders review priority demo context separately from persisted totals', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen initialSummary={zeroSummary} />
-    );
+  it('keeps errors visible and retries a failed storage request', async () => {
+    const get = vi.fn()
+      .mockResolvedValueOnce({ ok: false, errors: ['Storage is temporarily unavailable.'] })
+      .mockResolvedValueOnce({ ok: true, value: nonzeroSummary });
+    render(<DashboardScreen summaryStorageClient={{ get }} />);
 
-    expect(html).toContain('Needs Review Now');
-    expect(html).toContain('SOFI');
-    expect(html).toContain('Weakest Thesis');
-    expect(html).toContain('TSLA');
-    expect(html).toContain('Biggest Score Drop');
-    expect(html).toContain('TSLA');
-    expect(html).toContain('Top Improving Idea');
-    expect(html).toContain('NVDA');
-    expect(html).toContain('Example review signals from the shared demo thesis set.');
+    expect((await screen.findByRole('alert')).textContent).toContain('Storage is temporarily unavailable.');
+    expect(screen.queryByRole('definition')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('NVDA: 76.9 / 100')).toBeTruthy();
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('renders session thesis updates from props', () => {
-    const baseTheses = cloneMockTheses();
-    const sessionThesis = createMockThesisFromMbsScore(baseTheses, {
-      companyName: 'MVP Session Co',
-      createdAt: '2026-05-24T12:00:00.000Z',
-      mbsScore: 12,
-      ticker: 'MVP'
-    });
-    const html = renderToStaticMarkup(
-      <DashboardScreen
-        initialSummary={zeroSummary}
-        theses={[...baseTheses, sessionThesis]}
-      />
-    );
+  it('handles rejected requests without showing stale initial totals', async () => {
+    const get = vi.fn().mockRejectedValue(new Error('Cannot read saved data.'));
+    render(<DashboardScreen initialSummary={nonzeroSummary} summaryStorageClient={{ get }} />);
 
-    expect(html).toContain('MVP');
-    expect(html).toContain('12 MBS. Created from MBS Scorer.');
-    expect(html).toContain('Demo Research Context');
+    expect((await screen.findByRole('alert')).textContent).toContain('Cannot read saved data.');
+    expect(screen.queryByRole('definition')).toBeNull();
   });
 
-  it('renders market regime and quick actions', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen initialSummary={zeroSummary} />
-    );
+  it('provides a clear preview state when storage is unavailable', () => {
+    render(<DashboardScreen summaryStorageClient={null} />);
 
-    expect(html).toContain('Under Pressure');
-    expect(html).toContain('Example context for organizing research');
-    expect(html).toContain('Example market context');
-    expect(html).not.toContain('size conviction carefully');
-    expect(html).toContain('Open demo SOFI');
-    expect(html).toContain('Open MBS Scorer');
-    expect(html).toContain('Review Portfolio Ranker');
-    expect(html).toContain('Open Thesis Monitor');
-    expect(html).toContain('Check Watchlist');
+    expect(screen.getByText('Saved totals are unavailable in this preview. You can still explore the workspaces.')).toBeTruthy();
+    expect(screen.queryByRole('definition')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
-  it('labels the hard-coded market pulse as static demo data', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen initialSummary={zeroSummary} />
-    );
-
-    expect(html).toContain('Example Feed');
-    expect(html).toContain('Market Pulse');
-    expect(html).toContain('Demo data');
-    expect(html).toContain('Static example headlines and moves, not a live feed.');
-    expect(html).toContain(
-      'Google, Blackstone to create new AI cloud company, WSJ reports'
-    );
-    expect(html).toContain("Japan&#x27;s economy grew more than expected in Q1");
-    expect(html).toContain(
-      'Semiconductor leaders continue showing relative strength'
-    );
+  it('shows supplied errors when no storage connection is present', () => {
+    render(<DashboardScreen initialSummaryErrors={['Saved data is unavailable.']} summaryStorageClient={null} />);
+    expect(screen.getByRole('alert').textContent).toContain('Saved data is unavailable.');
+    expect(screen.queryByRole('definition')).toBeNull();
   });
 
-  it('does not render development status dashboard copy', () => {
-    const html = renderToStaticMarkup(
-      <DashboardScreen initialSummary={zeroSummary} />
-    );
+  it('omits invalid timestamps and falls back to a company name for score details', () => {
+    render(<DashboardScreen initialSummary={{
+      ...nonzeroSummary,
+      generatedAt: 'not-a-date',
+      latestMbsScoreSnapshot: { ...nonzeroSummary.latestMbsScoreSnapshot!, ticker: undefined }
+    }} summaryStorageClient={null} />);
 
-    expect(html).not.toContain('Offline MVP snapshot');
-    expect(html).not.toContain('Live data integrations');
-    expect(html).not.toContain('Brokerage connections');
-    expect(html).not.toContain('Pending MVP areas');
-    expect(html).not.toContain('MVP readiness checklist');
-    expect(html).not.toContain('Use this dashboard for');
-    expect(html).not.toContain('Manual workflows available');
+    expect(screen.getByText('NVIDIA: 76.9 / 100')).toBeTruthy();
+    expect(screen.queryByText(/Updated /)).toBeNull();
   });
 });

@@ -31,25 +31,28 @@ describe('WatchlistScreen', () => {
       <WatchlistScreen initialItems={[sampleItem]} />
     );
 
-    expect(html).toContain('Local Watchlist');
-    expect(html).toContain('Track companies, tags, thesis references');
+    expect(html).toContain('Watchlist');
+    expect(html).toContain('Keep a short list of companies you want to research.');
     expect(html).toContain('MSFT');
     expect(html).toContain('Microsoft');
     expect(html).toContain('quality, software');
     expect(html).toContain('Durable software thesis');
-    expect(html).toContain('Local saved data');
+    expect(html).toContain('Saved companies');
     expect(html).toContain('These watchlist items persist on this device.');
   });
 
   it('renders shared mock watchlist theses when no local items exist', () => {
     const html = renderToStaticMarkup(<WatchlistScreen />);
 
-    expect(html).toContain('Watchlist thesis context');
+    expect(html).toContain('Explore example companies');
+    expect(html.slice(0, html.indexOf('Explore example companies'))).not.toContain('CrowdStrike');
+    expect(html).toContain('Select a saved company to see its details');
     expect(html).toContain('Demo thesis data');
     expect(html).toContain(
       'Example thesis context is not part of your saved watchlist.'
     );
-    expect(html).not.toContain('No watchlist items yet');
+    expect(html).toContain('No companies saved yet');
+    expect(html.indexOf('Saved companies')).toBeLessThan(html.indexOf('Explore example companies'));
     expect(html).toContain('CRWD');
     expect(html).toContain('CrowdStrike');
     expect(html).toContain('PLTR');
@@ -84,7 +87,7 @@ describe('WatchlistScreen', () => {
       <WatchlistScreen initialForm={invalidForm} />
     );
 
-    expect(html).toContain('Validation');
+    expect(html).toContain('Check these details');
     expect(html).toContain('Watchlist ticker must be a valid ticker symbol.');
     expect(html).toContain(
       'Watchlist company name cannot be blank when provided.'

@@ -40,7 +40,7 @@ function ideas() { return within(screen.getByRole('region', { name: 'Investment 
 function row(ticker: string) { return within(ideas().getByText(ticker).closest('article')!); }
 async function openEditor(app = false) {
   const view = render(app ? <App /> : <PortfolioRankerScreen storageClient={service} />);
-  if (app) fireEvent.click(screen.getByRole('button', { name: 'Thesis Ranking' }));
+  if (app) fireEvent.click(screen.getByRole('button', { name: 'Compare ideas' }));
   await ideas().findByText('AAA');
   fireEvent.click(row('AAA').getByRole('button', { name: 'Edit details' }));
   return view;
@@ -48,7 +48,7 @@ async function openEditor(app = false) {
 function changeNote(note = 'Important research update') {
   fireEvent.change(screen.getByLabelText('Notes 1'), { target: { value: note } });
 }
-function leave() { fireEvent.click(screen.getByRole('button', { name: 'Dashboard' })); }
+function leave() { fireEvent.click(screen.getByRole('button', { name: 'Overview' })); }
 function dialog() { return within(screen.getByRole('dialog', { name: 'Unsaved ranking changes' })); }
 async function savedNote() {
   const result = await service.list();
@@ -68,7 +68,7 @@ describe('ranking draft and save protection', () => {
       expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(true);
     }
     expect((screen.getByLabelText('Search ideas') as HTMLInputElement).disabled).toBe(true);
-    expect((screen.getByLabelText('Filter ideas') as HTMLSelectElement).disabled).toBe(true);
+    expect((screen.getByLabelText('Example thesis status') as HTMLSelectElement).disabled).toBe(true);
     fireEvent.click(row('AAA').getByLabelText('More actions for AAA'));
     expect((row('AAA').getByRole('button', { name: 'Remove idea' }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
@@ -169,7 +169,7 @@ describe('ranking navigation', () => {
     fireEvent.click(dialog().getByRole('button', { name: 'Save and leave' }));
     await waitFor(() => expect(screen.queryByLabelText('Notes 1')).toBeNull());
     expect(await savedNote()).toBe('Important research update');
-    fireEvent.click(screen.getByRole('button', { name: 'Thesis Ranking' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Compare ideas' }));
     await ideas().findByText('Alpha');
     fireEvent.click(row('AAA').getByRole('button', { name: 'Edit details' }));
     expect((screen.getByLabelText('Notes 1') as HTMLTextAreaElement).value).toBe('Important research update');
@@ -224,14 +224,14 @@ describe('ranking navigation', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('protects the Re-evaluate thesis shortcut and native reload while dirty', async () => {
+  it('protects the Open scoring tool shortcut and native reload while dirty', async () => {
     await openEditor(true);
     changeNote();
     const event = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Re-evaluate thesis' }));
-    expect(screen.getByRole('dialog').textContent).toContain('MBS Scorer');
+    fireEvent.click(screen.getByRole('button', { name: 'Open scoring tool' }));
+    expect(screen.getByRole('dialog').textContent).toContain('Score a company');
     fireEvent.click(dialog().getByRole('button', { name: 'Continue editing' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     const cleanEvent = new Event('beforeunload', { cancelable: true });
@@ -247,14 +247,14 @@ describe('filtered ranking and new ideas', () => {
   it.each(['+ Add idea', '+ Add another idea'])('%s clears all filters and opens the new row', (name) => {
     render(<PortfolioRankerScreen storageClient={null} />);
     fireEvent.change(screen.getByLabelText('Search ideas'), { target: { value: 'NVDA' } });
-    fireEvent.change(screen.getByLabelText('Filter ideas'), { target: { value: 'Strong' } });
-    fireEvent.change(screen.getByLabelText('Filter idea status'), { target: { value: 'Active' } });
+    fireEvent.change(screen.getByLabelText('Example thesis status'), { target: { value: 'Strong' } });
+    fireEvent.change(screen.getByLabelText('Example idea status'), { target: { value: 'Active' } });
     fireEvent.click(screen.getByRole('button', { name }));
     const editor = screen.getByRole('region', { name: 'Edit Add ticker details' });
     expect(editor).toBeTruthy();
     expect((screen.getByLabelText('Search ideas') as HTMLInputElement).value).toBe('');
-    expect((screen.getByLabelText('Filter ideas') as HTMLSelectElement).value).toBe('all');
-    expect((screen.getByLabelText('Filter idea status') as HTMLSelectElement).value).toBe('all');
+    expect((screen.getByLabelText('Example thesis status') as HTMLSelectElement).value).toBe('all');
+    expect((screen.getByLabelText('Example idea status') as HTMLSelectElement).value).toBe('all');
     const ticker = within(editor).getByRole('textbox', { name: /Ticker/ });
     expect(document.activeElement).toBe(ticker);
     fireEvent.change(ticker, { target: { value: 'NEW' } });
@@ -264,14 +264,14 @@ describe('filtered ranking and new ideas', () => {
 
   it('ranks exactly the filtered cards, including hidden samples and empty results', () => {
     render(<PortfolioRankerScreen storageClient={null} />);
-    const output = () => within(screen.getByRole('heading', { name: 'Thesis ranking output' }).closest('section')!);
+    const output = () => within(screen.getByRole('heading', { name: 'Comparison' }).closest('section')!);
     fireEvent.change(screen.getByLabelText('Search ideas'), { target: { value: 'AVGO' } });
     expect(row('AVGO').getByText('1', { selector: '.portfolio-ranker-rank-badge' })).toBeTruthy();
     expect(output().getAllByText('AVGO').length).toBeGreaterThan(0);
     expect(output().getByText('1 / 1')).toBeTruthy();
     expect(output().queryByText('NVDA')).toBeNull();
     fireEvent.change(screen.getByLabelText('Search ideas'), { target: { value: 'AI Infrastructure' } });
-    fireEvent.change(screen.getByLabelText('Filter idea status'), { target: { value: 'Active' } });
+    fireEvent.change(screen.getByLabelText('Example idea status'), { target: { value: 'Active' } });
     expect(output().getByText('2 / 2')).toBeTruthy();
     expect(row('AVGO').getByText('2', { selector: '.portfolio-ranker-rank-badge' })).toBeTruthy();
     fireEvent.change(screen.getByLabelText('Search ideas'), { target: { value: 'no-such-idea' } });

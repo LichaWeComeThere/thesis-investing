@@ -91,22 +91,6 @@ function mockThesisBadgeVariant(
   return 'neutral';
 }
 
-function scoreForNote(note: LocalThesisNote): number | null {
-  if (note.conviction === 'high') {
-    return 82;
-  }
-
-  if (note.conviction === 'medium') {
-    return 68;
-  }
-
-  if (note.conviction === 'low') {
-    return 54;
-  }
-
-  return null;
-}
-
 function reviewLabelForNote(note: LocalThesisNote): string {
   if (note.reviewDueAt) {
     return `Review ${note.reviewDueAt}`;
@@ -167,7 +151,6 @@ export function ThesisMonitorScreen({
   const selectedMockThesis =
     demoTheses.find((thesis) => thesis.id === selectedMockThesisId) ??
     demoTheses[0];
-  const selectedNoteScore = selectedNote ? scoreForNote(selectedNote) : null;
   const thesisCount = notes.length;
   const activeThesisCount = activeNoteCount;
   const reviewDateCount = notesWithReviewDates;
@@ -333,18 +316,16 @@ export function ThesisMonitorScreen({
   return (
     <div className="thesis-monitor-screen">
       <PageHeader
-        badge={<Badge variant="accent">Thesis Notes</Badge>}
-        description="Record the original thesis behind a holding or idea, track status, and plan the next review."
-        eyebrow="Thesis Workspace"
-        title="Thesis Monitor"
+        description="Write down your research, assumptions, and questions to revisit."
+        title="Research notes"
       />
 
       <div className="thesis-workspace-grid">
-        <aside className="thesis-queue-rail" aria-label="Thesis Queue">
+        <aside className="thesis-queue-rail" aria-label="Research notes list">
           <div className="thesis-queue-header">
             <div>
-              <h2>Thesis Queue</h2>
-              <p>Review and update saved thesis notes</p>
+              <h2>Your notes</h2>
+              <p>Saved on this device</p>
             </div>
             <Button
               disabled={isWriting || isLoading}
@@ -352,16 +333,15 @@ export function ThesisMonitorScreen({
               type="button"
               variant="secondary"
             >
-              + New Thesis
+              + New note
             </Button>
           </div>
 
-          <div className="thesis-queue-list" role="list">
+          <div className="thesis-queue-list" role="group" aria-label="Saved and example notes">
             {isLoading ? (
-              <p>Loading persisted thesis notes...</p>
+              <p>Loading notes...</p>
             ) : hasLocalNotes ? (
               notes.map((note) => {
-                  const score = scoreForNote(note);
                   const isSelected = note.id === selectedNoteId;
 
                   return (
@@ -371,7 +351,6 @@ export function ThesisMonitorScreen({
                       disabled={isWriting}
                       key={note.id}
                       onClick={() => selectNote(note)}
-                      role="listitem"
                       type="button"
                     >
                       <span className="thesis-queue-card-topline">
@@ -383,7 +362,9 @@ export function ThesisMonitorScreen({
                       <span className="thesis-queue-title">{note.title}</span>
                       <span className="thesis-queue-meta">
                         <small>{reviewLabelForNote(note)}</small>
-                        {score ? <small>Score {score}</small> : null}
+                        {note.conviction ? (
+                          <small>{convictionLabels[note.conviction]} conviction</small>
+                        ) : null}
                       </span>
                       <span className="thesis-queue-open">Open</span>
                     </button>
@@ -392,62 +373,112 @@ export function ThesisMonitorScreen({
             ) : (
               <>
                 <div className="thesis-empty-state">
-                  <h3>No local thesis notes yet</h3>
+                  <h3>Your first note starts here</h3>
                   <p>
-                    Create a note or select a demo thesis to review the
-                    workflow.
+                    Use New note to capture your research. Examples below are not saved notes.
                   </p>
-                  <Badge variant="neutral">Demo thesis preview</Badge>
                 </div>
-                {demoTheses.map((thesis) => {
-                  const isSelected = thesis.id === selectedMockThesisId;
+                <details className="tool-about thesis-note-examples">
+                  <summary>Explore example notes</summary>
+                  <p className="data-provenance-note">These examples are not saved research notes.</p>
+                  {demoTheses.map((thesis) => {
+                    const isSelected = thesis.id === selectedMockThesisId;
 
-                  return (
-                    <button
-                      aria-current={isSelected ? 'true' : undefined}
-                      className="thesis-queue-card thesis-queue-card--demo"
-                      disabled={isWriting}
-                      key={thesis.id}
-                      onClick={() => {
-                        setSelectedMockThesisId(thesis.id);
-                        setSelectedNoteId(null);
-                      }}
-                      role="listitem"
-                      type="button"
-                    >
-                      <span className="thesis-queue-card-topline">
-                        <strong>{thesis.ticker}</strong>
-                        <Badge variant={mockThesisBadgeVariant(thesis)}>
-                          {thesis.thesisStatus}
-                        </Badge>
-                      </span>
-                      <span className="thesis-queue-title">
-                        {thesis.thesisSummary}
-                      </span>
-                      <span className="thesis-queue-meta">
-                        <small>{thesis.ideaStatus}</small>
-                        <small>Score {thesis.mbsScore}</small>
-                      </span>
-                      <span className="thesis-queue-open">Preview</span>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        aria-current={isSelected ? 'true' : undefined}
+                        className="thesis-queue-card thesis-queue-card--demo"
+                        disabled={isWriting}
+                        key={thesis.id}
+                        onClick={() => {
+                          setSelectedMockThesisId(thesis.id);
+                          setSelectedNoteId(null);
+                        }}
+                        type="button"
+                      >
+                        <span className="thesis-queue-card-topline">
+                          <strong>{thesis.ticker}</strong>
+                          <Badge variant={mockThesisBadgeVariant(thesis)}>
+                            {thesis.thesisStatus}
+                          </Badge>
+                        </span>
+                        <span className="thesis-queue-title">
+                          {thesis.thesisSummary}
+                        </span>
+                        <span className="thesis-queue-meta">
+                          <small>{thesis.ideaStatus}</small>
+                          <small>Score {thesis.mbsScore}</small>
+                        </span>
+                        <span className="thesis-queue-open">Preview</span>
+                      </button>
+                    );
+                  })}
+                  <article className="thesis-details thesis-details--compact">
+                    <p className="data-provenance-note" role="note">
+                      <Badge variant="neutral">Demo thesis data</Badge>
+                      <span>This example is separate from your saved thesis notes.</span>
+                    </p>
+                    <div className="thesis-details-header">
+                      <div>
+                        <p className="thesis-details-eyebrow">
+                          {selectedMockThesis.ticker}
+                        </p>
+                        <h3>{selectedMockThesis.companyName}</h3>
+                      </div>
+                      <Badge variant={mockThesisBadgeVariant(selectedMockThesis)}>
+                        {selectedMockThesis.thesisStatus}
+                      </Badge>
+                    </div>
+
+                    <dl className="thesis-meta-grid">
+                      <div>
+                        <dt>Score</dt>
+                        <dd>{selectedMockThesis.mbsScore}</dd>
+                      </div>
+                      <div>
+                        <dt>Review</dt>
+                        <dd>{selectedMockThesis.nextReviewDate}</dd>
+                      </div>
+                    </dl>
+
+                    <div className="thesis-detail-section">
+                      <h4>Summary</h4>
+                      <p>{selectedMockThesis.thesisSummary}</p>
+                    </div>
+
+                    <div className="thesis-detail-section">
+                      <h4>Bull case</h4>
+                      <p>{selectedMockThesis.bullCase}</p>
+                    </div>
+
+                    <div className="thesis-detail-section">
+                      <h4>Bear case</h4>
+                      <p>{selectedMockThesis.bearCase}</p>
+                    </div>
+
+                    <div className="thesis-detail-section">
+                      <h4>Review triggers</h4>
+                      <p>{selectedMockThesis.reviewTriggers.join(', ')}</p>
+                    </div>
+                  </article>
+                </details>
               </>
             )}
           </div>
 
-          <div className="thesis-queue-workflow">
-            <h3>Review workflow</h3>
+          <details className="thesis-queue-workflow tool-about">
+            <summary>About this tool</summary>
+            <p>Research notes are separate from your saved Theses and their review history. Use a note status to track your own research progress.</p>
             <div>
               <span>Draft</span>
               <span>Active</span>
               <span>Watch</span>
               <span>Broken</span>
             </div>
-          </div>
+          </details>
         </aside>
 
-        <Card className="thesis-form-card" title="Create or edit thesis note">
+        <Card className="thesis-form-card" title={selectedNote?.id === form.id ? "Edit note" : "New note"}>
           <div className="thesis-form-grid">
             <label className="thesis-field">
               <span>Title</span>
@@ -527,11 +558,11 @@ export function ThesisMonitorScreen({
           </div>
 
           <label className="thesis-field thesis-body-field">
-            <span>Thesis body</span>
+            <span>Research notes</span>
             <textarea
               aria-label="Thesis body"
               onChange={(event) => updateForm('body', event.currentTarget.value)}
-              placeholder="Write the user-authored thesis, key assumptions, and what would challenge it."
+              placeholder="What have you learned? What assumptions should you check?"
               rows={6}
               value={form.body}
             />
@@ -542,7 +573,7 @@ export function ThesisMonitorScreen({
             <textarea
               aria-label="Thesis checklist"
               onChange={(event) => updateForm('checklist', event.currentTarget.value)}
-              placeholder="Manual checklist items to revisit later."
+              placeholder="Questions and evidence to revisit."
               rows={4}
               value={form.checklist}
             />
@@ -550,7 +581,7 @@ export function ThesisMonitorScreen({
 
           {visibleValidationErrors.length > 0 ? (
             <div className="thesis-validation" role="alert">
-              <h3>Validation</h3>
+              <h3>Check these details</h3>
               <ul>
                 {visibleValidationErrors.map((error) => (
                   <li key={error}>{error}</li>
@@ -561,7 +592,7 @@ export function ThesisMonitorScreen({
 
           {storageErrors.length > 0 ? (
             <div className="thesis-validation" role="alert">
-              <h3>Storage</h3>
+              <h3>Could not update your notes</h3>
               <ul>
                 {storageErrors.map((error) => (
                   <li key={error}>{error}</li>
@@ -585,9 +616,9 @@ export function ThesisMonitorScreen({
           </div>
         </Card>
 
-        <Card className="thesis-health-card" emphasis title="Thesis health">
+        <Card className="thesis-health-card" title="Note overview">
           <div className="thesis-health-hero">
-            <span>Local notes</span>
+            <span>Saved notes</span>
             <strong>{thesisCount}</strong>
             <Badge variant={activeThesisCount > 0 ? 'accent' : 'neutral'}>
               {activeThesisCount} active/watch
@@ -611,13 +642,13 @@ export function ThesisMonitorScreen({
             <h3>Next action</h3>
             <p>
               {selectedNote
-                ? 'Review the selected thesis detail card below or update the manual checklist.'
-                : 'Select a demo thesis to preview example context or save a new note.'}
+                ? 'Edit the note or update the questions you want to revisit.'
+                : 'Write a new note to keep your own research. Examples below are for reference.'}
             </p>
           </div>
 
           <div className="thesis-selected-snapshot">
-            <h3>Selected thesis snapshot</h3>
+            <h3>Selected note</h3>
             {selectedNote ? (
               <article className="thesis-details thesis-details--compact">
                 <div className="thesis-details-header">
@@ -634,8 +665,8 @@ export function ThesisMonitorScreen({
 
                 <dl className="thesis-meta-grid">
                   <div>
-                    <dt>Score</dt>
-                    <dd>{selectedNoteScore ?? 'Not set'}</dd>
+                    <dt>Conviction</dt>
+                    <dd>{selectedNote.conviction ? convictionLabels[selectedNote.conviction] : 'Not set'}</dd>
                   </div>
                   <div>
                     <dt>Review due</dt>
@@ -656,54 +687,7 @@ export function ThesisMonitorScreen({
                 ) : null}
               </article>
             ) : (
-              <article className="thesis-details thesis-details--compact">
-                <p className="data-provenance-note" role="note">
-                  <Badge variant="neutral">Demo thesis data</Badge>
-                  <span>This example is separate from your saved thesis notes.</span>
-                </p>
-                <div className="thesis-details-header">
-                  <div>
-                    <p className="thesis-details-eyebrow">
-                      {selectedMockThesis.ticker}
-                    </p>
-                    <h3>{selectedMockThesis.companyName}</h3>
-                  </div>
-                  <Badge variant={mockThesisBadgeVariant(selectedMockThesis)}>
-                    {selectedMockThesis.thesisStatus}
-                  </Badge>
-                </div>
-
-                <dl className="thesis-meta-grid">
-                  <div>
-                    <dt>Score</dt>
-                    <dd>{selectedMockThesis.mbsScore}</dd>
-                  </div>
-                  <div>
-                    <dt>Review</dt>
-                    <dd>{selectedMockThesis.nextReviewDate}</dd>
-                  </div>
-                </dl>
-
-                <div className="thesis-detail-section">
-                  <h4>Summary</h4>
-                  <p>{selectedMockThesis.thesisSummary}</p>
-                </div>
-
-                <div className="thesis-detail-section">
-                  <h4>Bull case</h4>
-                  <p>{selectedMockThesis.bullCase}</p>
-                </div>
-
-                <div className="thesis-detail-section">
-                  <h4>Bear case</h4>
-                  <p>{selectedMockThesis.bearCase}</p>
-                </div>
-
-                <div className="thesis-detail-section">
-                  <h4>Review triggers</h4>
-                  <p>{selectedMockThesis.reviewTriggers.join(', ')}</p>
-                </div>
-              </article>
+              <p>Select a saved note to see its details, or write a new note.</p>
             )}
           </div>
         </Card>

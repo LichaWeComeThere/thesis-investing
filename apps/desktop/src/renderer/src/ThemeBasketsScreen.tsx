@@ -25,13 +25,11 @@ export function ThemeBasketsScreen({
   return (
     <div className="theme-baskets-screen">
       <PageHeader
-        badge={<Badge variant="accent">Theme Library</Badge>}
-        description="Browse curated research themes and example companies to organize new ideas."
-        eyebrow="Research Library"
-        title="Theme Baskets"
+        description="Explore research themes and example companies."
+        title="Themes"
       />
 
-      <Card className="theme-baskets-library-card" title="Theme library">
+      <Card className="theme-baskets-library-card" title="Browse themes">
         <div className="theme-baskets-layout">
           <div
             aria-label="Theme basket list"
@@ -60,12 +58,8 @@ export function ThemeBasketsScreen({
           <article className="theme-basket-details">
             <div className="theme-basket-details-header">
               <div>
-                <p className="theme-basket-details-eyebrow">
-                  Research theme
-                </p>
                 <h2>{selectedBasket.name}</h2>
               </div>
-              <Badge variant="neutral">Theme Library</Badge>
             </div>
 
             <p className="theme-basket-description">
@@ -78,7 +72,7 @@ export function ThemeBasketsScreen({
             </section>
 
             <section className="theme-basket-section">
-              <h3>Tags</h3>
+              <h3>Related topics</h3>
               <div className="theme-basket-tags">
                 {selectedBasket.tags.map((tag) => (
                   <Badge key={tag} variant="neutral">
@@ -90,6 +84,7 @@ export function ThemeBasketsScreen({
 
             <section className="theme-basket-section">
               <h3>Example companies</h3>
+              <p className="data-provenance-note">Research starting points from a static library. No live data is shown.</p>
               <div className="theme-basket-example-table-wrap">
                 <table className="theme-basket-example-table">
                   <thead>
