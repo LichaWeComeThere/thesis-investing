@@ -109,12 +109,15 @@ labeled shared mock data until their own future adoption stages.
 
 ## Phase 4: Read-only APIs
 
-Read-only API work is deferred until after the local-first foundation and Living
-Thesis OS are reviewed. API stages must use explicit provider boundaries and
-must not add trading execution or personalized advice.
+Phase 3 automated closeout is merged; hands-on Windows acceptance remains
+deferred. Stage 1 now records the proposed provider comparison, company-details
+scope, credential/cache boundaries, and offline behavior in the
+[Read-only API Plan](READ_ONLY_API_PLAN.md). It introduces no live integration.
+API implementation proceeds as separately reviewed stages and must not add
+trading execution or personalized advice.
 
-- Stage 1: API Architecture Plan
-- Stage 2: Read-only Company Metadata
+- Stage 1: [API Architecture Plan](READ_ONLY_API_PLAN.md) - proposed; documentation-only provider and architecture plan
+- Stage 2: Read-only Company Metadata - next implementation stage after plan approval; connection foundation, then company-details integration
 - Stage 3: Read-only Market Data
 - Stage 4: Read-only Financial Statements
 - Stage 5: Earnings / Calendar Data
