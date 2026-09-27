@@ -192,7 +192,7 @@ describe('Overview queue navigation with saved research', () => {
 
     await openTarget('Open thesis');
 
-    await screen.findByText('That thesis is no longer available. Choose a saved thesis, or return to Overview and refresh the list.');
+    await screen.findByText('That thesis is no longer available. Choose a saved thesis, or return to the list and refresh it.');
     expect(screen.queryByRole('textbox', { name: 'Thesis summary' })).toBeNull();
     expect(screen.queryByRole('heading', { name: first.entityName })).toBeNull();
     expect(screen.getByText('Choose a thesis to get started.')).toBeTruthy();

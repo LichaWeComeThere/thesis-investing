@@ -19,7 +19,9 @@ Stage 8 adds the read-only History card with completed reviews, decisions, and
 validated review-linked scores. Stage 9 adds derived Thesis Health with
 explainable research concerns and separate review timing. Manual Windows UI
 verification remains pending. Stage 10 adds the read-only Review Queue in
-Overview; Stage 11, Thesis Library, is the next separate task.
+Overview. Stage 11 adds the saved Thesis Library within the existing Theses
+destination. Stage 12, Closeout QA, is the next separate task.
+See [Thesis Library](LIVING_THESIS_LIBRARY.md) for catalog and navigation behavior.
 See [Review Queue](LIVING_THESIS_REVIEW_QUEUE.md), [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
 [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md), and
 [Decision Log](LIVING_THESIS_DECISION_LOG.md), plus the
@@ -624,10 +626,14 @@ It is distinct from:
 - Portfolio Ranker, which compares independent manual ranker inputs;
 - Thesis Board, which is the operational sorting, filtering, and editing view.
 
-Thesis Board and Thesis Library should be separate views over the same
-repositories and Living Thesis IDs. The Board emphasizes active work and review
-signals. The Library emphasizes search, lifecycle filters, archived records,
-and access to full history. They must not create duplicate thesis stores.
+Stage 11 implements Thesis Board and Thesis Library as separate views inside
+the existing Theses destination, over the same repository and Living Thesis IDs.
+The workspace emphasizes editing and reviewing one thesis; Browse library opens
+a full-width catalog with search, lifecycle filters, archived records, and direct
+access to existing history. Browsing state is retained when opening a record and
+returning. The existing draft and decision guards protect the internal view
+change. No duplicate store, new sidebar destination, schema change, or backup
+format is introduced. See [Thesis Library](LIVING_THESIS_LIBRARY.md).
 
 ## Mock-Data Transition
 
@@ -753,8 +759,9 @@ boundary and the atomic restore behavior.
 10. **Stage 10 - Review Queue.** Complete, with manual Windows UI verification
     pending. Overview derives explained groups from saved review schedules,
     validated research concerns, and active sessions, with direct navigation.
-11. **Stage 11 - Thesis Library.** Add the full persisted catalog as a second
-    view over the same repository data.
+11. **Stage 11 - Thesis Library.** Complete, with manual Windows UI verification
+    pending. A full catalog inside Theses shares the same saved records, retains
+    browsing filters, and opens exact thesis and history targets.
 12. **Stage 12 - Closeout QA.** Validate lifecycle persistence, history
     immutability, restart behavior, export/import round trips, architecture, and
     product safety.

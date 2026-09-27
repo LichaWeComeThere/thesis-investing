@@ -40,11 +40,14 @@ import {
   type LivingThesesStorageClient
 } from './livingThesesStorageClient';
 
-/** One navigation request from Overview, consumed when this workspace mounts. */
-export type ThesisOpenTarget = { thesisId: string; reviewSessionId?: string };
+/** One navigation request, consumed when this workspace mounts. */
+export type ThesisOpenTarget = { thesisId: string; reviewSessionId?: string; view?: 'history' };
 
 type ThesisBoardScreenProps = {
   initialTarget?: ThesisOpenTarget;
+  initialCreate?: boolean;
+  onBrowseLibrary?: () => void;
+  onSelectedThesisChange?: (thesisId: string) => void;
   historyClient?: ThesisHistoryStorageApi | null;
   decisionClient?: DecisionsStorageApi | null;
   reviewClient?: ReviewSessionsStorageApi | null;
@@ -132,6 +135,9 @@ export function ThesisBoardScreen({
   initialLoadState,
   initialTheses,
   initialTarget,
+  initialCreate = false,
+  onBrowseLibrary,
+  onSelectedThesisChange,
   navigationRequest
 }: ThesisBoardScreenProps): JSX.Element {
   const [review, setReview] = useState<ResumedReviewSession | null>(null);
@@ -139,11 +145,11 @@ export function ThesisBoardScreen({
   const [loadState, setLoadState] = useState<BoardLoadState>(
     initialLoadState ?? (initialTheses ? 'loaded' : 'loading')
   );
-  const [selectedId, setSelectedId] = useState(initialTheses?.[0]?.id ?? '');
+  const [selectedId, setSelectedId] = useState(initialCreate ? '' : initialTheses?.[0]?.id ?? '');
   const [draft, setDraft] = useState<BoardDraft>(() =>
-    initialTheses?.[0] ? thesisToDraft(initialTheses[0]) : emptyDraft
+    !initialCreate && initialTheses?.[0] ? thesisToDraft(initialTheses[0]) : emptyDraft
   );
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreating, setIsCreating] = useState(initialCreate);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [decisionGuarded, setDecisionGuarded] = useState(false);
@@ -161,7 +167,12 @@ export function ThesisBoardScreen({
   const historyHeadingId = useId();
   const [focusTarget, setFocusTarget] = useState<'company' | 'identity' | 'history' | 'new' | null>(null);
   const entryTargetRef = useRef(initialTarget);
+  const entryCreateRef = useRef(initialCreate);
   const loadSequence = useRef(0);
+
+  useEffect(() => {
+    if (selectedId) onSelectedThesisChange?.(selectedId);
+  }, [selectedId, onSelectedThesisChange]);
 
   useEffect(() => {
     if (!focusTarget || review) return;
@@ -176,10 +187,10 @@ export function ThesisBoardScreen({
   }, [focusTarget, review]);
 
   useEffect(() => {
-    if (navigationRequest && !review && !isDirty && !isSaving && !decisionGuarded) {
+    if (navigationRequest && !review && !isDirty && !isSaving && !decisionGuarded && !reviewOpening) {
       navigationRequest.onLeave();
     }
-  }, [isDirty, isSaving, navigationRequest, review, decisionGuarded]);
+  }, [isDirty, isSaving, navigationRequest, review, decisionGuarded, reviewOpening]);
 
   useEffect(() => {
     if (decisionNavigation && !decisionGuarded && !review) {
@@ -212,6 +223,14 @@ export function ThesisBoardScreen({
       setTheses(result.value);
       setLoadState('loaded');
       setFeedback(null);
+      if (entryCreateRef.current) {
+        entryCreateRef.current = false;
+        setSelectedId('');
+        setDraft(emptyDraft);
+        setIsCreating(true);
+        setFocusTarget('company');
+        return;
+      }
       const target = entryTargetRef.current;
       const nextSelected = target
         ? result.value.find((thesis) => thesis.id === target.thesisId)
@@ -221,10 +240,10 @@ export function ThesisBoardScreen({
       setDraft(nextSelected ? thesisToDraft(nextSelected) : emptyDraft);
       if (!target) return;
       if (!nextSelected) {
-        setFeedback({ type: 'warning', message: 'That thesis is no longer available. Choose a saved thesis, or return to Overview and refresh the list.' });
+        setFeedback({ type: 'warning', message: 'That thesis is no longer available. Choose a saved thesis, or return to the list and refresh it.' });
         return;
       }
-      setFocusTarget('identity');
+      setFocusTarget(target.view === 'history' ? 'history' : 'identity');
       if (!target.reviewSessionId) return;
       if (!reviewClient || nextSelected.lifecycle === 'archived' || nextSelected.lifecycle === 'paused') {
         setFeedback({ type: 'warning', message: 'This review could not be opened from Overview. Check the current thesis and its saved review below.' });
@@ -310,7 +329,7 @@ export function ThesisBoardScreen({
   }
 
   function beginCreate(): void {
-    if (isSaving || reviewOpening) return;
+    if (isSaving || reviewOpening || loadState !== 'loaded') return;
     if (decisionGuarded) {
       setDecisionNavigation({ destination: 'a new thesis', onStay: () => setDecisionNavigation(undefined), onLeave: () => {
         setDecisionNavigation(undefined); setDecisionGuarded(false);
@@ -467,7 +486,10 @@ export function ThesisBoardScreen({
       <PageHeader
         description="Build your investment case. Revisit it as the evidence changes."
         title="Theses"
-        actions={<span ref={newThesisActionRef}><Button disabled={isSaving || reviewOpening} onClick={beginCreate} type="button">New thesis</Button></span>}
+        actions={<>
+          {onBrowseLibrary ? <Button disabled={isSaving || reviewOpening} onClick={onBrowseLibrary} type="button" variant="secondary">Browse library</Button> : null}
+          <span ref={newThesisActionRef}><Button disabled={isSaving || reviewOpening || loadState !== 'loaded'} onClick={beginCreate} type="button">New thesis</Button></span>
+        </>}
       />
 
       {feedback ? (
@@ -574,7 +596,7 @@ export function ThesisBoardScreen({
           ) : null}
         </Card>
 
-        {(isCreating || selectedThesis) && loadState !== 'error' ? (
+        {(isCreating || selectedThesis) && loadState === 'loaded' ? (
           <div className="living-thesis-detail-column">
           <header className="thesis-workspace-identity">
             <div className="thesis-workspace-identity-top">
