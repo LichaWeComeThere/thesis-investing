@@ -15,7 +15,8 @@ export default defineConfig({
           verifyStorageRuntime: resolve(
             configDirname,
             'src/main/verifyStorageRuntime.ts'
-          )
+          ),
+          verifyDesktopRuntime: resolve(configDirname, 'src/main/verifyDesktopRuntime.ts')
         }
       }
     }

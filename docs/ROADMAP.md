@@ -118,7 +118,8 @@ trading execution or personalized advice.
 
 - Stage 1: [API Architecture Plan](READ_ONLY_API_PLAN.md) - complete; documentation-only provider and architecture plan merged in PR #19
 - Stage 2A: [Connection Foundation](DATA_CONNECTION_FOUNDATION.md) - implemented; trusted IPC, encrypted key storage, quota/cache controls, and mock transport checks; no live adapter or connection UI
-- Stage 2B: Read-only Company Metadata - next; supported Electron upgrade, entitled provider/rights validation, and simple Settings/Company details UI; native Windows acceptance required before connected release
+- Stage 2A follow-up: [Electron upgrade](ELECTRON_UPGRADE.md) - runtime pinned to 44.4.5 with native Windows smoke checks; hands-on acceptance remains pending
+- Stage 2B: Read-only Company Metadata - next; entitled provider/rights validation and simple Settings/Company details UI; native Windows acceptance required before connected release
 - Stage 3: Read-only Market Data
 - Stage 4: Read-only Financial Statements
 - Stage 5: Earnings / Calendar Data

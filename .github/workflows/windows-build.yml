@@ -16,6 +16,7 @@ jobs:
   windows-package:
     name: Windows package
     runs-on: windows-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out repository
@@ -36,6 +37,12 @@ jobs:
 
       - name: Build all workspaces
         run: pnpm build
+
+      - name: Verify SQLite inside Electron
+        run: pnpm --filter @thesis-investing/desktop exec electron ./out/main/verifyStorageRuntime.js
+
+      - name: Verify desktop runtime and native encrypted credentials
+        run: pnpm --filter @thesis-investing/desktop exec node ./scripts/verifyDesktopRuntime.mjs
 
       - name: Package Windows app
         run: pnpm package:windows

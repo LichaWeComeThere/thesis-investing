@@ -71,11 +71,11 @@ provider requests.
 
 Before Stage 2B is released with a live connection:
 
-1. Upgrade and verify Electron against a supported release. The project still
-   declares `^36.9.5`; Electron 36 reached end of life on October 27, 2025
-   ([official release schedule](https://releases.electronjs.org/schedule),
-   checked September 27, 2026). This PR hardens boundaries but does not upgrade
-   Electron or establish connected-release readiness.
+1. Keep Electron on a supported release. The follow-up upgrade pins `44.4.5`
+   and adds real Windows runtime checks; see
+   [Electron upgrade verification](ELECTRON_UPGRADE.md). The original Stage 2A
+   foundation shipped on Electron 36. The upgrade alone does not establish
+   connected-release readiness or replace hands-on acceptance.
 2. Verify entitled Alpha Vantage responses, supported US exchange/asset values,
    display/retention rights, and attribution. Keep persistence disabled until
    those rights are recorded.

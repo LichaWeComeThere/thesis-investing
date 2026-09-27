@@ -151,11 +151,11 @@ registered app main frame may invoke handlers; development permissions are
 separate from packaged behavior. Render remote values as plain text, never
 executable markup.
 
-Check Electron release support and plan any required version update before the
-connected release. The repository currently declares Electron `^36.9.5`; the
-installed types expose synchronous `safeStorage` methods, not the newer async
-methods in today's documentation. Do not silently code against the latest docs
-without checking the version actually shipped.
+The runtime is now pinned to Electron `44.4.5`; see
+[Electron upgrade verification](ELECTRON_UPGRADE.md). Keep checking release
+support before a connected release. The credential store retains the supported
+synchronous `safeStorage` APIs and the existing encrypted format; an async API
+migration is separate from this runtime update.
 
 Credential-store design uses `safeStorage` after app readiness, with encryption
 availability checked. On Linux reject `basic_text`; do not enable plaintext
@@ -227,7 +227,7 @@ integration. Stage 2 proceeds in two focused PRs:
 
 1. **Connection foundation (Stage 2A):** Electron boundaries, narrow validated
    IPC, credential handling, quota/cache infrastructure, and mock-adapter tests.
-   Implemented scope and the outstanding Electron upgrade/native acceptance
+   Implemented scope and the outstanding native acceptance
    gates are recorded in [Connection Foundation](DATA_CONNECTION_FOUNDATION.md).
 2. **Company details:** Alpha Vantage adapter, simple Settings/Thesis UI,
    provenance, cache states, and entitled coverage validation.
