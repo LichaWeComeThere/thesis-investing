@@ -20,7 +20,8 @@ validated review-linked scores. Stage 9 adds derived Thesis Health with
 explainable research concerns and separate review timing. Manual Windows UI
 verification remains pending. Stage 10 adds the read-only Review Queue in
 Overview. Stage 11 adds the saved Thesis Library within the existing Theses
-destination. Stage 12, Closeout QA, is the next separate task.
+destination. Stage 12 adds connected restart and backup-recovery verification; see
+[Closeout QA](LIVING_THESIS_CLOSEOUT.md) for evidence and deferred Windows acceptance.
 See [Thesis Library](LIVING_THESIS_LIBRARY.md) for catalog and navigation behavior.
 See [Review Queue](LIVING_THESIS_REVIEW_QUEUE.md), [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
 [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md), and

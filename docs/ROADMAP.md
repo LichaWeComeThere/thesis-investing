@@ -81,7 +81,9 @@ formats 1–4 compatibility. Manual Windows UI verification remains pending;
 Stage 10 adds a read-only Review Queue in Overview, with unfinished reviews,
 saved review dates, and separate research concerns. Stage 11 adds a full saved
 Thesis Library inside Theses, with catalog search, lifecycle filters, and direct
-history access. Stage 12, Living Thesis OS Closeout QA, is the next separate task.
+history access. Stage 12 adds connected lifecycle, restart, and backup-recovery
+regression coverage; automated closeout is complete subject to its PR checks.
+Hands-on Windows acceptance remains deferred and is documented in the closeout guide.
 
 The shared Living Thesis current-state model and validation are implemented in
 `packages/core` using the decisions for optional ticker metadata, dedicated
@@ -103,7 +105,7 @@ labeled shared mock data until their own future adoption stages.
 - Stage 9: [Thesis Health](LIVING_THESIS_HEALTH.md) - complete; deterministic research assessment, reasons, limitations, and separate review timing based on saved research; manual Windows UI check pending
 - Stage 10: [Review Queue](LIVING_THESIS_REVIEW_QUEUE.md) - complete; Overview groups saved drafts, overdue/due-soon reviews, and explained research concerns, with exact thesis/review navigation; manual Windows UI check pending
 - Stage 11: [Thesis Library](LIVING_THESIS_LIBRARY.md) - complete; a full catalog within Theses shares existing saved records, retains browsing filters, and opens exact thesis/history targets through guarded navigation; manual Windows UI check pending
-- Stage 12: Living Thesis OS Closeout QA
+- Stage 12: [Living Thesis OS Closeout QA](LIVING_THESIS_CLOSEOUT.md) - automated verification complete subject to PR checks; hands-on Windows acceptance deferred
 
 ## Phase 4: Read-only APIs
 
