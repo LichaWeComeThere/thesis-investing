@@ -18,6 +18,10 @@ The first supported target is a Windows desktop app built with Electron, Vite, R
 
 ## Setup
 
+Use Node.js 22.12 or later and pnpm 9.15.4. The desktop runtime is pinned to
+Electron 44.4.5. The first `pnpm dev` downloads that runtime if needed before
+starting the development app; subsequent starts reuse it.
+
 ```bash
 pnpm install
 pnpm dev
@@ -33,12 +37,18 @@ pnpm test
 pnpm build
 pnpm package:windows
 pnpm verify:storage
+pnpm verify:desktop
 pnpm preview:review
 ```
 
 `pnpm preview:review` opens a browser development server with a separate example
 database and fictional research. See the [review UI guide](docs/LIVING_THESIS_REVIEW_SESSION_UI.md#browser-development-preview)
 for its scope and data location. `pnpm dev` still launches the Electron app.
+
+`pnpm verify:desktop` runs an automated Electron smoke check using temporary
+data, including the built renderer/preload, IPC protections, and encrypted key
+storage. See [Electron upgrade verification](docs/ELECTRON_UPGRADE.md) for its
+scope and the remaining manual Windows acceptance.
 
 ## Workspace Layout
 
