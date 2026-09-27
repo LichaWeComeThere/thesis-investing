@@ -22,7 +22,8 @@ import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
 import { RemindersScreen } from './RemindersScreen';
 import { ThemeBasketsScreen } from './ThemeBasketsScreen';
-import { ThesisBoardScreen, type ThesisOpenTarget } from './ThesisBoardScreen';
+import type { ThesisOpenTarget } from './ThesisBoardScreen';
+import { ThesesWorkspace } from './ThesesWorkspace';
 import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 import { WatchlistScreen } from './WatchlistScreen';
 import {
@@ -436,7 +437,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
             theses={theses}
           />
         ) : selectedView.id === 'thesis-board' ? (
-          <ThesisBoardScreen
+          <ThesesWorkspace
             initialTarget={thesisTarget}
             navigationRequest={pendingViewId ? {
               destination: navigationViews.find((view) => view.id === pendingViewId)?.navLabel ?? 'another workspace',
