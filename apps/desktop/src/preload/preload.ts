@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import { createDataConnectionPreloadApi, createCompanyDetailsPreloadApi } from './dataConnectionPreload';
 import { dashboardSummariesStorageChannels } from '../shared/dashboardSummariesStorage';
 import { localDataStorageChannels } from '../shared/localDataStorage';
 import { createLivingThesesPreloadApi } from './livingThesesPreload';
@@ -16,6 +17,8 @@ import {
 } from '../shared/watchlistStorage';
 
 const thesisInvestingApi: ThesisInvestingApi = {
+  dataConnection: createDataConnectionPreloadApi((channel, ...args) => ipcRenderer.invoke(channel, ...args)),
+  companyDetails: createCompanyDetailsPreloadApi((channel, ...args) => ipcRenderer.invoke(channel, ...args)),
   thesisHistory: createThesisHistoryPreloadApi((channel, ...args) => ipcRenderer.invoke(channel, ...args)),
   decisions: createDecisionsPreloadApi((channel, ...args) => ipcRenderer.invoke(channel, ...args)),
   reviewSessions: createReviewSessionsPreloadApi((channel, ...args) => ipcRenderer.invoke(channel, ...args)),

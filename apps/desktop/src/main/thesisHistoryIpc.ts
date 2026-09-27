@@ -1,4 +1,5 @@
-import { app, ipcMain } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { thesisHistoryStorageChannels as channels } from '../shared/thesisHistoryStorage';
@@ -11,6 +12,6 @@ export function registerThesisHistoryIpc(): void {
   mkdirSync(dirname(filename), { recursive: true });
   const service = createThesisHistoryStorageService(() => createSqliteStorage({ filename }));
   const handlers = createThesisHistoryIpcHandlers(service);
-  ipcMain.handle(channels.get, (_event, thesisId: unknown) => handlers.get(thesisId));
+  handleTrustedIpc(channels.get, (_event, thesisId: unknown) => handlers.get(thesisId));
   app.once('before-quit', () => { void service.close(); });
 }

@@ -1,6 +1,8 @@
 # Phase 4 Stage 1 — Read-only API plan
 
-Status: proposed implementation plan; Stage 1 is documentation only.
+Status: Stage 1 accepted and merged in PR #19. Stage 2A implements the
+[connection foundation](DATA_CONNECTION_FOUNDATION.md); the live adapter and UI
+remain Stage 2B. Stage 1 itself is documentation only.
 Reviewed against `main` at `8278166` (merged Phase 3 closeout). Provider sources
 checked 2026-09-26, America/New_York. Prices and entitlements must be rechecked
 when implementing. Manual Windows acceptance from Phase 3 remains deferred.
@@ -142,13 +144,12 @@ success: providers can return quota, entitlement, or informational JSON.
 
 ## Credentials and Electron readiness
 
-The current app enables context isolation and renderer sandboxing in
-`main/main.ts`. The inspected code does not yet provide a renderer CSP,
-explicit navigation/new-window restrictions, or IPC sender-frame validation.
-Before adding credentials/network, implement and test those boundaries using
-Electron's security guidance [8]. Permit only the app's expected main frame;
-keep development preview permissions separate from packaged behavior. Render
-remote values as plain text, never executable markup.
+The app enables context isolation and renderer sandboxing in `main/main.ts`.
+Stage 2A adds a renderer CSP, navigation/new-window restrictions, and IPC
+sender-frame validation following Electron's security guidance [8]. Only the
+registered app main frame may invoke handlers; development permissions are
+separate from packaged behavior. Render remote values as plain text, never
+executable markup.
 
 Check Electron release support and plan any required version update before the
 connected release. The repository currently declares Electron `^36.9.5`; the
@@ -222,10 +223,12 @@ licensing, and backup design before being added.
 ## Implementation sequence and acceptance
 
 Stage 1 approval accepts the architecture direction, not a purchase or a live
-integration. Next propose Stage 2 in two focused PRs:
+integration. Stage 2 proceeds in two focused PRs:
 
-1. **Connection foundation:** Electron readiness, narrow validated IPC,
-   credential handling, quota/cache infrastructure, and mock-adapter tests.
+1. **Connection foundation (Stage 2A):** Electron boundaries, narrow validated
+   IPC, credential handling, quota/cache infrastructure, and mock-adapter tests.
+   Implemented scope and the outstanding Electron upgrade/native acceptance
+   gates are recorded in [Connection Foundation](DATA_CONNECTION_FOUNDATION.md).
 2. **Company details:** Alpha Vantage adapter, simple Settings/Thesis UI,
    provenance, cache states, and entitled coverage validation.
 

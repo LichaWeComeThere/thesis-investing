@@ -1,4 +1,5 @@
-import { app, dialog, ipcMain, shell } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app, dialog, shell } from 'electron';
 
 import { localDataStorageChannels } from '../shared/localDataStorage';
 import { createSqliteLocalDataStorageService } from './localDataStorageService';
@@ -12,17 +13,17 @@ export function registerLocalDataIpc(): void {
     showSaveDialog: (options) => dialog.showSaveDialog(options)
   });
 
-  ipcMain.handle(localDataStorageChannels.exportToJson, () =>
+  handleTrustedIpc(localDataStorageChannels.exportToJson, () =>
     service.exportToJson()
   );
-  ipcMain.handle(localDataStorageChannels.get, () => service.get());
-  ipcMain.handle(localDataStorageChannels.importFromJson, (_event, previewId) =>
+  handleTrustedIpc(localDataStorageChannels.get, () => service.get());
+  handleTrustedIpc(localDataStorageChannels.importFromJson, (_event, previewId) =>
     service.importFromJson(previewId)
   );
-  ipcMain.handle(localDataStorageChannels.openDataFolder, () =>
+  handleTrustedIpc(localDataStorageChannels.openDataFolder, () =>
     service.openDataFolder()
   );
-  ipcMain.handle(localDataStorageChannels.previewImportFromJson, () =>
+  handleTrustedIpc(localDataStorageChannels.previewImportFromJson, () =>
     service.previewImportFromJson()
   );
 

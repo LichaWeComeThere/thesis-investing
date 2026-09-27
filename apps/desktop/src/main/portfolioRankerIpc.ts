@@ -1,4 +1,5 @@
-import { app, ipcMain } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -13,14 +14,14 @@ export function registerPortfolioRankerIpc(): void {
   const databaseFile = getDatabaseFilePath();
   const service = createSqlitePortfolioRankerStorageService(databaseFile);
 
-  ipcMain.handle(portfolioRankerStorageChannels.list, () => service.list());
+  handleTrustedIpc(portfolioRankerStorageChannels.list, () => service.list());
 
-  ipcMain.handle(
+  handleTrustedIpc(
     portfolioRankerStorageChannels.save,
     (_event, item: PortfolioRankerItem) => service.save(item)
   );
 
-  ipcMain.handle(
+  handleTrustedIpc(
     portfolioRankerStorageChannels.remove,
     (_event, id: string): Promise<PortfolioRankerStorageResult<boolean>> =>
       service.remove(id)

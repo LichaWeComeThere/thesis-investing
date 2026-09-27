@@ -1,4 +1,5 @@
-import { app, ipcMain } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -11,14 +12,14 @@ export function registerLivingThesesIpc(): void {
   const service = createSqliteLivingThesesStorageService(databaseFile);
   const handlers = createLivingThesesIpcHandlers(service);
 
-  ipcMain.handle(livingThesesStorageChannels.create, (_event, input) =>
+  handleTrustedIpc(livingThesesStorageChannels.create, (_event, input) =>
     handlers.create(input)
   );
-  ipcMain.handle(livingThesesStorageChannels.getById, (_event, id) =>
+  handleTrustedIpc(livingThesesStorageChannels.getById, (_event, id) =>
     handlers.getById(id)
   );
-  ipcMain.handle(livingThesesStorageChannels.list, () => handlers.list());
-  ipcMain.handle(
+  handleTrustedIpc(livingThesesStorageChannels.list, () => handlers.list());
+  handleTrustedIpc(
     livingThesesStorageChannels.update,
     (_event, input, expectedVersion) =>
       handlers.update(input, expectedVersion)

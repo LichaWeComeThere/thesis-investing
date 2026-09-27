@@ -1,4 +1,5 @@
-import { app, ipcMain } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { reviewQueueStorageChannels as channels } from '../shared/reviewQueueStorage';
@@ -11,7 +12,7 @@ export function registerReviewQueueIpc(): void {
   mkdirSync(dirname(filename), { recursive: true });
   const service = createReviewQueueStorageService(() => createSqliteStorage({ filename }));
   const handlers = createReviewQueueIpcHandlers(service);
-  ipcMain.handle(channels.get, (_event, today: unknown, ...extraArguments: unknown[]) =>
+  handleTrustedIpc(channels.get, (_event, today: unknown, ...extraArguments: unknown[]) =>
     handlers.get(today, ...extraArguments)
   );
   app.once('before-quit', () => { void service.close(); });

@@ -1,5 +1,6 @@
+import { handleTrustedIpc } from './electronSecurity';
 import type { ThesisNote } from '@thesis-investing/core';
-import { app, ipcMain } from 'electron';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -10,9 +11,9 @@ export function registerThesisNotesIpc(): void {
   const databaseFile = getDatabaseFilePath();
   const service = createSqliteThesisNotesStorageService(databaseFile);
 
-  ipcMain.handle(thesisNotesStorageChannels.list, () => service.list());
+  handleTrustedIpc(thesisNotesStorageChannels.list, () => service.list());
 
-  ipcMain.handle(thesisNotesStorageChannels.save, (_event, note: ThesisNote) =>
+  handleTrustedIpc(thesisNotesStorageChannels.save, (_event, note: ThesisNote) =>
     service.save(note)
   );
 

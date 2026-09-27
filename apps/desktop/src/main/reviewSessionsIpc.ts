@@ -1,4 +1,5 @@
-import { app, ipcMain } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { reviewSessionsStorageChannels as channels } from '../shared/reviewSessionsStorage';
@@ -11,10 +12,10 @@ export function registerReviewSessionsIpc(): void {
   mkdirSync(dirname(filename), { recursive: true });
   const service = createReviewSessionStorageService(() => createSqliteStorage({ filename }));
   const handlers = createReviewSessionsIpcHandlers(service);
-  ipcMain.handle(channels.getActive, (_event, id: unknown) => handlers.getActive(id));
-  ipcMain.handle(channels.start, (_event, id: unknown) => handlers.start(id));
-  ipcMain.handle(channels.resume, (_event, id: unknown) => handlers.resume(id));
-  ipcMain.handle(channels.saveDraft, (_event, id: unknown, workflow: unknown, version: unknown) => handlers.saveDraft(id, workflow, version));
-  ipcMain.handle(channels.complete, (_event, id: unknown, workflow: unknown, version: unknown) => handlers.complete(id, workflow, version));
+  handleTrustedIpc(channels.getActive, (_event, id: unknown) => handlers.getActive(id));
+  handleTrustedIpc(channels.start, (_event, id: unknown) => handlers.start(id));
+  handleTrustedIpc(channels.resume, (_event, id: unknown) => handlers.resume(id));
+  handleTrustedIpc(channels.saveDraft, (_event, id: unknown, workflow: unknown, version: unknown) => handlers.saveDraft(id, workflow, version));
+  handleTrustedIpc(channels.complete, (_event, id: unknown, workflow: unknown, version: unknown) => handlers.complete(id, workflow, version));
   app.once('before-quit', () => { void service.close(); });
 }

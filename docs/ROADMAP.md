@@ -110,14 +110,15 @@ labeled shared mock data until their own future adoption stages.
 ## Phase 4: Read-only APIs
 
 Phase 3 automated closeout is merged; hands-on Windows acceptance remains
-deferred. Stage 1 now records the proposed provider comparison, company-details
+deferred. Stage 1 records the accepted provider comparison, company-details
 scope, credential/cache boundaries, and offline behavior in the
 [Read-only API Plan](READ_ONLY_API_PLAN.md). It introduces no live integration.
 API implementation proceeds as separately reviewed stages and must not add
 trading execution or personalized advice.
 
-- Stage 1: [API Architecture Plan](READ_ONLY_API_PLAN.md) - proposed; documentation-only provider and architecture plan
-- Stage 2: Read-only Company Metadata - next implementation stage after plan approval; connection foundation, then company-details integration
+- Stage 1: [API Architecture Plan](READ_ONLY_API_PLAN.md) - complete; documentation-only provider and architecture plan merged in PR #19
+- Stage 2A: [Connection Foundation](DATA_CONNECTION_FOUNDATION.md) - implemented; trusted IPC, encrypted key storage, quota/cache controls, and mock transport checks; no live adapter or connection UI
+- Stage 2B: Read-only Company Metadata - next; supported Electron upgrade, entitled provider/rights validation, and simple Settings/Company details UI; native Windows acceptance required before connected release
 - Stage 3: Read-only Market Data
 - Stage 4: Read-only Financial Statements
 - Stage 5: Earnings / Calendar Data

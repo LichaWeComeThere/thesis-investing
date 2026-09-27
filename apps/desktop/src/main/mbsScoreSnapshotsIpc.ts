@@ -1,5 +1,6 @@
+import { handleTrustedIpc } from './electronSecurity';
 import type { MbsScoreSnapshot } from '@thesis-investing/core';
-import { app, ipcMain } from 'electron';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -10,9 +11,9 @@ export function registerMbsScoreSnapshotsIpc(): void {
   const databaseFile = getDatabaseFilePath();
   const service = createSqliteMbsScoreSnapshotsStorageService(databaseFile);
 
-  ipcMain.handle(mbsScoreSnapshotsStorageChannels.list, () => service.list());
+  handleTrustedIpc(mbsScoreSnapshotsStorageChannels.list, () => service.list());
 
-  ipcMain.handle(
+  handleTrustedIpc(
     mbsScoreSnapshotsStorageChannels.save,
     (_event, snapshot: MbsScoreSnapshot) => service.save(snapshot)
   );
