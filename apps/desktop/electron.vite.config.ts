@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'electron-vite';
+import { developmentRendererCsp } from './src/tooling/rendererCsp';
 
 const configDirname = dirname(fileURLToPath(import.meta.url));
 
@@ -38,6 +39,7 @@ export default defineConfig({
         '@thesis-investing/ui': resolve(configDirname, '../../packages/ui/src')
       }
     },
-    plugins: [react()]
+    server: { host: '127.0.0.1' },
+    plugins: [react(), developmentRendererCsp()]
   }
 });

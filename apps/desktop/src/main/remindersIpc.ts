@@ -1,5 +1,6 @@
+import { handleTrustedIpc } from './electronSecurity';
 import type { Reminder } from '@thesis-investing/core';
-import { app, ipcMain } from 'electron';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -13,13 +14,13 @@ export function registerRemindersIpc(): void {
   const databaseFile = getDatabaseFilePath();
   const service = createSqliteRemindersStorageService(databaseFile);
 
-  ipcMain.handle(remindersStorageChannels.list, () => service.list());
+  handleTrustedIpc(remindersStorageChannels.list, () => service.list());
 
-  ipcMain.handle(remindersStorageChannels.save, (_event, reminder: Reminder) =>
+  handleTrustedIpc(remindersStorageChannels.save, (_event, reminder: Reminder) =>
     service.save(reminder)
   );
 
-  ipcMain.handle(
+  handleTrustedIpc(
     remindersStorageChannels.remove,
     (_event, id: string): Promise<RemindersStorageResult<boolean>> =>
       service.remove(id)

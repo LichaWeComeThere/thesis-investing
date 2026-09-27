@@ -1,3 +1,4 @@
+import type { DataConnectionApi, CompanyDetailsApi } from './companyDetails';
 import type { WatchlistItem } from '@thesis-investing/core';
 import type { DashboardSummariesStorageApi } from './dashboardSummariesStorage';
 import type { DecisionsStorageApi } from './decisionsStorage';
@@ -34,6 +35,9 @@ export type WatchlistStorageApi = {
 };
 
 export type ThesisInvestingApi = {
+  /** Optional for older clients and the offline browser preview. */
+  dataConnection?: DataConnectionApi;
+  companyDetails?: CompanyDetailsApi;
   thesisHistory: ThesisHistoryStorageApi;
   decisions: DecisionsStorageApi;
   reviewSessions: ReviewSessionsStorageApi;

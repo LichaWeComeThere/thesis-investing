@@ -1,4 +1,5 @@
-import { app, ipcMain } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -13,14 +14,14 @@ export function registerWatchlistIpc(): void {
   const databaseFile = getDatabaseFilePath();
   const service = createSqliteWatchlistStorageService(databaseFile);
 
-  ipcMain.handle(watchlistStorageChannels.list, () => service.list());
+  handleTrustedIpc(watchlistStorageChannels.list, () => service.list());
 
-  ipcMain.handle(
+  handleTrustedIpc(
     watchlistStorageChannels.save,
     (_event, item: WatchlistItem) => service.save(item)
   );
 
-  ipcMain.handle(
+  handleTrustedIpc(
     watchlistStorageChannels.remove,
     (_event, id: string): Promise<WatchlistStorageResult<boolean>> =>
       service.remove(id)

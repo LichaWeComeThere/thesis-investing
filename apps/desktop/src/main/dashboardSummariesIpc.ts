@@ -1,4 +1,5 @@
-import { app, ipcMain } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -9,7 +10,7 @@ export function registerDashboardSummariesIpc(): void {
   const databaseFile = getDatabaseFilePath();
   const service = createSqliteDashboardSummariesStorageService(databaseFile);
 
-  ipcMain.handle(dashboardSummariesStorageChannels.get, () => service.get());
+  handleTrustedIpc(dashboardSummariesStorageChannels.get, () => service.get());
 
   app.once('before-quit', () => {
     void service.close();

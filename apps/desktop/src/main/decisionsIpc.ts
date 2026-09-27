@@ -1,4 +1,5 @@
-import { app, ipcMain } from 'electron';
+import { handleTrustedIpc } from './electronSecurity';
+import { app } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { decisionsStorageChannels as channels } from '../shared/decisionsStorage';
@@ -11,8 +12,8 @@ export function registerDecisionsIpc(): void {
   mkdirSync(dirname(filename), { recursive: true });
   const service = createDecisionsStorageService(() => createSqliteStorage({ filename }));
   const handlers = createDecisionsIpcHandlers(service);
-  ipcMain.handle(channels.list, (_event, thesisId: unknown) => handlers.list(thesisId));
-  ipcMain.handle(channels.listCompletedReviews, (_event, thesisId: unknown) => handlers.listCompletedReviews(thesisId));
-  ipcMain.handle(channels.create, (_event, thesisId: unknown, input: unknown, requestId: unknown) => handlers.create(thesisId, input, requestId));
+  handleTrustedIpc(channels.list, (_event, thesisId: unknown) => handlers.list(thesisId));
+  handleTrustedIpc(channels.listCompletedReviews, (_event, thesisId: unknown) => handlers.listCompletedReviews(thesisId));
+  handleTrustedIpc(channels.create, (_event, thesisId: unknown, input: unknown, requestId: unknown) => handlers.create(thesisId, input, requestId));
   app.once('before-quit', () => { void service.close(); });
 }

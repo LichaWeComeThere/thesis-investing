@@ -2,6 +2,8 @@ import { BrowserWindow, app } from 'electron';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { getRendererUrl, secureAppWindow } from './electronSecurity';
+import { registerDataConnectionIpc } from './dataConnectionIpc';
 import { registerDashboardSummariesIpc } from './dashboardSummariesIpc';
 import { registerDecisionsIpc } from './decisionsIpc';
 import { registerThesisHistoryIpc } from './thesisHistoryIpc';
@@ -18,6 +20,11 @@ import { registerWatchlistIpc } from './watchlistIpc';
 const mainDirname = dirname(fileURLToPath(import.meta.url));
 
 function createWindow(): void {
+  const rendererUrl = getRendererUrl({
+    isPackaged: app.isPackaged,
+    rendererFile: join(mainDirname, '../renderer/index.html'),
+    developmentUrl: process.env.ELECTRON_RENDERER_URL
+  });
   const mainWindow = new BrowserWindow({
     width: 1100,
     height: 720,
@@ -27,20 +34,21 @@ function createWindow(): void {
     title: 'Thesis Investing',
     webPreferences: {
       contextIsolation: true,
+      nodeIntegration: false,
+      webviewTag: false,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
       preload: join(mainDirname, '../preload/preload.cjs'),
       sandbox: true
     }
   });
 
-  if (process.env.ELECTRON_RENDERER_URL) {
-    void mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
-    return;
-  }
-
-  void mainWindow.loadFile(join(mainDirname, '../renderer/index.html'));
+  secureAppWindow(mainWindow.webContents, rendererUrl);
+  void mainWindow.loadURL(rendererUrl);
 }
 
 void app.whenReady().then(() => {
+  registerDataConnectionIpc();
   registerDashboardSummariesIpc();
   registerDecisionsIpc();
   registerThesisHistoryIpc();
