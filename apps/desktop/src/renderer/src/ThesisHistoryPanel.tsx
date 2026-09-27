@@ -1,6 +1,6 @@
 import type { LivingThesisHistory, LivingThesisHistoryItem, LivingThesisHistoryScore, ManualBusinessScoreCategory } from '@thesis-investing/core';
 import { Button, Card } from '@thesis-investing/ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type RefObject } from 'react';
 import type { DecisionsStorageApi } from '../../shared/decisionsStorage';
 import type { ThesisHistoryStorageApi } from '../../shared/thesisHistoryStorage';
 import { DecisionLogPanel, type DecisionNavigationRequest } from './DecisionLogPanel';
@@ -11,7 +11,7 @@ const factorLabels: Record<ManualBusinessScoreCategory, string> = {
   balanceSheet: 'Balance sheet', growth: 'Growth', valuation: 'Valuation', risk: 'Risk resilience'
 };
 
-export function ThesisHistoryPanel({ thesisId, thesisVersion, entityName, client, decisionClient, disabled, navigationRequest, onGuardChange }: {
+export function ThesisHistoryPanel({ thesisId, thesisVersion, entityName, client, decisionClient, disabled, navigationRequest, onGuardChange, headingRef, headingId }: {
   thesisId: string;
   thesisVersion: number;
   entityName: string;
@@ -20,6 +20,8 @@ export function ThesisHistoryPanel({ thesisId, thesisVersion, entityName, client
   disabled?: boolean;
   navigationRequest?: DecisionNavigationRequest;
   onGuardChange: (guarded: boolean) => void;
+  headingRef?: RefObject<HTMLHeadingElement>;
+  headingId?: string;
 }): JSX.Element {
   const [history, setHistory] = useState<LivingThesisHistory | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +46,15 @@ export function ThesisHistoryPanel({ thesisId, thesisVersion, entityName, client
     return () => { current = false; };
   }, [request]);
 
+  useEffect(() => {
+    const heading = headingRef?.current;
+    // Loaded health content sits above History and can push the focused heading
+    // out of view. Follow it only while the user still has this heading focused.
+    if (!isLoading && heading && heading.ownerDocument.activeElement === heading) {
+      heading.scrollIntoView?.({ block: 'start' });
+    }
+  }, [headingRef, isLoading]);
+
   const visible = history ? showAll ? history.items : history.items.slice(0, 5) : [];
   const hasResearchHistory = history?.items.some((item) => ['review', 'decision', 'score'].includes(item.kind));
   return <>
@@ -52,8 +63,8 @@ export function ThesisHistoryPanel({ thesisId, thesisVersion, entityName, client
     <DecisionLogPanel thesisId={thesisId} entityName={entityName} client={decisionClient} disabled={disabled}
       navigationRequest={navigationRequest} onGuardChange={onGuardChange} embedded showEntries={false}
       onDecisionSaved={() => setReload((value) => value + 1)}
-      heading={<div><h2>History</h2><p>Reviews, decisions and business scores for {entityName}.</p></div>} />
-    <p className="thesis-history-coverage">Completed reviews and decisions are preserved here. Direct edits on the Board may not appear.</p>
+      heading={<div><h2 className="thesis-workspace-focus-target" ref={headingRef} id={headingId} tabIndex={-1}>History</h2><p>Reviews, decisions and business scores for {entityName}.</p></div>} />
+    <p className="thesis-history-coverage">Completed reviews and decisions are preserved here. Direct edits to your thesis may not appear.</p>
     {isLoading ? <p role="status">Loading history…</p> : null}
     {!isLoading && errors.length > 0 ? <div className="thesis-history-error" role="alert"><p>{errors.join(' ')}</p><Button type="button" variant="secondary" onClick={() => setReload((value) => value + 1)}>Try history again</Button></div> : null}
     {!isLoading && history ? <>

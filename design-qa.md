@@ -3,6 +3,31 @@
 Current interface redesign QA is recorded first. Earlier ranking, Thesis Health,
 History, Decision Log and review assessments remain below as historical evidence.
 
+## Research-session usability pass
+
+Date: 2026-09-26. Follow-up to the merged interface redesign; feature work remains
+paused. The isolated browser walkthrough created fictional Harbor Research,
+saved and resumed a review, completed it with a 70/100 example score, and saved
+a decision linked to that review. History retained the records after refresh.
+
+- New thesis focuses the company field; successful creation, selection, cancel,
+  and review return restore the selected company context. Blocked navigation
+  preserves the existing draft, and initial loading does not steal focus.
+- View history exposes the existing history section near the selected company.
+  Completing a review focuses History; delayed health/history loading keeps the
+  heading visible only if the user has not moved focus elsewhere.
+- At 1100 pixels and below, the list sits above the full-width editor. No main
+  horizontal overflow at 860, 1100, or 1365 pixels. The completion confirmation
+  fits the 860x560 window without clipped controls.
+- Decision save and cancel already restore Add decision focus; browser checks
+  and regression assertions confirmed that behavior without changing its code.
+- All 578 tests passed (188 core, 7 shared UI, 383 desktop), plus lint, typecheck,
+  production build and whitespace checks. No storage/schema or domain changes.
+- Evidence: [thesis navigation](docs/screenshots/usability-thesis-navigation.jpg),
+  [small-window history](docs/screenshots/usability-history-small.jpg).
+- Native Windows interaction, installer behavior, native dialogs, and a full
+  assistive-technology audit remain deferred.
+
 ## App-wide research workspace redesign
 
 Date: 2026-09-26. Feature work is paused for a focused interface redesign.

@@ -183,6 +183,79 @@ describe('ThesisBoardScreen', () => {
     expect(screen.getByText('Unsaved changes')).toBeTruthy();
   });
 
+  it('focuses a new thesis form and selected details without focusing on initial load', () => {
+    const other: LivingThesis = { ...thesis, id: 'second-thesis', entityName: 'Cedar Systems' };
+    render(<ThesisBoardScreen initialTheses={[thesis, other]} reviewClient={null} decisionClient={null} historyClient={null} />);
+    expect(document.activeElement).toBe(document.body);
+
+    fireEvent.click(screen.getByRole('button', { name: 'New thesis' }));
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Company or asset' }));
+
+    fireEvent.click(within(screen.getByRole('group', { name: 'Saved theses' })).getByRole('button', { name: /Cedar Systems/ }));
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Cedar Systems' }));
+
+    const search = screen.getByRole('searchbox', { name: 'Search theses' });
+    search.focus();
+    fireEvent.change(search, { target: { value: 'Cedar' } });
+    expect(document.activeElement).toBe(search);
+  });
+
+  it('keeps focus and the draft when dirty thesis navigation is blocked', () => {
+    const other: LivingThesis = { ...thesis, id: 'second-thesis', entityName: 'Cedar Systems' };
+    render(<ThesisBoardScreen initialTheses={[thesis, other]} reviewClient={null} decisionClient={null} historyClient={null} />);
+    const summary = screen.getByRole('textbox', { name: 'Thesis summary' });
+    summary.focus();
+    fireEvent.change(summary, { target: { value: 'Unsaved research' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'New thesis' }));
+    expect(document.activeElement).toBe(summary);
+    fireEvent.click(within(screen.getByRole('group', { name: 'Saved theses' })).getByRole('button', { name: /Cedar Systems/ }));
+    expect(document.activeElement).toBe(summary);
+    expect(screen.getByRole('heading', { name: 'Acme Research' })).toBeTruthy();
+    expect(screen.getByDisplayValue('Unsaved research')).toBeTruthy();
+  });
+
+  it('jumps to the existing decision log when full history is unavailable', () => {
+    render(<ThesisBoardScreen initialTheses={[thesis]} reviewClient={null} decisionClient={null} historyClient={null} />);
+    fireEvent.click(screen.getByRole('button', { name: 'View history' }));
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Decision Log' }));
+  });
+
+  it('focuses the saved thesis context after creating a thesis', async () => {
+    const create = vi.fn(async () => ({ ok: true as const, value: thesis }));
+    render(<ThesisBoardScreen initialTheses={[]} client={makeClient({ create })} reviewClient={null} decisionClient={null} historyClient={null} />);
+    fireEvent.click(screen.getByRole('button', { name: 'New thesis' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Company or asset' }), { target: { value: thesis.entityName } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Thesis title' }), { target: { value: thesis.title } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Thesis summary' }), { target: { value: thesis.summary } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create thesis' }));
+
+    await screen.findByText('Living Thesis created and saved locally.');
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Acme Research' }));
+    expect(create).toHaveBeenCalledOnce();
+  });
+
+  it('focuses the selected thesis without resetting its current draft', () => {
+    render(<ThesisBoardScreen initialTheses={[thesis]} reviewClient={null} decisionClient={null} historyClient={null} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Thesis summary' }), { target: { value: 'Research still in progress' } });
+
+    fireEvent.click(within(screen.getByRole('group', { name: 'Saved theses' })).getByRole('button', { name: /Acme Research/ }));
+
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Acme Research' }));
+    expect(screen.getByDisplayValue('Research still in progress')).toBeTruthy();
+    expect(screen.getByText('Unsaved changes')).toBeTruthy();
+  });
+
+  it.each([false, true])('restores context after cancelling a new form (existing thesis: %s)', (hasThesis) => {
+    render(<ThesisBoardScreen initialTheses={hasThesis ? [thesis] : []} reviewClient={null} decisionClient={null} historyClient={null} />);
+    fireEvent.click(screen.getByRole('button', { name: 'New thesis' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(document.activeElement).toBe(hasThesis
+      ? screen.getByRole('heading', { name: 'Acme Research' })
+      : screen.getByRole('button', { name: 'New thesis' }));
+  });
+
   it('creates tickerless input without renderer-authored identity, version, or timestamps', async () => {
     const create = vi.fn(async (input: CreateLivingThesisInput) => {
       void input;

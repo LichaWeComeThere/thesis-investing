@@ -12,6 +12,7 @@ import * as reviewClients from './reviewSessionsStorageClient';
 import * as thesisClients from './livingThesesStorageClient';
 import { markOnboardingCompleted } from './onboardingState';
 import { App } from './App';
+import { ThesisBoardScreen } from './ThesisBoardScreen';
 
 const thesis: LivingThesis = { id: 'review-ui-test', version: 1, entityName: 'Acme Research', ticker: 'ACME', title: 'Durable execution', summary: 'Original research summary', lifecycle: 'active', conviction: 'medium', riskLevel: 'low', risks: [], catalysts: [], createdAt: '2026-09-11T10:00:00.000Z', updatedAt: '2026-09-11T10:00:00.000Z' };
 let directory: string;
@@ -63,6 +64,16 @@ async function confirmCompletion() {
 async function current() { const result = await reviews.getActive(thesis.id); if (!result.ok || !result.value) throw new Error('Review missing'); return result.value; }
 
 describe('guided review with real draft storage', () => {
+  it('restores the thesis context after returning from a review and clears earlier creation feedback', async () => {
+    render(<ThesisBoardScreen initialTheses={[thesis]} initialFeedback={{ type: 'saved', message: 'Living Thesis created and saved locally.' }} historyClient={null} decisionClient={null} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Start review' }));
+    await screen.findByRole('heading', { name: 'Why are you reviewing?' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Return to theses' }));
+
+    expect(document.activeElement).toBe(await screen.findByRole('heading', { name: 'Acme Research' }));
+    expect(screen.queryByText('Living Thesis created and saved locally.')).toBeNull();
+  });
   it('starts, saves, closes storage, and resumes the exact draft without changing the thesis', async () => {
     await start(); await toSummary(); editSummary();
     fireEvent.change(screen.getByRole('textbox', { name: 'Review notes (optional)' }), { target: { value: 'A note with trailing space ' } });
@@ -104,6 +115,7 @@ describe('guided review with real draft storage', () => {
     await start(); await toSummary(); editSummary('Saved review text'); await saved(); editSummary('Temporary text');
     fireEvent.click(screen.getByRole('button', { name: 'Return to theses' }));
     fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Discard edits and leave' }));
+    expect(document.activeElement).toBe(await screen.findByRole('heading', { name: 'Acme Research' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Resume review' }));
     await screen.findByDisplayValue('Saved review text'); expect(screen.queryByDisplayValue('Temporary text')).toBeNull();
   });
@@ -222,6 +234,7 @@ describe('guided review with real draft storage', () => {
     expect(await theses.getById(thesis.id)).toEqual({ ok: true, value: thesis });
     await confirmCompletion();
     await screen.findByText('Review completed. Your thesis and review history are saved.');
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Decision Log' }));
     expect(screen.getByRole('textbox', { name: 'Thesis summary' })).toHaveProperty('value', 'Recheck customer retention next quarter.');
     expect(await reviews.getActive(thesis.id)).toEqual({ ok: true, value: null });
     expect((await reviews.resume(id)).ok).toBe(false);

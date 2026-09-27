@@ -13,7 +13,7 @@ import {
 } from '@thesis-investing/core';
 import { Badge, Button, Card, PageHeader } from '@thesis-investing/ui';
 import type { ReactNode, RefObject } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ReviewSessionLauncher } from './ReviewSessionLauncher';
 import { ReviewSessionScreen } from './ReviewSessionScreen';
 import { getDefaultReviewSessionsStorageClient } from './reviewSessionsStorageClient';
@@ -149,6 +149,24 @@ export function ThesisBoardScreen({
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<BoardSort>('recently-updated');
   const editorFormRef = useRef<HTMLFormElement>(null);
+  const companyInputRef = useRef<HTMLInputElement>(null);
+  const identityHeadingRef = useRef<HTMLHeadingElement>(null);
+  const historyHeadingRef = useRef<HTMLHeadingElement>(null);
+  const newThesisActionRef = useRef<HTMLSpanElement>(null);
+  const historyHeadingId = useId();
+  const [focusTarget, setFocusTarget] = useState<'company' | 'identity' | 'history' | 'new' | null>(null);
+
+  useEffect(() => {
+    if (!focusTarget || review) return;
+    const target = focusTarget === 'company' ? companyInputRef.current
+      : focusTarget === 'identity' ? identityHeadingRef.current
+      : focusTarget === 'history' ? historyHeadingRef.current : newThesisActionRef.current?.querySelector('button');
+    target?.focus();
+    if (focusTarget === 'identity' || focusTarget === 'history') {
+      target?.scrollIntoView?.({ block: 'start' });
+    }
+    setFocusTarget(null);
+  }, [focusTarget, review]);
 
   useEffect(() => {
     if (navigationRequest && !review && !isDirty && !isSaving && !decisionGuarded) {
@@ -220,11 +238,12 @@ export function ThesisBoardScreen({
 
   function selectThesis(thesis: LivingThesis): void {
     if (isSaving || reviewOpening) return;
-    if (thesis.id === selectedId && !isCreating) return;
+    if (thesis.id === selectedId && !isCreating) { setFocusTarget('identity'); return; }
     if (decisionGuarded) {
       setDecisionNavigation({ destination: thesis.entityName, onStay: () => setDecisionNavigation(undefined), onLeave: () => {
         setDecisionNavigation(undefined); setDecisionGuarded(false);
         setSelectedId(thesis.id); setDraft(thesisToDraft(thesis)); setIsCreating(false); setFeedback(null);
+        setFocusTarget('identity');
       } });
       return;
     }
@@ -240,6 +259,7 @@ export function ThesisBoardScreen({
     setDraft(thesisToDraft(thesis));
     setIsCreating(false);
     setFeedback(null);
+    setFocusTarget('identity');
   }
 
   function beginCreate(): void {
@@ -248,6 +268,7 @@ export function ThesisBoardScreen({
       setDecisionNavigation({ destination: 'a new thesis', onStay: () => setDecisionNavigation(undefined), onLeave: () => {
         setDecisionNavigation(undefined); setDecisionGuarded(false);
         setDraft(emptyDraft); setIsCreating(true); setSelectedId(''); setFeedback(null); setSearch(''); setFilter('all');
+        setFocusTarget('company');
       } });
       return;
     }
@@ -265,6 +286,7 @@ export function ThesisBoardScreen({
     setIsCreating(true);
     setSelectedId('');
     setFeedback(null);
+    setFocusTarget('company');
   }
 
   function updateDraft<K extends keyof BoardDraft>(
@@ -287,9 +309,11 @@ export function ThesisBoardScreen({
       if (firstThesis) {
         setSelectedId(firstThesis.id);
         setDraft(thesisToDraft(firstThesis));
+        setFocusTarget('identity');
       } else {
         setSelectedId('');
         setDraft(emptyDraft);
+        setFocusTarget('new');
       }
       return;
     }
@@ -338,6 +362,7 @@ export function ThesisBoardScreen({
       setDraft(thesisToDraft(result.value));
       setIsCreating(false);
       setIsDirty(false);
+      if (isCreating) setFocusTarget('identity');
       setFeedback({
         message: isCreating
           ? 'Living Thesis created and saved locally.'
@@ -378,7 +403,7 @@ export function ThesisBoardScreen({
 
   if (review && reviewClient) {
     return <ReviewSessionScreen key={review.session.id} initialReview={review} client={reviewClient}
-      navigationRequest={navigationRequest} onReturn={() => setReview(null)} onComplete={(completed) => {
+      navigationRequest={navigationRequest} onReturn={() => { setReview(null); setFocusTarget('identity'); }} onComplete={(completed) => {
         setTheses((current) => upsertThesis(current, completed.thesis));
         setDraft(thesisToDraft(completed.thesis));
         setSelectedId(completed.thesis.id);
@@ -386,6 +411,7 @@ export function ThesisBoardScreen({
         setFeedback({ type: 'saved', message: `Review completed. Your thesis and review history are saved.${completed.scoreSnapshot ? ' The new business score is saved too.' : ''}` });
         navigationRequest?.onStay();
         setReview(null);
+        setFocusTarget('history');
       }} />;
   }
 
@@ -394,7 +420,7 @@ export function ThesisBoardScreen({
       <PageHeader
         description="Build your investment case. Revisit it as the evidence changes."
         title="Theses"
-        actions={<Button disabled={isSaving || reviewOpening} onClick={beginCreate} type="button">New thesis</Button>}
+        actions={<span ref={newThesisActionRef}><Button disabled={isSaving || reviewOpening} onClick={beginCreate} type="button">New thesis</Button></span>}
       />
 
       {feedback ? (
@@ -508,16 +534,20 @@ export function ThesisBoardScreen({
               <span>{isCreating ? 'New thesis' : selectedThesis?.ticker || 'Investment thesis'}</span>
               {!isCreating && selectedThesis ? <Badge variant={getLifecycleBadge(selectedThesis.lifecycle)}>{lifecycleLabels[selectedThesis.lifecycle]}</Badge> : null}
             </div>
-            <h2>{isCreating ? 'What is your investment idea?' : selectedThesis?.entityName}</h2>
+            <h2 className="thesis-workspace-focus-target" ref={identityHeadingRef} tabIndex={-1}>{isCreating ? 'What is your investment idea?' : selectedThesis?.entityName}</h2>
             <p>{isCreating ? 'Start with the essentials. Add more detail as your research grows.' : selectedThesis?.title}</p>
-            <small>Your research is saved on this device.</small>
+            <div className="thesis-workspace-identity-actions">
+              <small>Your research is saved on this device.</small>
+              {selectedThesis && !isCreating && loadState === 'loaded' ? <Button type="button" variant="ghost" size="sm" aria-controls={historyHeadingId} onClick={() => setFocusTarget('history')}>View history</Button> : null}
+            </div>
           </header>
           {selectedThesis && !isCreating && loadState === 'loaded' ? <ReviewSessionLauncher
-            key={`review-${selectedThesis.id}`} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving || decisionGuarded} onOpen={setReview} onOpeningChange={setReviewOpening}
+            key={`review-${selectedThesis.id}`} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving || decisionGuarded} onOpen={(opened) => { setFeedback(null); setReview(opened); }} onOpeningChange={setReviewOpening}
           /> : null}
           <LivingThesisEditor
             draft={draft}
             formRef={editorFormRef}
+            companyInputRef={companyInputRef}
             isCreating={isCreating}
             isDirty={isDirty}
             isSaving={isSaving}
@@ -529,10 +559,12 @@ export function ThesisBoardScreen({
           {selectedThesis && !isCreating && loadState === 'loaded' ? historyClient ? <ThesisHistoryPanel key={`history-${selectedThesis.id}`}
             thesisId={selectedThesis.id} thesisVersion={selectedThesis.version} entityName={selectedThesis.entityName}
             client={historyClient} decisionClient={decisionClient} disabled={isDirty || isSaving || reviewOpening}
+            headingRef={historyHeadingRef} headingId={historyHeadingId}
             onGuardChange={setDecisionGuarded} navigationRequest={navigationRequest ?? decisionNavigation}
           /> : <DecisionLogPanel key={`decisions-${selectedThesis.id}`}
             thesisId={selectedThesis.id} entityName={selectedThesis.entityName} client={decisionClient}
             disabled={isDirty || isSaving || reviewOpening} onGuardChange={setDecisionGuarded}
+            heading={<div><h2 className="thesis-workspace-focus-target" ref={historyHeadingRef} id={historyHeadingId} tabIndex={-1}>Decision Log</h2><p>What you decided about {selectedThesis.entityName}, and why.</p></div>}
             navigationRequest={navigationRequest ?? decisionNavigation}
           /> : null}
           </div>
@@ -620,9 +652,10 @@ function UnsavedThesisDialog({ destination, feedback, isSaving, onDiscard, onSav
   );
 }
 
-function LivingThesisEditor({ draft, formRef, isCreating, isDirty, isSaving, disabled = false, onCancel, onChange, onSubmit }: {
+function LivingThesisEditor({ draft, formRef, companyInputRef, isCreating, isDirty, isSaving, disabled = false, onCancel, onChange, onSubmit }: {
   draft: BoardDraft;
   formRef: RefObject<HTMLFormElement>;
+  companyInputRef: RefObject<HTMLInputElement>;
   isCreating: boolean;
   isDirty: boolean;
   isSaving: boolean;
@@ -645,7 +678,7 @@ function LivingThesisEditor({ draft, formRef, isCreating, isDirty, isSaving, dis
           </div>
 
           <div className="living-thesis-field-grid">
-            <TextField label="Company or asset" onChange={(value) => onChange('entityName', value)} required value={draft.entityName} />
+            <TextField label="Company or asset" inputRef={companyInputRef} onChange={(value) => onChange('entityName', value)} required value={draft.entityName} />
             <TextField label="Ticker (optional)" onChange={(value) => onChange('ticker', value)} value={draft.ticker} />
           </div>
           <TextField label="Thesis title" onChange={(value) => onChange('title', value)} required value={draft.title} />
@@ -752,8 +785,8 @@ function BoardState({ alert = false, children, empty = false, title }: { alert?:
   return <div className={`living-thesis-state${empty ? ' living-thesis-state--empty' : ''}`} role={alert ? 'alert' : 'status'}><strong>{title}</strong><div className="living-thesis-state-copy">{children}</div></div>;
 }
 
-function TextField({ label, onChange, required = false, type = 'text', value, ...inputProps }: { label: string; onChange: (value: string) => void; required?: boolean; type?: 'date' | 'number' | 'text'; value: string; min?: string }): JSX.Element {
-  return <label className="living-thesis-field"><span>{label}{required ? <small className="thesis-workspace-required">Required</small> : null}</span><input {...inputProps} aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} required={required} type={type} value={value} /></label>;
+function TextField({ label, inputRef, onChange, required = false, type = 'text', value, ...inputProps }: { label: string; inputRef?: RefObject<HTMLInputElement>; onChange: (value: string) => void; required?: boolean; type?: 'date' | 'number' | 'text'; value: string; min?: string }): JSX.Element {
+  return <label className="living-thesis-field"><span>{label}{required ? <small className="thesis-workspace-required">Required</small> : null}</span><input {...inputProps} ref={inputRef} aria-label={label} onChange={(event) => onChange(event.currentTarget.value)} required={required} type={type} value={value} /></label>;
 }
 
 function TextAreaField({ label, onChange, required = false, value }: { label: string; onChange: (value: string) => void; required?: boolean; value: string }): JSX.Element {
