@@ -126,6 +126,54 @@ function expandEntry(text: string | RegExp, index = 0) {
 }
 
 describe('Thesis History with real local storage', () => {
+  it('focuses existing history from the thesis shortcut', async () => {
+    await openBoard();
+    fireEvent.click(screen.getByRole('button', { name: 'View history' }));
+    expect(document.activeElement).toBe(within(historyRegion()).getByRole('heading', { name: 'History' }));
+  });
+
+  it.each([false, true])('keeps loaded history in view without interrupting later focus (moved away: %s)', async (movedAway) => {
+    const original = history.get.bind(history);
+    const result = await original(thesis.id);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    vi.spyOn(history, 'get').mockImplementation(async (id) => {
+      if (id === thesis.id) { await gate; return result; }
+      return original(id);
+    });
+    await openBoard();
+    fireEvent.click(screen.getByRole('button', { name: 'View history' }));
+    const heading = within(historyRegion()).getByRole('heading', { name: 'History' });
+    const scrollIntoView = vi.fn();
+    heading.scrollIntoView = scrollIntoView;
+    const summary = screen.getByRole('textbox', { name: 'Thesis summary' });
+    if (movedAway) summary.focus();
+
+    await act(async () => { release(); await gate; });
+    await waitFor(() => expect(within(historyRegion()).queryByText('Loading history…')).toBeNull());
+
+    expect(document.activeElement).toBe(movedAway ? summary : heading);
+    if (movedAway) expect(scrollIntoView).not.toHaveBeenCalled();
+    else expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+  });
+
+  it('focuses a new thesis only after leaving the guarded decision draft', async () => {
+    await openBoard();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Add decision' }).hasAttribute('disabled')).toBe(false));
+    fireEvent.click(screen.getByRole('button', { name: 'Add decision' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Decision' }), { target: { value: 'A decision still being written' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'New thesis' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Unsaved decision' });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Continue editing' }));
+    expect(screen.getByDisplayValue('A decision still being written')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'New thesis' }));
+    fireEvent.click(within(await screen.findByRole('dialog', { name: 'Unsaved decision' })).getByRole('button', { name: 'Discard edits and leave' }));
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Company or asset' }));
+    expect(screen.getByRole('heading', { name: 'What is your investment idea?' })).toBeTruthy();
+  });
   it('shows saved review changes and compares formally linked scores in chronological order', async () => {
     await completeReview({ reason: 'Retention evidence improved', summary: 'Stronger retention supports the thesis.',
       resolveRisk: true, scoreDraft: { kind: 'score', input: scoreInput } });
@@ -193,8 +241,10 @@ describe('Thesis History with real local storage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     fireEvent.click(within(await screen.findByRole('dialog', { name: 'Unsaved decision' })).getByRole('button', { name: 'Continue editing' }));
     expect(screen.getByDisplayValue('The current reporting period is incomplete.')).toBeTruthy();
+    screen.getByRole('button', { name: 'Save decision' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Save decision' }));
     await within(historyRegion()).findByText(/Decision: Wait for new retention evidence/);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Add decision' }));
     expect(value(await decisions.list(thesis.id))).toHaveLength(1);
     expect(value(await theses.getById(thesis.id))).toEqual(thesis);
     fireEvent.change(screen.getByRole('textbox', { name: 'Thesis summary' }), { target: { value: 'Unsaved Board research' } });
@@ -222,6 +272,8 @@ describe('Thesis History with real local storage', () => {
     await within(historyRegion()).findByText('Review completed');
     expect(within(historyRegion()).getAllByText('Review completed')).toHaveLength(1);
     expect(expandEntry('Review completed').getByText('Fresh research from the review flow')).toBeTruthy();
+    expect(document.activeElement).toBe(within(historyRegion()).getByRole('heading', { name: 'History' }));
+    expect(screen.getByText('Review completed. Your thesis and review history are saved.')).toBeTruthy();
     expect(value(await reviews.getActive(thesis.id))).toBeNull();
   });
 
@@ -247,7 +299,7 @@ describe('Thesis History with real local storage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     await within(historyRegion()).findByText('Currently archived');
     expect(within(historyRegion()).getByText(/earlier archive changes may not be recorded/)).toBeTruthy();
-    expect(within(historyRegion()).getByText(/Direct edits on the Board may not appear/)).toBeTruthy();
+    expect(within(historyRegion()).getByText(/Direct edits to your thesis may not appear/)).toBeTruthy();
     expect(within(historyRegion()).queryByText('Review completed')).toBeNull();
     expect(value(await theses.getById(thesis.id))).toMatchObject({ lifecycle: 'archived', version: 2,
       summary: 'Research saved for later reference.' });

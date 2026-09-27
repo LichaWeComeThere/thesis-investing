@@ -91,3 +91,29 @@ The updated captures show the app directly, without the development size selecto
 
 - [Research notes editor](screenshots/ui-redesign-research-notes.jpg)
 - [Note overview after vertical scrolling](screenshots/ui-redesign-research-notes-overview.jpg)
+
+### Research-session usability follow-up
+
+The walkthrough used fictional Harbor Research data in the isolated preview:
+create a thesis, save and resume a review, update the summary and risk assessment,
+record a business score, complete the review, and save a decision linked to it.
+The completed review, score, and decision are visible together in History.
+
+The follow-up improves movement through those existing screens. New thesis opens
+the first field with keyboard focus. Selecting a thesis or returning from review
+restores the selected company heading. A View history shortcut makes reviews and
+decisions easier to find, and completion moves to History. History remains in
+view after its data loads without interrupting a user who has moved elsewhere.
+
+At 1100 pixels and below, the thesis list sits above the full-width editor. The
+860, 1100, and 1365 pixel checks showed no main-content horizontal overflow.
+This work changes presentation and navigation only; storage and review semantics
+are unchanged. Hands-on Windows and assistive-technology checks remain deferred.
+
+The saved session was checked again after a browser refresh. New/create/cancel,
+selected-thesis, review-return, completion, and decision save/cancel focus were
+verified in the browser. All 578 tests passed (188 core, 7 shared UI, 383 desktop),
+along with lint, typecheck, production build, and whitespace checks.
+
+- [Selected thesis and History shortcut](screenshots/usability-thesis-navigation.jpg)
+- [Completed research session in a small window](screenshots/usability-history-small.jpg)
