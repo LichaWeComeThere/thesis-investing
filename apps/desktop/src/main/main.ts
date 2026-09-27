@@ -8,6 +8,7 @@ import { registerThesisHistoryIpc } from './thesisHistoryIpc';
 import { registerLocalDataIpc } from './localDataIpc';
 import { registerLivingThesesIpc } from './livingThesesIpc';
 import { registerReviewSessionsIpc } from './reviewSessionsIpc';
+import { registerReviewQueueIpc } from './reviewQueueIpc';
 import { registerMbsScoreSnapshotsIpc } from './mbsScoreSnapshotsIpc';
 import { registerPortfolioRankerIpc } from './portfolioRankerIpc';
 import { registerRemindersIpc } from './remindersIpc';
@@ -46,6 +47,7 @@ void app.whenReady().then(() => {
   registerLocalDataIpc();
   registerLivingThesesIpc();
   registerReviewSessionsIpc();
+  registerReviewQueueIpc();
   registerMbsScoreSnapshotsIpc();
   registerPortfolioRankerIpc();
   registerRemindersIpc();

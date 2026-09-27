@@ -164,6 +164,19 @@ export {
   LIVING_THESIS_REVIEW_TIMING_STATUSES,
   evaluateLivingThesisHealth
 } from './livingThesisHealth';
+
+export {
+  LIVING_THESIS_REVIEW_QUEUE_ALGORITHM_VERSION,
+  LIVING_THESIS_REVIEW_QUEUE_GROUPS,
+  buildLivingThesisReviewQueue
+} from './livingThesisReviewQueue';
+export type {
+  LivingThesisReviewQueue,
+  LivingThesisReviewQueueGroup,
+  LivingThesisReviewQueueInput,
+  LivingThesisReviewQueueItem,
+  LivingThesisReviewQueueResult
+} from './livingThesisReviewQueue';
 export type {
   LivingThesisHealth,
   LivingThesisHealthInput,

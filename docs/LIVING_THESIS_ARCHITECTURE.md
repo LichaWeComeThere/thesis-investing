@@ -18,8 +18,9 @@ Decision Log, optional links to completed reviews, and format 5 backup coverage.
 Stage 8 adds the read-only History card with completed reviews, decisions, and
 validated review-linked scores. Stage 9 adds derived Thesis Health with
 explainable research concerns and separate review timing. Manual Windows UI
-verification remains pending; Stage 10, Review Queue, is the next separate
-task. See [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
+verification remains pending. Stage 10 adds the read-only Review Queue in
+Overview; Stage 11, Thesis Library, is the next separate task.
+See [Review Queue](LIVING_THESIS_REVIEW_QUEUE.md), [Review Session Storage](LIVING_THESIS_REVIEW_SESSION_STORAGE.md),
 [Guided Review UI](LIVING_THESIS_REVIEW_SESSION_UI.md), and
 [Decision Log](LIVING_THESIS_DECISION_LOG.md), plus the
 [History contract](LIVING_THESIS_HISTORY.md) and
@@ -598,21 +599,20 @@ the complete rules, limitations, and verification cases.
 
 ## Review Queue
 
-The Review Queue should be a deterministic read model, not a persisted ranking
-or recommendation list. Candidate reasons may include:
+Stage 10 implements a deterministic read model in Overview, derived in one
+consistent storage read. Each eligible saved thesis appears once: unfinished
+reviews first, then overdue dates, dates due today or within seven days, then
+concrete research concerns from the existing Thesis Health rules. Rows preserve
+schedule information separately from high-risk and eligible-score-decline
+reasons. Paused and archived theses are excluded. Missing information alone does
+not generate an alert, and abandoned sessions are not resumed.
 
-- overdue scheduled review;
-- review due within a configured window;
-- unresolved high-severity risk;
-- material negative score change between linked snapshots;
-- lifecycle eligibility, including exclusion of archived theses;
-- stale or abandoned in-progress review;
-- explicit user review flag.
-
-The queue should expose reason codes, due date, and an explainable priority band
-such as overdue, due soon, attention, or routine. If an internal numeric score
-is used, its contributions must be inspectable and tested. User-facing copy
-should say review, revisit, or inspect, not buy, sell, add, trim, or allocate.
+Open thesis selects the exact saved record. Resume review reopens the exact
+session without creating a new one and retains existing version-conflict and
+unsaved-edit protection. There is no persisted ranking, numeric priority score,
+manual review flag, new schema, or backup format. See the
+[Review Queue contract](LIVING_THESIS_REVIEW_QUEUE.md) for ordering, temporal,
+loading, and validation details.
 
 ## Thesis Library
 
@@ -750,8 +750,9 @@ boundary and the atomic restore behavior.
    verification pending. Derived research status, concern and missing-information
    reasons, and separate review timing reuse validated saved records without
    adding a schema or backup format.
-10. **Stage 10 - Review Queue.** Build the explainable queue from schedules,
-    health, scores, risks, and active sessions.
+10. **Stage 10 - Review Queue.** Complete, with manual Windows UI verification
+    pending. Overview derives explained groups from saved review schedules,
+    validated research concerns, and active sessions, with direct navigation.
 11. **Stage 11 - Thesis Library.** Add the full persisted catalog as a second
     view over the same repository data.
 12. **Stage 12 - Closeout QA.** Validate lifecycle persistence, history

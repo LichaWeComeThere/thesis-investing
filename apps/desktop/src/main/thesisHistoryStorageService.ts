@@ -31,48 +31,53 @@ export function createThesisHistoryStorageService(createStorage: () => Promise<S
       try {
         const storage = await getStorage();
         return storage.runInTransaction(() => {
-          const repositories = storage.repositories;
-          const thesis = repositories.livingTheses.getById(thesisId);
-          if (!thesis) return failure('The saved thesis was not found.');
-
-          const sessions = repositories.reviewSessions.list(thesisId);
-          const revisions = repositories.thesisRevisions.list(thesisId);
-          const decisions = repositories.thesisDecisions.list(thesisId);
-          const revisionsById = new Map(revisions.map((revision) => [revision.id, revision]));
-          const completedReviews: Array<{
-            session: LivingThesisReviewSession;
-            revision: LivingThesisRevision;
-            scoreSnapshot?: MbsScoreSnapshot;
-          }> = [];
-          const seenRevisions = new Set<string>();
-          const seenScores = new Set<string>();
-
-          for (const session of sessions) {
-            if (session.workflow.status !== 'completed') continue;
-            const revision = session.revisionId ? revisionsById.get(session.revisionId) : undefined;
-            if (!revision || seenRevisions.has(revision.id)) return invalidHistory();
-            const scoreSnapshot = session.scoreSnapshotId
-              ? repositories.mbsScoreSnapshots.getById(session.scoreSnapshotId) : undefined;
-            if (completedReviewIntegrityErrors(session, revision, thesis, scoreSnapshot).length > 0 ||
-                (scoreSnapshot && seenScores.has(scoreSnapshot.id))) return invalidHistory();
-            seenRevisions.add(revision.id);
-            if (scoreSnapshot) seenScores.add(scoreSnapshot.id);
-            completedReviews.push({ session, revision, ...(scoreSnapshot ? { scoreSnapshot } : {}) });
-          }
-          // An orphan revision is a broken relationship, not a missing timeline event.
-          if (seenRevisions.size !== revisions.length) return invalidHistory();
-          const completedById = new Map(completedReviews.map(({ session }) => [session.id, session]));
-          for (const decision of decisions) {
-            const linkedReview = decision.reviewSessionId ? completedById.get(decision.reviewSessionId) : undefined;
-            if (decisionIntegrityErrors(decision, thesis, linkedReview).length > 0) return invalidHistory();
-          }
-          return { ok: true, value: buildLivingThesisHistory({ thesis, completedReviews, decisions }) };
+          return readThesisHistory(storage, thesisId);
         });
       } catch {
         return failure('History could not be loaded. Try again.');
       }
     }
   };
+}
+
+/** Synchronous composition point; callers own the transaction that gives this read a coherent snapshot. */
+export function readThesisHistory(storage: SqliteStorage, thesisId: string): RepositoryResult<LivingThesisHistory> {
+  const repositories = storage.repositories;
+  const thesis = repositories.livingTheses.getById(thesisId);
+  if (!thesis) return failure('The saved thesis was not found.');
+
+  const sessions = repositories.reviewSessions.list(thesisId);
+  const revisions = repositories.thesisRevisions.list(thesisId);
+  const decisions = repositories.thesisDecisions.list(thesisId);
+  const revisionsById = new Map(revisions.map((revision) => [revision.id, revision]));
+  const completedReviews: Array<{
+    session: LivingThesisReviewSession;
+    revision: LivingThesisRevision;
+    scoreSnapshot?: MbsScoreSnapshot;
+  }> = [];
+  const seenRevisions = new Set<string>();
+  const seenScores = new Set<string>();
+
+  for (const session of sessions) {
+    if (session.workflow.status !== 'completed') continue;
+    const revision = session.revisionId ? revisionsById.get(session.revisionId) : undefined;
+    if (!revision || seenRevisions.has(revision.id)) return invalidHistory();
+    const scoreSnapshot = session.scoreSnapshotId
+      ? repositories.mbsScoreSnapshots.getById(session.scoreSnapshotId) : undefined;
+    if (completedReviewIntegrityErrors(session, revision, thesis, scoreSnapshot).length > 0 ||
+        (scoreSnapshot && seenScores.has(scoreSnapshot.id))) return invalidHistory();
+    seenRevisions.add(revision.id);
+    if (scoreSnapshot) seenScores.add(scoreSnapshot.id);
+    completedReviews.push({ session, revision, ...(scoreSnapshot ? { scoreSnapshot } : {}) });
+  }
+  // An orphan revision is a broken relationship, not a missing timeline event.
+  if (seenRevisions.size !== revisions.length) return invalidHistory();
+  const completedById = new Map(completedReviews.map(({ session }) => [session.id, session]));
+  for (const decision of decisions) {
+    const linkedReview = decision.reviewSessionId ? completedById.get(decision.reviewSessionId) : undefined;
+    if (decisionIntegrityErrors(decision, thesis, linkedReview).length > 0) return invalidHistory();
+  }
+  return { ok: true, value: buildLivingThesisHistory({ thesis, completedReviews, decisions }) };
 }
 
 function failure(message: string): RepositoryResult<LivingThesisHistory> {

@@ -1,6 +1,8 @@
 import { Button, PageHeader } from '@thesis-investing/ui';
 import { useEffect, useState } from 'react';
 import type { DashboardSummary } from '../../shared/dashboardSummariesStorage';
+import type { ReviewQueueStorageApi } from '../../shared/reviewQueueStorage';
+import { ReviewQueuePanel, type ReviewQueueTarget } from './ReviewQueuePanel';
 import {
   getDefaultDashboardSummariesStorageClient,
   type DashboardSummariesStorageClient
@@ -34,6 +36,8 @@ type DashboardScreenProps = {
   initialSummary?: DashboardSummary;
   initialSummaryErrors?: string[];
   onOpenWorkspace?: (workspaceId: string) => void;
+  onOpenThesis?: (target: ReviewQueueTarget) => void;
+  queueStorageClient?: ReviewQueueStorageApi | null;
   summaryStorageClient?: DashboardSummariesStorageClient | null;
 };
 
@@ -84,6 +88,8 @@ export function DashboardScreen({
   initialSummary,
   initialSummaryErrors = [],
   onOpenWorkspace,
+  onOpenThesis,
+  queueStorageClient,
   summaryStorageClient
 }: DashboardScreenProps): JSX.Element {
   const resolvedSummaryStorageClient =
@@ -162,6 +168,8 @@ export function DashboardScreen({
           Open theses <span aria-hidden="true">→</span>
         </Button>
       </section>
+
+      <ReviewQueuePanel onOpenThesis={onOpenThesis} storageClient={queueStorageClient} />
 
       <div className="overview-layout">
         <section aria-labelledby="overview-workflow-heading">

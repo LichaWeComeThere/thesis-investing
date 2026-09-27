@@ -78,7 +78,9 @@ concerns, missing-information reasons, and separate review timing. Both views
 derive from saved records; they introduce no migration or backup format change.
 Current format 5 backups include decisions alongside review history and retain
 formats 1–4 compatibility. Manual Windows UI verification remains pending;
-Stage 10, Review Queue, is the next separate task.
+Stage 10 adds a read-only Review Queue in Overview, with unfinished reviews,
+saved review dates, and separate research concerns. Stage 11, Thesis Library,
+is the next separate task.
 
 The shared Living Thesis current-state model and validation are implemented in
 `packages/core` using the decisions for optional ticker metadata, dedicated
@@ -98,7 +100,7 @@ labeled shared mock data until their own future adoption stages.
 - Stage 7: [Decision Log](LIVING_THESIS_DECISION_LOG.md) - complete; simple entry form, immutable history, optional completed-review links, safe retries, and backup coverage implemented; manual Windows UI check pending
 - Stage 8: [Score History / Thesis Timeline](LIVING_THESIS_HISTORY.md) - complete; read-only History card, expandable review/decision/score details, validated formal score links, and deterministic ordering implemented; direct-edit history remains incomplete; manual Windows UI check pending
 - Stage 9: [Thesis Health](LIVING_THESIS_HEALTH.md) - complete; deterministic research assessment, reasons, limitations, and separate review timing based on saved research; manual Windows UI check pending
-- Stage 10: Review Queue
+- Stage 10: [Review Queue](LIVING_THESIS_REVIEW_QUEUE.md) - complete; Overview groups saved drafts, overdue/due-soon reviews, and explained research concerns, with exact thesis/review navigation; manual Windows UI check pending
 - Stage 11: Thesis Library
 - Stage 12: Living Thesis OS Closeout QA
 
