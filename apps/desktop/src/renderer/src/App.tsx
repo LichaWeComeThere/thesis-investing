@@ -22,7 +22,7 @@ import { ManualMbsScorerScreen } from './ManualMbsScorerScreen';
 import { PortfolioRankerScreen } from './PortfolioRankerScreen';
 import { RemindersScreen } from './RemindersScreen';
 import { ThemeBasketsScreen } from './ThemeBasketsScreen';
-import { ThesisBoardScreen } from './ThesisBoardScreen';
+import { ThesisBoardScreen, type ThesisOpenTarget } from './ThesisBoardScreen';
 import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 import { WatchlistScreen } from './WatchlistScreen';
 import {
@@ -297,6 +297,7 @@ type AppShellProps = {
 function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
   const [selectedViewId, setSelectedViewId] = useState(navigationViews[0].id);
   const [pendingViewId, setPendingViewId] = useState<string | null>(null);
+  const [thesisTarget, setThesisTarget] = useState<ThesisOpenTarget>();
   const [theses, setTheses] = useState<MockThesis[]>(() => cloneMockTheses());
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
@@ -331,11 +332,19 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
     }
 
     setIsNavigationOpen(false);
+    setThesisTarget(undefined);
     setSelectedViewId(viewId);
+  }
+
+  function openQueuedThesis(target: ThesisOpenTarget): void {
+    setThesisTarget(target);
+    setIsNavigationOpen(false);
+    setSelectedViewId('thesis-board');
   }
 
   const completeBoardNavigation = useCallback(() => {
     setIsNavigationOpen(false);
+    setThesisTarget(undefined);
     if (pendingViewId) setSelectedViewId(pendingViewId);
     setPendingViewId(null);
   }, [pendingViewId]);
@@ -419,7 +428,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
 
       <main className="content-area" id="workspace-content" tabIndex={-1} aria-label={selectedView.title} ref={mainRef}>
         {selectedView.id === 'dashboard' ? (
-          <DashboardScreen onOpenWorkspace={requestNavigation} />
+          <DashboardScreen onOpenWorkspace={requestNavigation} onOpenThesis={openQueuedThesis} />
         ) : selectedView.id === 'mbs-scorer' ? (
           <ManualMbsScorerScreen
             onCreateThesis={createThesisFromMbsScore}
@@ -428,6 +437,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
           />
         ) : selectedView.id === 'thesis-board' ? (
           <ThesisBoardScreen
+            initialTarget={thesisTarget}
             navigationRequest={pendingViewId ? {
               destination: navigationViews.find((view) => view.id === pendingViewId)?.navLabel ?? 'another workspace',
               onLeave: completeBoardNavigation,

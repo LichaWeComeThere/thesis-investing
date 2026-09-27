@@ -17,6 +17,7 @@ let reviews;
 let theses;
 let decisions;
 let history;
+let reviewQueue;
 const toolServices = {};
 const server = await createServer({
   configFile: false, root: previewRoot,
@@ -37,6 +38,7 @@ const server = await createServer({
         const { method, args } = JSON.parse(body);
         const handlers = {
           'summary.get': () => toolServices.dashboard.get(),
+          'reviewQueue.get': (...input) => reviewQueue.get(...input),
           'watchlist.list': () => toolServices.watchlist.list(),
           'watchlist.save': (...input) => toolServices.watchlist.save(...input),
           'watchlist.remove': (...input) => toolServices.watchlist.remove(...input),
@@ -67,6 +69,10 @@ const { createDecisionsStorageService } = await server.ssrLoadModule(resolve(app
 const { createDecisionsIpcHandlers } = await server.ssrLoadModule(resolve(appRoot, 'src/main/decisionsIpcHandlers.ts'));
 const { createThesisHistoryStorageService } = await server.ssrLoadModule(resolve(appRoot, 'src/main/thesisHistoryStorageService.ts'));
 const { createThesisHistoryIpcHandlers } = await server.ssrLoadModule(resolve(appRoot, 'src/main/thesisHistoryIpcHandlers.ts'));
+const { createReviewQueueStorageService } = await server.ssrLoadModule(resolve(appRoot, 'src/main/reviewQueueStorageService.ts'));
+const { createReviewQueueIpcHandlers } = await server.ssrLoadModule(resolve(appRoot, 'src/main/reviewQueueIpcHandlers.ts'));
+const reviewQueueService = createReviewQueueStorageService(() => createSqliteStorage({ filename }));
+reviewQueue = createReviewQueueIpcHandlers(reviewQueueService);
 const historyService = createThesisHistoryStorageService(() => createSqliteStorage({ filename }));
 history = createThesisHistoryIpcHandlers(historyService);
 const reviewService = createReviewSessionStorageService(() => createSqliteStorage({ filename }));
@@ -94,5 +100,5 @@ if (existing.value.length === 0) {
 }
 await server.listen();
 console.log('Guided review example workspace is ready.');
-async function close() { await server.close(); await reviewService.close(); await decisionService.close(); await historyService.close(); await theses.close(); await Promise.all(Object.values(toolServices).map((service) => service.close())); process.exit(0); }
+async function close() { await server.close(); await reviewService.close(); await decisionService.close(); await historyService.close(); await reviewQueueService.close(); await theses.close(); await Promise.all(Object.values(toolServices).map((service) => service.close())); process.exit(0); }
 process.on('SIGTERM', close); process.on('SIGINT', close);

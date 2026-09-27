@@ -7,6 +7,7 @@ import type { MbsScoreSnapshotsStorageApi } from './mbsScoreSnapshotsStorage';
 import type { PortfolioRankerStorageApi } from './portfolioRankerStorage';
 import type { RemindersStorageApi } from './remindersStorage';
 import type { ReviewSessionsStorageApi } from './reviewSessionsStorage';
+import type { ReviewQueueStorageApi } from './reviewQueueStorage';
 import type { ThesisNotesStorageApi } from './thesisNotesStorage';
 import type { ThesisHistoryStorageApi } from './thesisHistoryStorage';
 
@@ -36,6 +37,7 @@ export type ThesisInvestingApi = {
   thesisHistory: ThesisHistoryStorageApi;
   decisions: DecisionsStorageApi;
   reviewSessions: ReviewSessionsStorageApi;
+  reviewQueue: ReviewQueueStorageApi;
   dashboardSummaries: DashboardSummariesStorageApi;
   localData: LocalDataStorageApi;
   livingTheses: LivingThesesStorageApi;

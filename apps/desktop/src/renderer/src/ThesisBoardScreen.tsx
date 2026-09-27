@@ -40,7 +40,11 @@ import {
   type LivingThesesStorageClient
 } from './livingThesesStorageClient';
 
+/** One navigation request from Overview, consumed when this workspace mounts. */
+export type ThesisOpenTarget = { thesisId: string; reviewSessionId?: string };
+
 type ThesisBoardScreenProps = {
+  initialTarget?: ThesisOpenTarget;
   historyClient?: ThesisHistoryStorageApi | null;
   decisionClient?: DecisionsStorageApi | null;
   reviewClient?: ReviewSessionsStorageApi | null;
@@ -127,6 +131,7 @@ export function ThesisBoardScreen({
   initialFeedback = null,
   initialLoadState,
   initialTheses,
+  initialTarget,
   navigationRequest
 }: ThesisBoardScreenProps): JSX.Element {
   const [review, setReview] = useState<ResumedReviewSession | null>(null);
@@ -155,6 +160,8 @@ export function ThesisBoardScreen({
   const newThesisActionRef = useRef<HTMLSpanElement>(null);
   const historyHeadingId = useId();
   const [focusTarget, setFocusTarget] = useState<'company' | 'identity' | 'history' | 'new' | null>(null);
+  const entryTargetRef = useRef(initialTarget);
+  const loadSequence = useRef(0);
 
   useEffect(() => {
     if (!focusTarget || review) return;
@@ -182,6 +189,8 @@ export function ThesisBoardScreen({
   }, [decisionNavigation, decisionGuarded, review]);
 
   const loadTheses = useCallback(async (preferredId = ''): Promise<void> => {
+    const sequence = ++loadSequence.current;
+    const isCurrent = () => sequence === loadSequence.current;
     if (!client) {
       setLoadState('error');
       setFeedback({
@@ -192,29 +201,66 @@ export function ThesisBoardScreen({
     }
 
     setLoadState('loading');
-    const result = await client.list();
-
-    if (!result.ok) {
-      setLoadState('error');
-      setFeedback({ messages: result.errors, type: 'error' });
-      return;
+    try {
+      const result = await client.list();
+      if (!isCurrent()) return;
+      if (!result.ok) {
+        setLoadState('error');
+        setFeedback({ messages: result.errors, type: 'error' });
+        return;
+      }
+      setTheses(result.value);
+      setLoadState('loaded');
+      setFeedback(null);
+      const target = entryTargetRef.current;
+      const nextSelected = target
+        ? result.value.find((thesis) => thesis.id === target.thesisId)
+        : result.value.find((thesis) => thesis.id === preferredId) ?? result.value[0];
+      entryTargetRef.current = undefined;
+      setSelectedId(nextSelected?.id ?? '');
+      setDraft(nextSelected ? thesisToDraft(nextSelected) : emptyDraft);
+      if (!target) return;
+      if (!nextSelected) {
+        setFeedback({ type: 'warning', message: 'That thesis is no longer available. Choose a saved thesis, or return to Overview and refresh the list.' });
+        return;
+      }
+      setFocusTarget('identity');
+      if (!target.reviewSessionId) return;
+      if (!reviewClient || nextSelected.lifecycle === 'archived' || nextSelected.lifecycle === 'paused') {
+        setFeedback({ type: 'warning', message: 'This review could not be opened from Overview. Check the current thesis and its saved review below.' });
+        return;
+      }
+      setReviewOpening(true);
+      try {
+        const resumed = await reviewClient.resume(target.reviewSessionId);
+        if (!isCurrent()) return;
+        if (!resumed.ok) {
+          setFeedback({ type: 'error', messages: resumed.errors.length ? resumed.errors : ['The saved review could not be opened. Check the review below.'] });
+          return;
+        }
+        const value = resumed.value;
+        if (value.session.id !== target.reviewSessionId || value.session.thesisId !== target.thesisId ||
+            value.currentThesis.id !== target.thesisId || value.session.workflow.status !== 'in_progress' ||
+            value.currentThesis.lifecycle === 'archived' || value.currentThesis.lifecycle === 'paused') {
+          setFeedback({ type: 'warning', message: 'The saved review has changed. Check the current thesis and its review before continuing.' });
+          return;
+        }
+        setTheses((current) => upsertThesis(current, value.currentThesis));
+        setDraft(thesisToDraft(value.currentThesis));
+        setFocusTarget(null);
+        setReview(value);
+      } catch {
+        if (isCurrent()) setFeedback({ type: 'error', messages: ['The saved review could not be opened. Check the review below and try again.'] });
+      } finally {
+        if (isCurrent()) setReviewOpening(false);
+      }
+    } catch {
+      if (isCurrent()) {
+        setLoadState('error');
+        setFeedback({ type: 'error', messages: ['Your saved theses could not be loaded. Try again.'] });
+      }
     }
-
-    setTheses(result.value);
-    setLoadState('loaded');
-    setFeedback(null);
-
-    const nextSelected =
-      result.value.find((thesis) => thesis.id === preferredId) ?? result.value[0];
-
-    if (nextSelected) {
-      setSelectedId(nextSelected.id);
-      setDraft(thesisToDraft(nextSelected));
-    } else {
-      setSelectedId('');
-      setDraft(emptyDraft);
-    }
-  }, [client]);
+  }, [client, reviewClient]);
 
   useEffect(() => {
     if (initialTheses !== undefined || initialLoadState !== undefined) {
@@ -222,6 +268,7 @@ export function ThesisBoardScreen({
     }
 
     void loadTheses();
+    return () => { loadSequence.current += 1; };
   }, [initialLoadState, initialTheses, loadTheses]);
 
   const visibleTheses = useMemo(
@@ -542,7 +589,7 @@ export function ThesisBoardScreen({
             </div>
           </header>
           {selectedThesis && !isCreating && loadState === 'loaded' ? <ReviewSessionLauncher
-            key={`review-${selectedThesis.id}`} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving || decisionGuarded} onOpen={(opened) => { setFeedback(null); setReview(opened); }} onOpeningChange={setReviewOpening}
+            key={`review-${selectedThesis.id}`} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving || decisionGuarded || reviewOpening} onOpen={(opened) => { setFeedback(null); setReview(opened); }} onOpeningChange={setReviewOpening}
           /> : null}
           <LivingThesisEditor
             draft={draft}
