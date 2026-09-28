@@ -125,7 +125,7 @@ describe('Settings backup and storage hierarchy', () => {
 
     await act(async () => { resolveStatus({ ok: true, value: localDataInfo }); });
     expect(details.open).toBe(true);
-    expect(screen.getByRole('status').textContent).toContain('Status refreshed');
+    expect(screen.getByText(/Status refreshed/).closest('[role="status"]')).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Refresh status' }) as HTMLButtonElement).disabled).toBe(false);
     expect(get).toHaveBeenCalledTimes(1);
   });

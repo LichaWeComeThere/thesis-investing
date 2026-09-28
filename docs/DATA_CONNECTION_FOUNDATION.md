@@ -1,8 +1,8 @@
 # Phase 4 Stage 2A — Connection foundation
 
-This stage prepares the optional company-details connection. Production has no
-live adapter, no key-entry UI, and no outgoing provider requests. The first
-adapter and the Settings/Thesis controls belong to Stage 2B. Tests use synthetic
+This stage prepared the optional company-details connection without a live
+adapter or key-entry UI. [Stage 2B](COMPANY_DETAILS.md) now adds the adapter and
+Settings/Thesis controls for personal account validation. Tests use synthetic
 company data and fake encryption; no account or subscription was created.
 
 ## Implemented boundaries
@@ -56,9 +56,9 @@ The separately tested transport uses only the fixed Alpha Vantage HTTPS
 Company Overview endpoint, URL-encodes inputs, rejects redirects, omits browser
 credentials, caps response bytes at 1 MiB even without Content-Length, and
 handles HTTP-200 error envelopes. The service owns timeout/cancellation. This
-transport is **not wired to production** and does not yet normalize real
-provider responses. The future adapter must verify supported exchange and
-common-stock identity before producing the normalized result.
+transport is wired through Stage 2B's strict adapter, which checks exact symbol,
+supported exchange and common-stock identity before producing normalized results.
+Live entitled response coverage remains unverified.
 
 ## Verification and remaining release gates
 

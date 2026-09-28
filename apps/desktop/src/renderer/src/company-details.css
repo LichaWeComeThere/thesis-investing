@@ -1,0 +1,72 @@
+.company-details {
+  border-top: 1px solid var(--ti-color-border);
+  color: var(--ti-color-text);
+  padding-top: 22px;
+}
+
+.company-details-header {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  justify-content: space-between;
+}
+
+.company-details h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.company-details p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.company-details-header p,
+.company-details-note {
+  color: var(--ti-color-text-muted);
+}
+
+.company-details-fields {
+  display: grid;
+  gap: 16px 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 20px 0;
+}
+
+.company-details-fields .company-details-name {
+  grid-column: 1 / -1;
+}
+
+.company-details-fields dt {
+  color: var(--ti-color-text-muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.company-details-fields dd {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.company-details-feedback {
+  border-left: 2px solid var(--ti-color-border);
+  margin: 12px 0;
+  padding-left: 12px;
+}
+
+@media (max-width: 900px) {
+  .company-details-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .company-details-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

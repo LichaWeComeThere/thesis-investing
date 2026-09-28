@@ -2,7 +2,9 @@
 
 Status: Stage 1 accepted and merged in PR #19. Stage 2A implements the
 [connection foundation](DATA_CONNECTION_FOUNDATION.md); the live adapter and UI
-remain Stage 2B. Stage 1 itself is documentation only.
+are implemented for personal account validation in
+[Stage 2B](COMPANY_DETAILS.md). Live entitled coverage and hands-on Windows
+acceptance remain pending. Stage 1 itself is documentation only.
 Reviewed against `main` at `8278166` (merged Phase 3 closeout). Provider sources
 checked 2026-09-26, America/New_York. Prices and entitlements must be rechecked
 when implementing. Manual Windows acceptance from Phase 3 remains deferred.

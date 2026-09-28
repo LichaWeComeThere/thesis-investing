@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from '../../apps/desktop/src/renderer/src/App';
 import '../../apps/desktop/src/renderer/src/styles.css';
 import '../../apps/desktop/src/renderer/src/workspace-shell.css';
+import { previewCompanyDetails, previewDataConnection } from './companyDetailsFixture';
 
 // Development-only bridge. The production renderer always uses Electron preload.
 const invoke = async (method: string, ...args: unknown[]) => {
@@ -12,6 +13,8 @@ const invoke = async (method: string, ...args: unknown[]) => {
 };
 Object.assign(window, { thesisInvesting: {
   platform: 'preview',
+  dataConnection: previewDataConnection,
+  companyDetails: previewCompanyDetails(id => invoke('theses.getById', id)),
   dashboardSummaries: { get: () => invoke('summary.get') },
   watchlist: { list: () => invoke('watchlist.list'), save: (...args: unknown[]) => invoke('watchlist.save', ...args), remove: (id: string) => invoke('watchlist.remove', id) },
   thesisNotes: { list: () => invoke('notes.list'), save: (...args: unknown[]) => invoke('notes.save', ...args) },

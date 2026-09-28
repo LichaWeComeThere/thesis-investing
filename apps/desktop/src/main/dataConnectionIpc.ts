@@ -9,6 +9,7 @@ import { createCredentialStore } from './dataConnection/credentialStore';
 import { createProviderCache } from './dataConnection/providerCache';
 import { createRequestBudget } from './dataConnection/requestBudget';
 import { createCompanyDetailsService } from './dataConnection/companyDetailsService';
+import { createAlphaVantageCompanyDetailsAdapter } from './dataConnection/alphaVantageCompanyDetails';
 
 /** Lazy optional resources: a broken connection must never block offline application startup. */
 export function registerDataConnectionIpc(): void {
@@ -31,13 +32,13 @@ export function registerDataConnectionIpc(): void {
       filename: join(app.getPath('userData'), 'thesis-investing.sqlite')
     }));
     service = createCompanyDetailsService({ credentials, cache, budget,
+      adapter: createAlphaVantageCompanyDetailsAdapter(),
       getThesis: async (id) => {
         const result = await theses!.getById(id);
         if (result.ok) return result.value;
         if (result.code === 'not-found') return undefined;
         throw new Error('Saved thesis unavailable.');
       }
-      // No live adapter is installed in this foundation stage.
     });
     return service;
   });
