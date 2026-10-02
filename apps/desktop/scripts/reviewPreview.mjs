@@ -59,7 +59,7 @@ const server = await createServer({
       } catch { response.statusCode = 400; response.end(JSON.stringify({ ok: false, errors: ['Preview request failed.'] })); }
     });
   } }],
-  server: { host: '0.0.0.0', port: 4173, strictPort: true, allowedHosts: ['terminal.local'], fs: { allow: [repoRoot] } }
+  server: { host: process.env.THESIS_PREVIEW_HOST || '127.0.0.1', port: 4173, strictPort: true, allowedHosts: ['terminal.local'], fs: { allow: [repoRoot] } }
 });
 const { createSqliteStorage } = await server.ssrLoadModule(resolve(appRoot, 'src/storage/sqlite.ts'));
 const { createReviewSessionStorageService } = await server.ssrLoadModule(resolve(appRoot, 'src/main/reviewSessionStorageService.ts'));

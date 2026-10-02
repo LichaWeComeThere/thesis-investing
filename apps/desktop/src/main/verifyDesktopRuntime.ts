@@ -55,6 +55,8 @@ async function verify(): Promise<void> {
   await app.whenReady();
   console.log(`[desktop verification] Electron ${process.versions.electron}; Node ${process.versions.node}.`);
   let networkAttempt = false;
+  // The provider transport uses Node fetch, outside Electron's session hooks.
+  globalThis.fetch = async () => { networkAttempt = true; throw new Error('Live requests are disabled during runtime verification.'); };
   session.defaultSession.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*'] }, (_details, callback) => {
     networkAttempt = true;
     callback({ cancel: true });
@@ -153,7 +155,7 @@ async function verify(): Promise<void> {
     const result = await window.webContents.executeJavaScript(`window.thesisInvesting.dataConnection.saveKey(${JSON.stringify(fakeKey)})`);
     assert.equal(result.ok, true);
     assert.equal(result.value.configured, true);
-    assert.equal(result.value.adapterAvailable, false);
+    assert.equal(result.value.adapterAvailable, true);
     assert.equal((await readFile(join(credentialDirectory, 'api-key.enc'))).includes(Buffer.from(fakeKey)), false);
     assert.equal(await store.readKey(), fakeKey);
     const removed = await window.webContents.executeJavaScript('window.thesisInvesting.dataConnection.remove()');

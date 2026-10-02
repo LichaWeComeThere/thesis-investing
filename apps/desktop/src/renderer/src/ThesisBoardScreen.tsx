@@ -24,6 +24,7 @@ import { getDefaultDecisionsStorageClient } from './decisionsStorageClient';
 import type { ThesisHistoryStorageApi } from '../../shared/thesisHistoryStorage';
 import { getDefaultThesisHistoryStorageClient } from './thesisHistoryStorageClient';
 import { ThesisHistoryPanel } from './ThesisHistoryPanel';
+import { CompanyDetailsSection } from './CompanyDetailsSection';
 import './thesis-workspace.css';
 
 import type {
@@ -47,6 +48,7 @@ type ThesisBoardScreenProps = {
   initialTarget?: ThesisOpenTarget;
   initialCreate?: boolean;
   onBrowseLibrary?: () => void;
+  onOpenSettings?: () => void;
   onSelectedThesisChange?: (thesisId: string) => void;
   historyClient?: ThesisHistoryStorageApi | null;
   decisionClient?: DecisionsStorageApi | null;
@@ -137,6 +139,7 @@ export function ThesisBoardScreen({
   initialTarget,
   initialCreate = false,
   onBrowseLibrary,
+  onOpenSettings,
   onSelectedThesisChange,
   navigationRequest
 }: ThesisBoardScreenProps): JSX.Element {
@@ -610,6 +613,10 @@ export function ThesisBoardScreen({
               {selectedThesis && !isCreating && loadState === 'loaded' ? <Button type="button" variant="ghost" size="sm" aria-controls={historyHeadingId} onClick={() => setFocusTarget('history')}>View history</Button> : null}
             </div>
           </header>
+          {selectedThesis && !isCreating ? <CompanyDetailsSection
+            thesisId={selectedThesis.id} ticker={selectedThesis.ticker}
+            disabled={isDirty || isSaving || reviewOpening} onOpenSettings={onOpenSettings}
+          /> : null}
           {selectedThesis && !isCreating && loadState === 'loaded' ? <ReviewSessionLauncher
             key={`review-${selectedThesis.id}`} thesis={selectedThesis} client={reviewClient} disabled={isDirty || isSaving || decisionGuarded || reviewOpening} onOpen={(opened) => { setFeedback(null); setReview(opened); }} onOpeningChange={setReviewOpening}
           /> : null}

@@ -26,6 +26,7 @@ import type { ThesisOpenTarget } from './ThesisBoardScreen';
 import { ThesesWorkspace } from './ThesesWorkspace';
 import { ThesisMonitorScreen } from './ThesisMonitorScreen';
 import { WatchlistScreen } from './WatchlistScreen';
+import { DataConnectionSettings } from './DataConnectionSettings';
 import {
   cloneMockTheses,
   createMockThesisFromMbsScore,
@@ -327,7 +328,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
       return;
     }
 
-    if (selectedViewId === 'thesis-board' || selectedViewId === 'portfolio-ranker') {
+    if (selectedViewId === 'thesis-board' || selectedViewId === 'portfolio-ranker' || selectedViewId === 'settings-about') {
       setPendingViewId(viewId);
       return;
     }
@@ -439,6 +440,7 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
         ) : selectedView.id === 'thesis-board' ? (
           <ThesesWorkspace
             initialTarget={thesisTarget}
+            onOpenSettings={() => requestNavigation('settings-about')}
             navigationRequest={pendingViewId ? {
               destination: navigationViews.find((view) => view.id === pendingViewId)?.navLabel ?? 'another workspace',
               onLeave: completeBoardNavigation,
@@ -467,7 +469,11 @@ function AppShell({ onResetOnboarding }: AppShellProps): JSX.Element {
             theses={theses}
           />
         ) : selectedView.id === 'settings-about' ? (
-          <SettingsAboutScreen onResetOnboarding={onResetOnboarding} />
+          <SettingsAboutScreen onResetOnboarding={onResetOnboarding} navigationRequest={pendingViewId ? {
+            destination: navigationViews.find((view) => view.id === pendingViewId)?.navLabel ?? 'another workspace',
+            onLeave: completeBoardNavigation,
+            onStay: cancelBoardNavigation
+          } : undefined} />
         ) : (
           <div className="planned-workspace-screen">
             <PageHeader
@@ -538,6 +544,7 @@ function formatLocalDataDisplayLabel(label: string): string {
 }
 
 type SettingsAboutScreenProps = AppShellProps & {
+  navigationRequest?: { destination: string; onLeave: () => void; onStay: () => void };
   initialLocalDataExportState?: LocalDataExportState;
   initialLocalDataImportState?: LocalDataImportState;
   initialLocalDataMaintenanceState?: LocalDataMaintenanceState;
@@ -626,8 +633,10 @@ export function SettingsAboutScreen({
   initialLocalDataErrors,
   initialLocalDataInfo,
   localDataClient,
-  onResetOnboarding
+  onResetOnboarding,
+  navigationRequest
 }: SettingsAboutScreenProps): JSX.Element {
+  const [welcomeRequested, setWelcomeRequested] = useState(false);
   const resolvedLocalDataClient = useMemo(
     () =>
       localDataClient === undefined
@@ -987,7 +996,7 @@ export function SettingsAboutScreen({
   return (
     <div className="settings-about-screen">
       <PageHeader
-        description="Back up your research and manage this device’s workspace."
+        description="Back up your research and manage this device’s workspace and optional connection."
         title="Settings"
       />
 
@@ -1000,6 +1009,11 @@ export function SettingsAboutScreen({
             </p>
           </div>
         </Card>
+
+        <DataConnectionSettings navigationRequest={navigationRequest ?? (welcomeRequested ? {
+          destination: 'the welcome screen', onLeave: onResetOnboarding,
+          onStay: () => setWelcomeRequested(false)
+        } : undefined)} />
 
         <Card title="Backups">
           <div className="local-data-status-panel">
@@ -1020,6 +1034,7 @@ export function SettingsAboutScreen({
                   reviews, history, decisions, scores, comparison ideas, notes,
                   watchlist companies, and reminders. Choose where to save the file.
                 </p>
+                <p>API keys and downloaded company details are not included. Set up the optional connection again on another device.</p>
               </div>
 
               <div className="local-data-export-actions">
@@ -1556,14 +1571,15 @@ export function SettingsAboutScreen({
             </p>
             <p>
               The app does not connect to brokerage accounts, execute trades,
-              sync to cloud services, or call live stock APIs in this version.
+              or sync to cloud services. Optional company details are loaded
+              from Alpha Vantage only when you request them.
             </p>
           </div>
         </Card>
 
         <Card title="Getting started">
           <div className="settings-actions">
-            <Button onClick={onResetOnboarding} type="button" variant="secondary">
+            <Button onClick={() => setWelcomeRequested(true)} type="button" variant="secondary">
               Reset onboarding
             </Button>
           </div>
