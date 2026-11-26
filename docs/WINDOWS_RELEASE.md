@@ -96,3 +96,20 @@ For manual download and verification steps, see the [release smoke test checklis
 - Phase 1 core workflows are persisted locally, but selected route, selected rows, search/filter/sort controls, and in-progress forms remain transient UI state.
 - Import/export, database backups, restore flows, and SQLite-backed local preferences are intentionally out of scope for Phase 1.
 - No live APIs, AI analyst features, brokerage connections, trading execution, Supabase/auth, or cloud sync are included.
+
+## Publishing a release
+
+Releases are built by the `Windows Build` workflow and published automatically when a version tag is pushed.
+
+1. Bump `version` in `package.json`, `apps/desktop/package.json`, `packages/core/package.json` and `packages/ui/package.json` (keep them in sync) and merge that change to `main`.
+2. Tag the merge commit and push the tag:
+
+   ```bash
+   git checkout main && git pull
+   git tag v0.9.0
+   git push origin v0.9.0
+   ```
+
+3. The workflow packages the app, zips `win-unpacked` as `ThesisInvesting-<version>-windows-x64.zip`, and creates a GitHub Release for the tag with the zip attached and auto-generated notes.
+
+Pull requests that touch the desktop app or shared packages also run the workflow and upload the zip as a build artifact, so a build can be tested before tagging. The build is unsigned; SmartScreen will warn on first launch until a code-signing certificate is added.

@@ -11,12 +11,18 @@ on:
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
   windows-package:
     name: Windows package
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check out repository
@@ -47,9 +53,49 @@ jobs:
       - name: Package Windows app
         run: pnpm package:windows
 
-      - name: Upload Windows unpacked artifact
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $version = "${{ github.ref_name }}".TrimStart("v")
+          } else {
+            $version = (Get-Content apps/desktop/package.json | ConvertFrom-Json).version
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version: $version"
+
+      - name: Create portable zip
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $folder = "Thesis Investing $version"
+          $zip = "ThesisInvesting-$version-windows-x64.zip"
+          New-Item -ItemType Directory -Path dist | Out-Null
+          Copy-Item -Path apps/desktop/release/windows/win-unpacked -Destination "dist/$folder" -Recurse
+          Compress-Archive -Path "dist/$folder" -DestinationPath "dist/$zip" -CompressionLevel Optimal
+          Get-Item "dist/$zip" | Select-Object Name, @{n="MB";e={[math]::Round($_.Length/1MB,1)}}
+
+      - name: Upload Windows portable zip
         uses: actions/upload-artifact@v4
         with:
-          name: thesis-investing-windows-unpacked
-          path: apps/desktop/release/windows/win-unpacked/**
+          name: thesis-investing-windows-x64
+          path: dist/*.zip
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $notes = @(
+            "Portable Windows build (x64). Unzip, open the folder, run **Thesis Investing.exe**.",
+            "",
+            "The build is not code-signed, so Windows SmartScreen may show `"Windows protected your PC`" on first launch: click **More info**, then **Run anyway**. All data stays on your machine in a local SQLite database.",
+            ""
+          ) -join "`n"
+          Set-Content -Path release-notes.md -Value $notes -Encoding utf8
+          $zip = (Get-ChildItem dist/*.zip).FullName
+          gh release create $tag $zip --title "Thesis Investing $tag" --notes-file release-notes.md --generate-notes --verify-tag

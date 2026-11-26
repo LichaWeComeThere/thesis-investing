@@ -4,6 +4,7 @@ A Windows desktop app for investors who want to think before they trade. Score a
 
 Everything is stored locally in SQLite. No account, no brokerage connection, no live market data, nothing leaves your machine.
 
+[![Download for Windows](https://img.shields.io/github/v/release/LichaWeComeThere/thesis-investing?label=Download%20for%20Windows&logo=windows&color=0078D4)](https://github.com/LichaWeComeThere/thesis-investing/releases/latest)
 [![CI](https://github.com/LichaWeComeThere/thesis-investing/actions/workflows/ci.yml/badge.svg)](https://github.com/LichaWeComeThere/thesis-investing/actions/workflows/ci.yml)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D4)
 ![Stack](https://img.shields.io/badge/Electron%20%7C%20React%20%7C%20TypeScript%20%7C%20SQLite-2d3748)
@@ -39,6 +40,12 @@ Most retail investing mistakes aren't bad picks; they're forgotten reasons. You 
 - **SQLite** for local persistence, with versioned migrations and a verified runtime check inside Electron
 - **pnpm workspaces** monorepo: domain logic is a pure TypeScript package with its own tests, shared UI is a separate package, the app is a thin shell on top
 - **Vitest** unit tests, **ESLint** + strict TypeScript, **GitHub Actions** CI on every pull request
+
+## Download
+
+Grab the latest `ThesisInvesting-<version>-windows-x64.zip` from the [Releases page](https://github.com/LichaWeComeThere/thesis-investing/releases/latest), unzip it anywhere, and run **Thesis Investing.exe**. No installer, no admin rights; delete the folder to uninstall.
+
+The build isn't code-signed, so Windows SmartScreen may warn on first launch: click **More info**, then **Run anyway**. Your data lives in a local SQLite file under your user profile and never leaves the machine.
 
 ## Run it locally
 
@@ -76,9 +83,9 @@ The rule that shaped the architecture: **anything that computes lives in `packag
 
 ## Status
 
-The app is feature-complete for local, offline use: scoring, ranking, theses, guided reviews, decision log, history, health assessment, review queue, backups. Current work is manual Windows acceptance testing ahead of a first packaged release.
+The app is feature-complete for local, offline use: scoring, ranking, theses, guided reviews, decision log, history, health assessment, review queue, backups. A portable Windows build is published on the Releases page; the remaining work before 1.0 is a broader manual acceptance pass on Windows.
 
-Planned next, in order: a packaged Windows installer, read-only market data (prices and filings, still no trading), and later an optional AI research assistant. See the [roadmap](docs/ROADMAP.md).
+Planned next, in order: a signed installer, read-only market data (prices and filings, still no trading), and later an optional AI research assistant. See the [roadmap](docs/ROADMAP.md).
 
 Not planned: brokerage connections, trade execution, personalized advice, cloud sync.
 
