@@ -116,6 +116,6 @@ remapping, and all-or-nothing import.
 
 Browser verification covers the six-section flow, explicit saves, saved-draft
 resume, keyboard Enter/Escape, and the three desktop frame sizes. The
-[design QA report](../design-qa.md) contains screenshots and comparison evidence.
+[design QA report](dev/DESIGN_QA.md) contains screenshots and comparison evidence.
 Manual Windows UI/installer testing remains deferred. Automated builds and
 packaging do not establish interactive Windows behavior.

@@ -1,96 +1,107 @@
 # Thesis Investing
 
-Thesis Investing is a Windows-first desktop app for building investment discipline. The goal is to help users score stocks, track portfolios, write thesis notes, and monitor whether an original investment thesis remains intact.
+A Windows desktop app for investors who want to think before they trade. Score a company on its fundamentals, write down *why* you own it, and come back on a schedule to check whether that reason still holds.
 
-This repository has completed Phase 1: Offline Windows MVP, Phase 2: Local Data Foundation through closeout QA, and Phase 3 through Stage 9: Thesis Health, with manual Windows UI verification still pending. The desktop app has onboarding, a navigation shell, a local Dashboard summary overview, local manual MVP screens for scoring, ranking, thesis notes, watchlists, static theme baskets, reminders, and a persisted Living Thesis Board. It includes local SQLite persistence for Watchlist items, Thesis Notes, Reminders, Portfolio Ranker inputs, MBS Score Snapshots, and formal Living Thesis current state with structured risks and catalysts. Read-only Dashboard summaries, non-destructive export, preview-first append-only import, and local data maintenance remain available; new backups use export format version 5 and include Living Theses, their risks and catalysts, review sessions, completed review revisions, and saved decisions, while formats 1–4 remain readable. It does not connect to brokerage accounts, execute trades, provide personalized financial advice, or use live stock APIs.
+Everything is stored locally in SQLite. No account, no brokerage connection, no live market data, nothing leaves your machine.
 
-The [Stage 5 review workflow](docs/LIVING_THESIS_REVIEW_WORKFLOW.md) provides core review steps, proposed-edit previews, and completion validation. [Stage 6, part 1](docs/LIVING_THESIS_REVIEW_SESSION_STORAGE.md) adds durable review draft storage, restart recovery, independent version checks, and backup coverage. [Stage 6, part 2](docs/LIVING_THESIS_REVIEW_SESSION_UI.md) connects that storage to a guided review in Thesis Board: start or resume a review, work through six sections, and save an unfinished draft. **Save draft** keeps the current thesis and score history unchanged. **Complete review** confirms the proposed changes, then saves the updated thesis, immutable review revision, completed session, and any new business score together. Failed writes roll back; retrying an uncertain completion cannot duplicate history.
+[![CI](https://github.com/LichaWeComeThere/thesis-investing/actions/workflows/ci.yml/badge.svg)](https://github.com/LichaWeComeThere/thesis-investing/actions/workflows/ci.yml)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D4)
+![Stack](https://img.shields.io/badge/Electron%20%7C%20React%20%7C%20TypeScript%20%7C%20SQLite-2d3748)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-[Stage 7: Decision Log](docs/LIVING_THESIS_DECISION_LOG.md) adds **Add decision** inside a saved thesis. Record a decision and reason, optionally link a completed review, and browse the saved entries with the newest first. The date is recorded automatically; an entry documents reasoning without changing the thesis or completed review. Saved decisions are immutable and included in backups.
+![Overview screen](docs/screenshots/readme-overview.jpg)
 
-[Stage 8: History](docs/LIVING_THESIS_HISTORY.md) brings completed reviews, decisions, and scores saved through those reviews into one **History** card, with newest-first summaries and expandable details. It derives the view from existing records without changing the database schema or backup format. Direct Board edits are not a complete historical log, and legacy scores are not linked by ticker or a coincidentally matching ID.
+## Why
 
-[Stage 9: Thesis Health](docs/LIVING_THESIS_HEALTH.md) adds a small assessment based on saved research, with clear reasons and missing-information messages. Research concerns and review timing stay separate: an overdue review does not make the research assessment worse. Recorded high risks and decreases in review-linked scores identify concerns; an empty record is never treated as healthy. The assessment is derived locally without changing stored research or backups. Stage 10, Review Queue, is the next separate task.
+Most retail investing mistakes aren't bad picks; they're forgotten reasons. You buy a stock for a thesis, the price moves, and six months later you can't remember what you were betting on. Thesis Investing is a research journal with structure: it forces the thesis into writing, scores the business the same way every time, and keeps an immutable record of every review and decision so you can see your own reasoning drift.
 
-## Windows-first
+## What it does
 
-The first supported target is a Windows desktop app built with Electron, Vite, React, and TypeScript.
+| Area | What you can do |
+| --- | --- |
+| **Score a company** | Walk through a manual business-quality scorecard (the MBS score) and save a snapshot. Rescore later and compare. |
+| **Compare ideas** | Rank saved scores against each other to decide what to research next. |
+| **Theses** | Write an investment case per company: summary, structured risks and catalysts, status. The "Living Thesis" is the center of the app. |
+| **Guided reviews** | Revisit a thesis section by section, preview proposed edits, save a draft, or complete the review. Completed reviews are immutable revisions. |
+| **Decision log** | Record buy / hold / trim / sell decisions with reasoning, optionally linked to a review. |
+| **History** | One timeline per thesis: reviews, decisions, and score changes, newest first. |
+| **Thesis health** | A local assessment that flags recorded high risks and falling scores, and says plainly when it doesn't have enough information. |
+| **Review queue** | See which theses are due or overdue for a review. |
+| **Watchlist, themes, reminders** | Track companies you're not ready to score, group ideas into theme baskets, and set manual reminders (earnings dates, follow-ups). |
+| **Backups** | Export everything to a versioned JSON file and import it back with a preview-first, append-only import. Older export formats stay readable. |
 
-## Setup
+![Theses screen](docs/screenshots/readme-theses.jpg)
 
-Use Node.js 22.12 or later and pnpm 9.15.4. The desktop runtime is pinned to
-Electron 44.4.5. The first `pnpm dev` downloads that runtime if needed before
-starting the development app; subsequent starts reuse it.
+## Tech stack
+
+- **Electron 44** desktop shell with a hardened main/preload/renderer split (context isolation, IPC allow-list, encrypted key storage via the OS credential store)
+- **React 18 + TypeScript** renderer, built with **Vite** / electron-vite
+- **SQLite** for local persistence, with versioned migrations and a verified runtime check inside Electron
+- **pnpm workspaces** monorepo: domain logic is a pure TypeScript package with its own tests, shared UI is a separate package, the app is a thin shell on top
+- **Vitest** unit tests, **ESLint** + strict TypeScript, **GitHub Actions** CI on every pull request
+
+## Run it locally
+
+Requirements: Node.js 22.12+ and pnpm 9.15.4 (`corepack enable` installs the pinned version).
 
 ```bash
 pnpm install
-pnpm dev
+pnpm dev          # launches the Electron app; first run downloads Electron
 ```
 
-## Available Scripts
+Other scripts:
 
 ```bash
-pnpm dev
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm package:windows
-pnpm verify:storage
-pnpm verify:desktop
-pnpm preview:review
+pnpm lint             # ESLint
+pnpm typecheck        # tsc across all workspaces
+pnpm test             # Vitest across all workspaces
+pnpm build            # build all workspaces
+pnpm package:windows  # unpacked Windows build in apps/desktop/release/windows
+pnpm verify:storage   # SQLite-inside-Electron runtime check
+pnpm verify:desktop   # automated Electron smoke test (IPC protections, key storage)
+pnpm preview:review   # browser preview of the review UI with fictional sample data
 ```
 
-`pnpm preview:review` opens a browser development server with a separate example
-database and fictional research. See the [review UI guide](docs/LIVING_THESIS_REVIEW_SESSION_UI.md#browser-development-preview)
-for its scope and data location. `pnpm dev` still launches the Electron app.
+## How the code is organized
 
-`pnpm verify:desktop` runs an automated Electron smoke check using temporary
-data, including the built renderer/preload, IPC protections, and encrypted key
-storage. See [Electron upgrade verification](docs/ELECTRON_UPGRADE.md) for its
-scope and the remaining manual Windows acceptance.
+```
+apps/desktop/     Electron + React app (main process, preload, renderer, SQLite layer)
+packages/core/    Pure TypeScript domain logic: scoring, ranking, thesis model, review rules
+packages/ui/      Reusable React components and the design system
+docs/             Feature specs, architecture notes, release and QA docs
+tools/            Development helpers (review UI preview server)
+```
 
-## Workspace Layout
+The rule that shaped the architecture: **anything that computes lives in `packages/core` and has no idea Electron exists.** The desktop app only wires storage and screens to it. That keeps the scoring and review logic unit-testable and lets the review UI run in a plain browser for design work.
 
-- `apps/desktop`: Electron + Vite + React + TypeScript desktop app
-- `packages/core`: pure TypeScript scoring and domain logic
-- `packages/ui`: reusable React UI components
-- `.github/workflows`: GitHub Actions workflows
+## Status
+
+The app is feature-complete for local, offline use: scoring, ranking, theses, guided reviews, decision log, history, health assessment, review queue, backups. Current work is manual Windows acceptance testing ahead of a first packaged release.
+
+Planned next, in order: a packaged Windows installer, read-only market data (prices and filings, still no trading), and later an optional AI research assistant. See the [roadmap](docs/ROADMAP.md).
+
+Not planned: brokerage connections, trade execution, personalized advice, cloud sync.
 
 ## Documentation
 
-- [Roadmap](docs/ROADMAP.md)
-- [Living Thesis Decision Log](docs/LIVING_THESIS_DECISION_LOG.md)
-- [Living Thesis History](docs/LIVING_THESIS_HISTORY.md)
-- [Living Thesis Health](docs/LIVING_THESIS_HEALTH.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Codex Workflow](docs/CODEX_WORKFLOW.md)
-- [Definition Of Done](docs/DEFINITION_OF_DONE.md)
-- [Issue Labels](docs/ISSUE_LABELS.md)
-- [Phase 1 Closeout](docs/PHASE_1_CLOSEOUT.md)
-- [Phase 2 Closeout](docs/PHASE_2_CLOSEOUT.md)
-- [Design System](docs/DESIGN_SYSTEM.md)
-- [Dashboard](docs/DASHBOARD.md)
-- [Domain Models](docs/DOMAIN_MODELS.md)
-- [Manual Business Score](docs/MBS_SCORING.md)
-- [Manual MBS Scorer Screen](docs/MANUAL_MBS_SCORER.md)
-- [Portfolio Ranker](docs/PORTFOLIO_RANKER.md)
-- [Thesis Monitor](docs/THESIS_MONITOR.md)
-- [Watchlist](docs/WATCHLIST.md)
-- [Theme Baskets](docs/THEME_BASKETS.md)
-- [Reminders](docs/REMINDERS.md)
-- [Windows Release Prep](docs/WINDOWS_RELEASE.md)
-- [Release Smoke Test](docs/RELEASE_SMOKE_TEST.md)
-- [First-Run Onboarding](docs/ONBOARDING.md)
-- [Persistence](docs/PERSISTENCE.md)
-- [Local Data Export](docs/LOCAL_DATA_EXPORT.md)
-- [Local Data Import](docs/LOCAL_DATA_IMPORT.md)
-- [Local Data Maintenance](docs/LOCAL_DATA_MAINTENANCE.md)
-- [Storage Runtime Verification](docs/STORAGE_RUNTIME_VERIFICATION.md)
-- [Historical Plans and Prototype Archives](docs/archive/README.md)
-- [Guided Review UI](docs/LIVING_THESIS_REVIEW_SESSION_UI.md)
-- [Guided Review Design QA](design-qa.md)
+Start with [Architecture](docs/ARCHITECTURE.md) and [Domain models](docs/DOMAIN_MODELS.md). Feature-level specs:
 
-## Financial Disclaimer
+- Scoring and ranking: [MBS scoring](docs/MBS_SCORING.md) · [Manual scorer screen](docs/MANUAL_MBS_SCORER.md) · [Portfolio ranker](docs/PORTFOLIO_RANKER.md)
+- Living Thesis: [Architecture](docs/LIVING_THESIS_ARCHITECTURE.md) · [Library](docs/LIVING_THESIS_LIBRARY.md) · [Review workflow](docs/LIVING_THESIS_REVIEW_WORKFLOW.md) · [Review session storage](docs/LIVING_THESIS_REVIEW_SESSION_STORAGE.md) · [Guided review UI](docs/LIVING_THESIS_REVIEW_SESSION_UI.md) · [Decision log](docs/LIVING_THESIS_DECISION_LOG.md) · [History](docs/LIVING_THESIS_HISTORY.md) · [Health](docs/LIVING_THESIS_HEALTH.md) · [Review queue](docs/LIVING_THESIS_REVIEW_QUEUE.md)
+- Other screens: [Dashboard](docs/DASHBOARD.md) · [Watchlist](docs/WATCHLIST.md) · [Theme baskets](docs/THEME_BASKETS.md) · [Reminders](docs/REMINDERS.md) · [Onboarding](docs/ONBOARDING.md) · [Thesis monitor](docs/THESIS_MONITOR.md) · [Company details](docs/COMPANY_DETAILS.md)
+- Data: [Persistence](docs/PERSISTENCE.md) · [Export](docs/LOCAL_DATA_EXPORT.md) · [Import](docs/LOCAL_DATA_IMPORT.md) · [Maintenance](docs/LOCAL_DATA_MAINTENANCE.md) · [Storage runtime verification](docs/STORAGE_RUNTIME_VERIFICATION.md) · [Data connection foundation](docs/DATA_CONNECTION_FOUNDATION.md)
+- Design and release: [Design system](docs/DESIGN_SYSTEM.md) · [UI redesign](docs/UI_REDESIGN.md) · [Windows release](docs/WINDOWS_RELEASE.md) · [Release smoke test](docs/RELEASE_SMOKE_TEST.md) · [Electron upgrade](docs/ELECTRON_UPGRADE.md)
+- Process and history: [Roadmap](docs/ROADMAP.md) · [Phase 1 closeout](docs/PHASE_1_CLOSEOUT.md) · [Phase 2 closeout](docs/PHASE_2_CLOSEOUT.md) · [Living Thesis closeout](docs/LIVING_THESIS_CLOSEOUT.md) · [Archive](docs/archive/README.md)
+- Contributor notes: [docs/dev](docs/dev) (definition of done, issue labels, design QA log, AI-assisted workflow notes)
 
-Thesis Investing is educational software. It is not financial advice, investment advice, a brokerage, or a trading execution platform.
+## How it was built
+
+Built in small pull requests, one feature stage at a time, each with its own spec in `docs/` and a QA pass before merging. Manuel Diaz ([@LichaWeComeThere](https://github.com/LichaWeComeThere)) led the project: product direction, architecture, the Living Thesis review workflow, data model, and QA. [@Itsnick141](https://github.com/Itsnick141) contributed to the desktop UI, including the tab layout, Thesis Board, and ranking screens. AI coding tools were used as a pair programmer throughout; the process notes in [docs/dev](docs/dev) show how the work was staged.
+
+## Disclaimer
+
+Thesis Investing is educational software and a personal research tool. It is not financial advice, investment advice, a brokerage, or a trading platform.
+
+## License
+
+[MIT](LICENSE) © 2026 Manuel Diaz
